@@ -4,8 +4,11 @@ import android.content.Context
 import android.hardware.ConsumerIrManager
 import android.util.Log
 import com.andene.spectra.data.models.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.withContext
 
 /**
  * Module 6 — IR Replay & Control
@@ -86,8 +89,10 @@ class IrControl(private val context: Context) {
 
     /**
      * Send a named command to a specific device.
+     * ConsumerIrManager.transmit blocks for the IR burst duration (50–200ms),
+     * so this is suspending and runs on the IO dispatcher.
      */
-    fun sendCommand(deviceId: String, commandName: String): Boolean {
+    suspend fun sendCommand(deviceId: String, commandName: String): Boolean {
         val device = _devices.value[deviceId]
         val command = device?.irProfile?.commands?.get(commandName)
 
@@ -103,7 +108,7 @@ class IrControl(private val context: Context) {
     /**
      * Send a raw IR command directly (not from saved profile).
      */
-    fun sendRaw(
+    suspend fun sendRaw(
         deviceId: String,
         commandName: String,
         carrierFreq: Int,
@@ -120,20 +125,21 @@ class IrControl(private val context: Context) {
     /**
      * Send a command with repeat (for volume/channel hold).
      */
-    fun sendRepeated(
+    suspend fun sendRepeated(
         deviceId: String,
         commandName: String,
         repeatCount: Int = 3
-    ): Boolean {
+    ): Boolean = withContext(Dispatchers.IO) {
         val device = _devices.value[deviceId]
-        val command = device?.irProfile?.commands?.get(commandName) ?: return false
+        val command = device?.irProfile?.commands?.get(commandName)
+            ?: return@withContext false
         val carrier = device.irProfile?.carrierFrequency ?: DEFAULT_CARRIER
 
         var success = true
         for (i in 0 until repeatCount) {
             try {
                 irManager?.transmit(carrier, command.rawTimings)
-                Thread.sleep(REPEAT_DELAY_MS)
+                delay(REPEAT_DELAY_MS)
             } catch (e: Exception) {
                 success = false
                 break
@@ -141,25 +147,25 @@ class IrControl(private val context: Context) {
         }
 
         _lastTransmitResult.value = TransmitResult(success, deviceId, commandName)
-        return success
+        success
     }
 
-    private fun transmit(
+    private suspend fun transmit(
         deviceId: String,
         commandName: String,
         command: IrCommand,
         carrierFreqOverride: Int? = null
-    ): Boolean {
+    ): Boolean = withContext(Dispatchers.IO) {
         if (irManager == null || !irManager.hasIrEmitter()) {
             _lastTransmitResult.value = TransmitResult(false, deviceId, commandName)
-            return false
+            return@withContext false
         }
 
         val carrier = carrierFreqOverride
             ?: _devices.value[deviceId]?.irProfile?.carrierFrequency
             ?: DEFAULT_CARRIER
 
-        return try {
+        try {
             irManager.transmit(carrier, command.rawTimings)
             _lastTransmitResult.value = TransmitResult(true, deviceId, commandName)
             Log.d(TAG, "Transmitted '$commandName' to $deviceId @ ${carrier}Hz")

@@ -7,9 +7,9 @@ import com.andene.spectra.SpectraApp
 import com.andene.spectra.core.SpectraOrchestrator
 import com.andene.spectra.data.models.*
 import com.andene.spectra.data.repository.DeviceRepository
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -163,55 +163,58 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     // ── IR Brute Force ────────────────────────────────────────
 
+    // One pending response at a time; the orchestrator's onAttempt callback
+    // suspends on this until the UI completes it via confirm/deny.
+    private var pendingBruteForceResponse: CompletableDeferred<Boolean>? = null
+
     fun startBruteForce() {
         viewModelScope.launch {
             _screen.value = Screen.LEARN
             orchestrator.startBruteForce { protocol, manufacturer, attempt ->
+                val response = CompletableDeferred<Boolean>()
+                pendingBruteForceResponse = response
                 _bruteForcePrompt.value = BruteForcePrompt(protocol, manufacturer, attempt)
-                // Wait for user response — this is handled via confirmBruteForce/denyBruteForce
-                // We use a simple polling approach here
-                while (_bruteForcePrompt.value != null) {
-                    kotlinx.coroutines.delay(100)
+                try {
+                    response.await()
+                } finally {
+                    pendingBruteForceResponse = null
+                    _bruteForcePrompt.value = null
                 }
-                // Return whether user confirmed
-                _bruteForceConfirmed
             }
 
-            // After sweep completes
             val state = orchestrator.bruteForce.state.value
             if (state.foundProtocol != null) {
                 val device = _activeDevice.value
                 if (device != null) {
                     orchestrator.registerKnownDevice(device)
-                    viewModelScope.launch { repository.save(device) }
+                    repository.save(device)
                 }
                 _screen.value = Screen.REMOTE
             }
         }
     }
 
-    private var _bruteForceConfirmed = false
-
     fun confirmBruteForce() {
-        _bruteForceConfirmed = true
-        _bruteForcePrompt.value = null
+        pendingBruteForceResponse?.complete(true)
     }
 
     fun denyBruteForce() {
-        _bruteForceConfirmed = false
-        _bruteForcePrompt.value = null
+        pendingBruteForceResponse?.complete(false)
     }
 
     fun stopBruteForce() {
         orchestrator.bruteForce.stop()
-        _bruteForcePrompt.value = null
+        // Unblock any in-flight prompt so the sweep coroutine returns promptly.
+        pendingBruteForceResponse?.complete(false)
     }
 
     // ── IR Control ────────────────────────────────────────────
 
     fun sendCommand(commandName: String) {
         val deviceId = _activeDevice.value?.id ?: return
-        orchestrator.control.sendCommand(deviceId, commandName)
+        viewModelScope.launch {
+            orchestrator.control.sendCommand(deviceId, commandName)
+        }
     }
 
     fun sendRepeated(commandName: String, count: Int = 3) {
