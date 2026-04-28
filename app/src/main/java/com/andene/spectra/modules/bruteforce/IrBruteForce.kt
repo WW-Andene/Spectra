@@ -30,98 +30,6 @@ class IrBruteForce(private val context: Context) {
         private const val TAG = "IrBruteForce"
         private const val CARRIER_FREQ = 38000 // 38kHz standard
         private const val SEND_DELAY_MS = 600L // Pause between attempts
-    }
-
-    private val irManager = context.getSystemService(Context.CONSUMER_IR_SERVICE) as? ConsumerIrManager
-
-    private val _state = MutableStateFlow(BruteForceState())
-    val state: StateFlow<BruteForceState> = _state
-
-    private var sweepJob: Job? = null
-
-    /**
-     * Check if IR blaster is available.
-     */
-    fun isAvailable(): Boolean = irManager?.hasIrEmitter() == true
-
-    /**
-     * Get supported carrier frequency ranges.
-     */
-    fun getCarrierRanges(): List<ConsumerIrManager.CarrierFrequencyRange> {
-        return irManager?.carrierFrequencies?.toList() ?: emptyList()
-    }
-
-    /**
-     * Start brute force sweep across all protocol families.
-     * Calls [onAttempt] after each transmission so UI can ask user for confirmation.
-     */
-    suspend fun startSweep(
-        onAttempt: suspend (protocol: IrProtocol, manufacturer: String, attemptNum: Int) -> Boolean
-    ) {
-        if (irManager == null || !irManager.hasIrEmitter()) {
-            Log.e(TAG, "No IR emitter available")
-            return
-        }
-
-        _state.value = BruteForceState(isRunning = true)
-        var totalAttempts = 0
-
-        for ((protocol, codes) in POWER_CODES) {
-            for ((manufacturer, timings) in codes) {
-                totalAttempts++
-                _state.value = _state.value.copy(
-                    currentProtocol = protocol,
-                    totalAttempts = totalAttempts
-                )
-
-                // Transmit the code
-                try {
-                    irManager.transmit(CARRIER_FREQ, timings)
-                } catch (e: Exception) {
-                    Log.w(TAG, "Transmit failed for $manufacturer/$protocol", e)
-                    continue
-                }
-
-                delay(SEND_DELAY_MS)
-
-                // Ask user: did the device respond?
-                val confirmed = onAttempt(protocol, manufacturer, totalAttempts)
-                if (confirmed) {
-                    _state.value = _state.value.copy(
-                        isRunning = false,
-                        foundProtocol = protocol,
-                        foundCode = timings.first().toLong()
-                    )
-                    Log.d(TAG, "Found! $manufacturer using $protocol after $totalAttempts attempts")
-                    return
-                }
-            }
-        }
-
-        _state.value = _state.value.copy(isRunning = false)
-        Log.d(TAG, "Sweep complete, no device responded after $totalAttempts attempts")
-    }
-
-    /**
-     * Send a single raw IR pattern.
-     */
-    fun transmitRaw(carrierFreq: Int, pattern: IntArray) {
-        irManager?.transmit(carrierFreq, pattern)
-    }
-
-    fun stop() {
-        sweepJob?.cancel()
-        _state.value = _state.value.copy(isRunning = false)
-    }
-
-    // ────────────────────────────────────────────────────────────
-    // Power-on code database per protocol
-    //
-    // Each entry is alternating mark/space pairs in MICROSECONDS.
-    // These are the most common power toggle codes per manufacturer.
-    // ────────────────────────────────────────────────────────────
-
-    companion object PowerCodes {
 
         /**
          * Encode an NEC command from address + command bytes.
@@ -262,4 +170,87 @@ class IrBruteForce(private val context: Context) {
             ),
         )
     }
+
+    private val irManager = context.getSystemService(Context.CONSUMER_IR_SERVICE) as? ConsumerIrManager
+
+    private val _state = MutableStateFlow(BruteForceState())
+    val state: StateFlow<BruteForceState> = _state
+
+    private var sweepJob: Job? = null
+
+    /**
+     * Check if IR blaster is available.
+     */
+    fun isAvailable(): Boolean = irManager?.hasIrEmitter() == true
+
+    /**
+     * Get supported carrier frequency ranges.
+     */
+    fun getCarrierRanges(): List<ConsumerIrManager.CarrierFrequencyRange> {
+        return irManager?.carrierFrequencies?.toList() ?: emptyList()
+    }
+
+    /**
+     * Start brute force sweep across all protocol families.
+     * Calls [onAttempt] after each transmission so UI can ask user for confirmation.
+     */
+    suspend fun startSweep(
+        onAttempt: suspend (protocol: IrProtocol, manufacturer: String, attemptNum: Int) -> Boolean
+    ) {
+        if (irManager == null || !irManager.hasIrEmitter()) {
+            Log.e(TAG, "No IR emitter available")
+            return
+        }
+
+        _state.value = BruteForceState(isRunning = true)
+        var totalAttempts = 0
+
+        for ((protocol, codes) in POWER_CODES) {
+            for ((manufacturer, timings) in codes) {
+                totalAttempts++
+                _state.value = _state.value.copy(
+                    currentProtocol = protocol,
+                    totalAttempts = totalAttempts
+                )
+
+                // Transmit the code
+                try {
+                    irManager.transmit(CARRIER_FREQ, timings)
+                } catch (e: Exception) {
+                    Log.w(TAG, "Transmit failed for $manufacturer/$protocol", e)
+                    continue
+                }
+
+                delay(SEND_DELAY_MS)
+
+                // Ask user: did the device respond?
+                val confirmed = onAttempt(protocol, manufacturer, totalAttempts)
+                if (confirmed) {
+                    _state.value = _state.value.copy(
+                        isRunning = false,
+                        foundProtocol = protocol,
+                        foundCode = timings.first().toLong()
+                    )
+                    Log.d(TAG, "Found! $manufacturer using $protocol after $totalAttempts attempts")
+                    return
+                }
+            }
+        }
+
+        _state.value = _state.value.copy(isRunning = false)
+        Log.d(TAG, "Sweep complete, no device responded after $totalAttempts attempts")
+    }
+
+    /**
+     * Send a single raw IR pattern.
+     */
+    fun transmitRaw(carrierFreq: Int, pattern: IntArray) {
+        irManager?.transmit(carrierFreq, pattern)
+    }
+
+    fun stop() {
+        sweepJob?.cancel()
+        _state.value = _state.value.copy(isRunning = false)
+    }
+
 }
