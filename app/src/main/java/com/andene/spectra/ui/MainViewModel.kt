@@ -121,10 +121,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * Walk a macro's steps, sending each command via IrControl with the
      * configured delay before each step. Cancellable; cancelling stops at
      * the next step boundary (we don't kill an in-flight transmit).
+     *
+     * Re-tap behaviour: if a macro is already running, ignore the new tap
+     * instead of silently swapping macros — that way the user can't
+     * accidentally truncate a run by double-tapping a chip. Tap the same
+     * macro twice OK (no-op), tap a different one — also no-op until the
+     * first finishes or is cancelled.
      */
     fun runMacro(id: String) {
+        if (macroJob?.isActive == true) return
         val macro = _macros.value.firstOrNull { it.id == id } ?: return
-        macroJob?.cancel()
         macroJob = viewModelScope.launch {
             try {
                 for ((index, step) in macro.steps.withIndex()) {
@@ -262,9 +268,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // One pending response at a time; the orchestrator's onAttempt callback
     // suspends on this until the UI completes it via confirm/deny.
     private var pendingBruteForceResponse: CompletableDeferred<Boolean>? = null
+    private var bruteForceJob: kotlinx.coroutines.Job? = null
 
     fun startBruteForce() {
-        viewModelScope.launch {
+        // Re-entry guard: if a sweep is already running, ignore. Otherwise
+        // two coroutines race on the orchestrator's BruteForceState and the
+        // pendingBruteForceResponse field, producing inconsistent prompts.
+        if (bruteForceJob?.isActive == true) return
+        bruteForceJob = viewModelScope.launch {
             _screen.value = Screen.LEARN
             orchestrator.startBruteForce { protocol, manufacturer, attempt ->
                 val response = CompletableDeferred<Boolean>()

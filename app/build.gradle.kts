@@ -60,9 +60,6 @@ dependencies {
 
     // NSD/mDNS — included in Android SDK, no extra dep
 
-    // DataStore for persistence
-    implementation("androidx.datastore:datastore-preferences:1.0.0")
-
     // Unit tests (host JVM, no Android dependencies needed)
     testImplementation("junit:junit:4.13.2")
 }
