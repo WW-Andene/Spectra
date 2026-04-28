@@ -108,72 +108,90 @@ class SpectraOrchestrator(private val context: Context) {
         Manifest.permission.ACCESS_WIFI_STATE
     ])
     suspend fun scanPassive() = withContext(Dispatchers.IO) {
+        // Clear any prior scan's outcome so a cancellation can't leave a
+        // stale match hanging on _discoveredDevice for the next collector
+        // (which would let the viewmodel promote it as if it had just been
+        // discovered).
+        _discoveredDevice.value = null
         _phase.value = Phase.SCANNING_PASSIVE
         appendLog("Starting passive scan — hold phone near device")
 
-        // Run all three fingerprinting modules concurrently
-        val acousticJob = async {
-            appendLog("Module 2: Listening for acoustic signature...")
-            acoustic.capture()
-        }
-        val rfJob = async {
-            appendLog("Module 3: Scanning WiFi/BLE/mDNS...")
-            rf.scan()
-        }
-        val emJob = async {
-            appendLog("Module 4: Reading EM field pattern...")
-            em.capture()
-        }
-
-        val acousticSig = acousticJob.await()
-        val rfSig = rfJob.await()
-        val emSig = emJob.await()
-
-        appendLog("Passive scan complete")
-        appendLog("  Acoustic: ${acousticSig?.dominantFrequencies?.size ?: 0} frequency peaks")
-        appendLog("  RF: ${rfSig.wifiDevices.size} WiFi, ${rfSig.bleDevices.size} BLE devices")
-        appendLog("  EM: field strength ${emSig?.fieldStrength ?: 0f} µT")
-
-        // Surface module-level errors that were previously logcat-only — the
-        // user couldn't tell whether 'no signature' meant 'we listened and
-        // heard silence' or 'the mic refused to open'.
-        if (acoustic.state.value == AcousticFingerprint.State.ERROR) {
-            appendLog("  ⚠ Acoustic module errored — check microphone access.")
-        }
-        if (rf.state.value == RfFingerprint.State.ERROR) {
-            appendLog("  ⚠ RF module errored — check Bluetooth + Location.")
-        }
-        if (em.state.value == EmFingerprint.State.ERROR ||
-            em.state.value == EmFingerprint.State.NO_SENSOR) {
-            appendLog("  ⚠ EM module unavailable — phone may have no magnetometer.")
-        }
-
-        // Build candidate profile, with a best-effort manufacturer/category
-        // guess from the RF + mDNS hints that the RF module already produced.
-        val (inferredManufacturer, inferredCategory) = inferIdentity(rfSig)
-        val candidate = DeviceProfile(
-            manufacturer = inferredManufacturer,
-            category = inferredCategory,
-            acousticSignature = acousticSig,
-            rfSignature = rfSig,
-            emSignature = emSig
-        )
-
-        // Try to match against known devices
-        val match = matchKnownDevice(candidate)
-
-        if (match != null) {
-            appendLog("Device identified: ${match.name ?: match.manufacturer ?: "Unknown"}")
-            _discoveredDevice.value = match
-            _phase.value = if (match.irProfile?.commands?.isNotEmpty() == true) {
-                Phase.READY
-            } else {
-                Phase.DEVICE_IDENTIFIED
+        try {
+            // Run all three fingerprinting modules concurrently
+            val acousticJob = async {
+                appendLog("Module 2: Listening for acoustic signature...")
+                acoustic.capture()
             }
-        } else {
-            appendLog("New device — not in known database")
-            _discoveredDevice.value = candidate
-            _phase.value = Phase.DEVICE_UNKNOWN
+            val rfJob = async {
+                appendLog("Module 3: Scanning WiFi/BLE/mDNS...")
+                rf.scan()
+            }
+            val emJob = async {
+                appendLog("Module 4: Reading EM field pattern...")
+                em.capture()
+            }
+
+            val acousticSig = acousticJob.await()
+            val rfSig = rfJob.await()
+            val emSig = emJob.await()
+
+            appendLog("Passive scan complete")
+            appendLog("  Acoustic: ${acousticSig?.dominantFrequencies?.size ?: 0} frequency peaks")
+            appendLog("  RF: ${rfSig.wifiDevices.size} WiFi, ${rfSig.bleDevices.size} BLE devices")
+            appendLog("  EM: field strength ${emSig?.fieldStrength ?: 0f} µT")
+
+            // Surface module-level errors that were previously logcat-only — the
+            // user couldn't tell whether 'no signature' meant 'we listened and
+            // heard silence' or 'the mic refused to open'.
+            if (acoustic.state.value == AcousticFingerprint.State.ERROR) {
+                appendLog("  ⚠ Acoustic module errored — check microphone access.")
+            }
+            if (rf.state.value == RfFingerprint.State.ERROR) {
+                appendLog("  ⚠ RF module errored — check Bluetooth + Location.")
+            }
+            if (em.state.value == EmFingerprint.State.ERROR ||
+                em.state.value == EmFingerprint.State.NO_SENSOR) {
+                appendLog("  ⚠ EM module unavailable — phone may have no magnetometer.")
+            }
+
+            // Build candidate profile, with a best-effort manufacturer/category
+            // guess from the RF + mDNS hints that the RF module already produced.
+            val (inferredManufacturer, inferredCategory) = inferIdentity(rfSig)
+            val candidate = DeviceProfile(
+                manufacturer = inferredManufacturer,
+                category = inferredCategory,
+                acousticSignature = acousticSig,
+                rfSignature = rfSig,
+                emSignature = emSig
+            )
+
+            // Try to match against known devices
+            val match = matchKnownDevice(candidate)
+
+            if (match != null) {
+                appendLog("Device identified: ${match.name ?: match.manufacturer ?: "Unknown"}")
+                _discoveredDevice.value = match
+                _phase.value = if (match.irProfile?.commands?.isNotEmpty() == true) {
+                    Phase.READY
+                } else {
+                    Phase.DEVICE_IDENTIFIED
+                }
+            } else {
+                appendLog("New device — not in known database")
+                _discoveredDevice.value = candidate
+                _phase.value = Phase.DEVICE_UNKNOWN
+            }
+        } finally {
+            // If we leave the function while still in SCANNING_PASSIVE — the
+            // cancellation path, where none of the terminal _phase writes
+            // above ran — push phase off SCANNING_PASSIVE so any collector
+            // waiting on `phase != SCANNING_PASSIVE` (the viewmodel scan
+            // watcher) actually progresses. Plain StateFlow.value writes are
+            // synchronous and don't suspend, so this works fine inside a
+            // cancellation finally without NonCancellable.
+            if (_phase.value == Phase.SCANNING_PASSIVE) {
+                _phase.value = Phase.IDLE
+            }
         }
     }
 
