@@ -75,6 +75,10 @@
     <string name="em_no_data">EM: no data</string>
     <string name="default_device_name">Device</string>
     <string name="action_open_remote_short">Open Remote</string>
+    <string name="macro_discard_changes_message">Discard unsaved changes to this macro?</string>
+    <string name="action_discard">Discard</string>
+    <string name="action_keep_editing">Keep editing</string>
+    <string name="camera_bind_failed">Camera couldn\'t start. Try going back and reopening Learn, or reboot the phone if the issue persists.</string>
 
     <!-- Scanning -->
     <string name="scan_title">Scanning…</string>

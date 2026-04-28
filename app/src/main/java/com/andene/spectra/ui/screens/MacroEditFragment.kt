@@ -84,8 +84,17 @@ class MacroEditFragment : Fragment() {
         btnAddStep.setOnClickListener { openStepBuilder(stepList) }
 
         btnCancel.setOnClickListener {
-            vm.navigate(MainViewModel.Screen.HOME)
+            confirmDiscardThenNavigate(nameInput)
         }
+        // Same prompt for system back: don't drop unsaved work silently.
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : androidx.activity.OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    confirmDiscardThenNavigate(nameInput)
+                }
+            },
+        )
 
         btnSave.setOnClickListener {
             val name = nameInput.text?.toString()?.trim().orEmpty()
@@ -108,6 +117,27 @@ class MacroEditFragment : Fragment() {
             vm.saveMacro(macro)
             vm.navigate(MainViewModel.Screen.HOME)
         }
+    }
+
+    private fun confirmDiscardThenNavigate(nameInput: TextInputEditText) {
+        // Treat the editor as dirty if either steps or name diverge from
+        // the source state — for a new macro, any data is "dirty"; for
+        // an edit, dirty means the user has changed something.
+        val original = vm.editingMacro.value
+        val nameChanged = (nameInput.text?.toString().orEmpty()) != (original?.name.orEmpty())
+        val stepsChanged = workingSteps != (original?.steps.orEmpty())
+        val dirty = nameChanged || stepsChanged
+        if (!dirty) {
+            vm.navigate(MainViewModel.Screen.HOME)
+            return
+        }
+        AlertDialog.Builder(requireContext())
+            .setMessage(R.string.macro_discard_changes_message)
+            .setPositiveButton(R.string.action_discard) { _, _ ->
+                vm.navigate(MainViewModel.Screen.HOME)
+            }
+            .setNegativeButton(R.string.action_keep_editing, null)
+            .show()
     }
 
     private fun restoreFromSaved(

@@ -42,7 +42,7 @@
         <Button
             android:id="@+id/btnShareDevice"
             android:layout_width="wrap_content"
-            android:layout_height="36dp"
+            android:layout_height="48dp"
             android:text="@string/action_share"
             android:textSize="12sp"
             android:backgroundTint="@color/bg_card_elevated"
@@ -52,7 +52,7 @@
         <Button
             android:id="@+id/btnLearnMore"
             android:layout_width="wrap_content"
-            android:layout_height="36dp"
+            android:layout_height="48dp"
             android:text="@string/action_learn_more"
             android:textSize="12sp"
             android:backgroundTint="@color/bg_card_elevated"

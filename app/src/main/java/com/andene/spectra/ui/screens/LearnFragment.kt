@@ -338,7 +338,16 @@ class LearnFragment : Fragment() {
                     analyzer
                 )
             } catch (e: Exception) {
-                // Camera init failed — log but don't crash
+                // Camera init failed (rare — usually means another app holds
+                // the camera or the device is mid-screen-rotation). Surface
+                // it instead of failing silently — user otherwise sees an
+                // empty PreviewView and can't tell whether to wait or retry.
+                android.util.Log.e("LearnFragment", "Camera bind failed", e)
+                android.widget.Toast.makeText(
+                    requireContext(),
+                    getString(R.string.camera_bind_failed),
+                    android.widget.Toast.LENGTH_LONG,
+                ).show()
             }
         }, ContextCompat.getMainExecutor(requireContext()))
     }

@@ -81,7 +81,7 @@
     <Button
         android:id="@+id/btnImportClipboard"
         android:layout_width="match_parent"
-        android:layout_height="36dp"
+        android:layout_height="48dp"
         android:text="@string/action_import_clipboard"
         android:textSize="11sp"
         android:backgroundTint="@color/bg_card_elevated"
@@ -109,7 +109,8 @@
         <Button
             android:id="@+id/btnNewMacro"
             android:layout_width="wrap_content"
-            android:layout_height="32dp"
+            android:layout_height="40dp"
+            android:minHeight="40dp"
             android:text="@string/action_new_macro"
             android:textSize="11sp"
             android:backgroundTint="@color/bg_card_elevated"
