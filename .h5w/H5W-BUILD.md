@@ -29,7 +29,6 @@ camera capture, RF discovery currently dead-ending in the matcher).
 
 | ID | Feature | Phase | Status | Notes |
 |----|---------|-------|--------|-------|
-| B-206 | RC6 codec | 1 | TODO | Manchester encoding, separate codec impl |
 | B-207 | Brute-force whole-remote | 1 | TODO | after POWER hit, sweep VOL/CH/etc. on same protocol |
 | B-208 | Acoustic+EM matcher tiebreakers | 1 | TODO | break RF-score ties via signature similarity |
 | B-209 | Roku ECP control over mDNS | 1 | TODO | discovered Roku → HTTP ECP keypress |
@@ -76,7 +75,8 @@ camera capture, RF discovery currently dead-ending in the matcher).
 | B-100 | IR camera capture decode upgrade | 6 — surface multi-press agreement in Learn UI | `49aec89` |
 | B-100 | IR camera capture decode upgrade | 8 — NEC press-and-hold via spec-compliant repeat frames | `cced38d` |
 | B-200 | Carrier auto-tune retry + B-201 atomic device save + B-202 hold-to-repeat + B-203 anonymised export | small-fix bundle | `c78ef24` |
-| B-205 | Panasonic codec (Kaseikyo, 48-bit, vendor-aware) | (this commit) |
+| B-205 | Panasonic codec (Kaseikyo, 48-bit, vendor-aware) | `2c6c218` |
+| B-206 | RC6 mode 0 codec (Manchester) | (this commit) |
 
 ---
 
