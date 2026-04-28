@@ -130,8 +130,12 @@ class SpectraOrchestrator(private val context: Context) {
         appendLog("  RF: ${rfSig.wifiDevices.size} WiFi, ${rfSig.bleDevices.size} BLE devices")
         appendLog("  EM: field strength ${emSig?.fieldStrength ?: 0f} µT")
 
-        // Build candidate profile
+        // Build candidate profile, with a best-effort manufacturer/category
+        // guess from the RF + mDNS hints that the RF module already produced.
+        val (inferredManufacturer, inferredCategory) = inferIdentity(rfSig)
         val candidate = DeviceProfile(
+            manufacturer = inferredManufacturer,
+            category = inferredCategory,
             acousticSignature = acousticSig,
             rfSignature = rfSig,
             emSignature = emSig
@@ -262,6 +266,61 @@ class SpectraOrchestrator(private val context: Context) {
         return if (bestScore >= SIMILARITY_THRESHOLD) {
             bestMatch?.copy(confidence = bestScore)
         } else null
+    }
+
+    /**
+     * Best-effort manufacturer + category guess from the strongest RF hits.
+     * Prefers WiFi (closest signal first) over BLE; mDNS hints map to category.
+     * Returns nulls/UNKNOWN when the signal is ambiguous.
+     */
+    private fun inferIdentity(rf: RfSignature): Pair<String?, DeviceCategory> {
+        val topWifi = rf.wifiDevices.firstOrNull { !it.modelHint.isNullOrBlank() }
+        val topBle = rf.bleDevices.firstOrNull { !it.name.isNullOrBlank() }
+
+        val manufacturer = topWifi?.modelHint
+            ?: extractManufacturerFromBleName(topBle?.name)
+
+        val category = guessCategory(rf)
+        return manufacturer to category
+    }
+
+    private fun extractManufacturerFromBleName(name: String?): String? {
+        if (name.isNullOrBlank()) return null
+        val lower = name.lowercase()
+        return when {
+            "samsung" in lower -> "Samsung"
+            "lg" in lower -> "LG Electronics"
+            "sony" in lower -> "Sony"
+            "roku" in lower -> "Roku"
+            "sonos" in lower -> "Sonos"
+            "bose" in lower -> "Bose"
+            "apple" in lower || "airpods" in lower -> "Apple"
+            "xiaomi" in lower || lower.startsWith("mi ") -> "Xiaomi"
+            else -> null
+        }
+    }
+
+    private fun guessCategory(rf: RfSignature): DeviceCategory {
+        // mDNS service hints are the most reliable categoriser.
+        val mdnsHints = rf.wifiDevices.mapNotNull { it.modelHint?.lowercase() }
+        if (mdnsHints.any { "chromecast" in it || "android tv" in it || "fire tv" in it }) {
+            return DeviceCategory.SET_TOP_BOX
+        }
+        if (mdnsHints.any { "airplay" in it || "tv" in it }) {
+            return DeviceCategory.TV
+        }
+        if (mdnsHints.any { "spotify" in it || "sonos" in it || "airplay audio" in it }) {
+            return DeviceCategory.SPEAKER
+        }
+
+        // BLE device names occasionally tell us directly.
+        val bleNames = rf.bleDevices.mapNotNull { it.name?.lowercase() }
+        if (bleNames.any { "tv" in it || "soundbar" in it && "tv" in it }) return DeviceCategory.TV
+        if (bleNames.any { "speaker" in it || "soundbar" in it || "audio" in it }) {
+            return DeviceCategory.SPEAKER
+        }
+
+        return DeviceCategory.UNKNOWN
     }
 
     private fun compareRf(a: RfSignature, b: RfSignature): Float {
