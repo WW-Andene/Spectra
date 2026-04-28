@@ -78,6 +78,20 @@ dependencies {
 
     // NSD/mDNS — included in Android SDK, no extra dep
 
-    // Unit tests (host JVM, no Android dependencies needed)
+    // Unit tests (host JVM)
     testImplementation("junit:junit:4.13.2")
+    // Robolectric runs Android-framework-touching code on the JVM (no
+    // emulator). Used by repository round-trip and orchestrator-matcher
+    // tests that need a Context.
+    testImplementation("org.robolectric:robolectric:4.11.1")
+    testImplementation("androidx.test:core:1.5.0")
+    testImplementation("androidx.test.ext:junit:1.1.5")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+}
+
+// Robolectric needs the test runner to know the package + minSdk.
+android {
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }

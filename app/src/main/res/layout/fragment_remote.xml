@@ -139,14 +139,17 @@
                 android:text="@string/btn_vol_down" />
         </LinearLayout>
 
-        <!-- D-Pad -->
+        <!-- D-Pad. Margins kept at 8dp (not 16dp) so the Vol+DPad+Ch row
+             fits a 320dp viewport: 64+8+56+8+64 = 200dp wide column total.
+             Outer LinearLayout has 20dp horizontal padding on the parent,
+             leaving 280dp content area on a 320dp screen — well within. -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp">
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp">
 
             <Button
                 android:id="@+id/btnUp"

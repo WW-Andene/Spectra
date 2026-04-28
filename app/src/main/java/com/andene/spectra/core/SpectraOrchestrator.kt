@@ -266,107 +266,12 @@ class SpectraOrchestrator(private val context: Context) {
     }
 
     // ── Device Matching ───────────────────────────────────────
+    // Pure logic lives in Matching.kt for testability; this class just
+    // takes a thread-safe snapshot of knownSignatures and delegates.
 
-    /**
-     * Compare candidate against known device signatures.
-     *
-     * RF is the only reliable cross-session anchor: a BSSID or BLE address
-     * match identifies a specific physical radio. Acoustic and EM fingerprints
-     * shift too much with device state, distance, and ambient noise to be
-     * trusted as primary identifiers — they're captured for display but not
-     * weighted into the match decision here.
-     */
     private fun matchKnownDevice(candidate: DeviceProfile): DeviceProfile? {
-        val candidateRf = candidate.rfSignature ?: return null
-
-        var bestMatch: DeviceProfile? = null
-        var bestScore = 0f
-
         val snapshot = synchronized(knownSignatures) { knownSignatures.toList() }
-        for (known in snapshot) {
-            val knownRf = known.rfSignature ?: continue
-            val score = compareRf(candidateRf, knownRf)
-            if (score > bestScore) {
-                bestScore = score
-                bestMatch = known
-            }
-        }
-
-        return if (bestScore >= SIMILARITY_THRESHOLD) {
-            bestMatch?.copy(confidence = bestScore)
-        } else null
-    }
-
-    /**
-     * Best-effort manufacturer + category guess from the strongest RF hits.
-     * Prefers WiFi (closest signal first) over BLE; mDNS hints map to category.
-     * Returns nulls/UNKNOWN when the signal is ambiguous.
-     */
-    private fun inferIdentity(rf: RfSignature): Pair<String?, DeviceCategory> {
-        val topWifi = rf.wifiDevices.firstOrNull { !it.modelHint.isNullOrBlank() }
-        val topBle = rf.bleDevices.firstOrNull { !it.name.isNullOrBlank() }
-
-        val manufacturer = topWifi?.modelHint
-            ?: extractManufacturerFromBleName(topBle?.name)
-
-        val category = guessCategory(rf)
-        return manufacturer to category
-    }
-
-    private fun extractManufacturerFromBleName(name: String?): String? {
-        if (name.isNullOrBlank()) return null
-        val lower = name.lowercase()
-        return when {
-            "samsung" in lower -> "Samsung"
-            "lg" in lower -> "LG Electronics"
-            "sony" in lower -> "Sony"
-            "roku" in lower -> "Roku"
-            "sonos" in lower -> "Sonos"
-            "bose" in lower -> "Bose"
-            "apple" in lower || "airpods" in lower -> "Apple"
-            "xiaomi" in lower || lower.startsWith("mi ") -> "Xiaomi"
-            else -> null
-        }
-    }
-
-    private fun guessCategory(rf: RfSignature): DeviceCategory {
-        // mDNS service hints are the most reliable categoriser.
-        val mdnsHints = rf.wifiDevices.mapNotNull { it.modelHint?.lowercase() }
-        if (mdnsHints.any { "chromecast" in it || "android tv" in it || "fire tv" in it }) {
-            return DeviceCategory.SET_TOP_BOX
-        }
-        if (mdnsHints.any { "airplay" in it || "tv" in it }) {
-            return DeviceCategory.TV
-        }
-        if (mdnsHints.any { "spotify" in it || "sonos" in it || "airplay audio" in it }) {
-            return DeviceCategory.SPEAKER
-        }
-
-        // BLE device names occasionally tell us directly.
-        val bleNames = rf.bleDevices.mapNotNull { it.name?.lowercase() }
-        if (bleNames.any { "tv" in it || "soundbar" in it && "tv" in it }) return DeviceCategory.TV
-        if (bleNames.any { "speaker" in it || "soundbar" in it || "audio" in it }) {
-            return DeviceCategory.SPEAKER
-        }
-
-        return DeviceCategory.UNKNOWN
-    }
-
-    private fun compareRf(a: RfSignature, b: RfSignature): Float {
-        // WiFi BSSID exact match is definitive
-        val commonBssids = a.wifiDevices.map { it.bssid }.intersect(b.wifiDevices.map { it.bssid }.toSet())
-        if (commonBssids.isNotEmpty()) return 1f
-
-        // BLE address match
-        val commonBle = a.bleDevices.map { it.address }.intersect(b.bleDevices.map { it.address }.toSet())
-        if (commonBle.isNotEmpty()) return 0.9f
-
-        // Manufacturer match (weaker)
-        val aManufacturers = a.wifiDevices.mapNotNull { it.modelHint }.toSet()
-        val bManufacturers = b.wifiDevices.mapNotNull { it.modelHint }.toSet()
-        if (aManufacturers.intersect(bManufacturers).isNotEmpty()) return 0.4f
-
-        return 0f
+        return matchKnownDevice(candidate, snapshot, SIMILARITY_THRESHOLD)
     }
 
     // ── Persistence Hooks ─────────────────────────────────────
