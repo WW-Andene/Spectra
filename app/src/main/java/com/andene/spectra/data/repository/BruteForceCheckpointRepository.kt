@@ -41,13 +41,29 @@ class BruteForceCheckpointRepository(private val context: Context) {
 
     private val file: File get() = File(context.filesDir, FILE_NAME)
 
-    /** Write or replace the current checkpoint. Atomic. */
+    /**
+     * Write or replace the current checkpoint. Truly atomic via
+     * java.nio.file.Files.move(ATOMIC_MOVE, REPLACE_EXISTING) — the
+     * old delete-then-rename had a window where a process kill would
+     * leave NEITHER file readable, losing the previous-good state too.
+     */
     suspend fun save(checkpoint: BruteForceCheckpoint) = withContext(Dispatchers.IO) {
         try {
             val tmp = File(file.parentFile, "$FILE_NAME.tmp")
             tmp.writeText(json.encodeToString(checkpoint.toSerializable()))
-            if (file.exists()) file.delete()
-            tmp.renameTo(file)
+            try {
+                java.nio.file.Files.move(
+                    tmp.toPath(),
+                    file.toPath(),
+                    java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+                )
+            } catch (_: java.nio.file.AtomicMoveNotSupportedException) {
+                // Filesystem rejects atomic move (rare — exotic FUSE mounts).
+                // Fall back to the old behaviour for those edge cases.
+                if (file.exists()) file.delete()
+                tmp.renameTo(file)
+            }
         } catch (e: Exception) {
             Log.w(TAG, "Failed to save BF checkpoint", e)
         }

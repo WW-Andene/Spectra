@@ -45,19 +45,50 @@ class MacroRepository(private val context: Context) {
 
     /**
      * Replace the on-disk macro list with this one.
-     * Atomic via temp-file-then-rename so a crash mid-write doesn't corrupt.
+     *
+     * Truly atomic via java.nio.file.Files.move with ATOMIC_MOVE +
+     * REPLACE_EXISTING. The previous delete-then-rename pattern had a
+     * window between `file.delete()` and `tmp.renameTo(file)` where a
+     * process kill would leave only the tmp file on disk and the
+     * canonical macros.json missing — defeating the whole point of the
+     * temp-file dance. ATOMIC_MOVE guarantees the rename either replaces
+     * the destination or fails outright, so on-disk state is always
+     * either the previous-good or the new file, never empty.
+     *
+     * Falls back to a best-effort delete+rename if the platform refuses
+     * an ATOMIC_MOVE (some FUSE / SAF mounts on edge-case Androids); the
+     * fallback is the old (slightly-leaky) behaviour, but the production
+     * /data/data/<pkg>/files path is a vanilla ext4/f2fs mount where
+     * ATOMIC_MOVE is supported.
      */
     suspend fun saveAll(macros: List<Macro>): Boolean = withContext(Dispatchers.IO) {
         try {
             val data = MacroFile(macros = macros.map { it.toSerializable() })
             val tmp = File(file.parentFile, "$FILE_NAME.tmp")
             tmp.writeText(json.encodeToString(data))
-            if (file.exists()) file.delete()
-            tmp.renameTo(file)
+            atomicReplace(tmp, file)
             true
         } catch (e: Exception) {
             Log.e(TAG, "Failed to save macros", e)
             false
+        }
+    }
+
+    private fun atomicReplace(src: File, dst: File) {
+        try {
+            java.nio.file.Files.move(
+                src.toPath(),
+                dst.toPath(),
+                java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+            )
+        } catch (e: java.nio.file.AtomicMoveNotSupportedException) {
+            // Last-resort path for filesystems that reject ATOMIC_MOVE.
+            // Same window as the original code but only on exotic mounts.
+            if (dst.exists()) dst.delete()
+            if (!src.renameTo(dst)) {
+                throw java.io.IOException("Could not rename ${src.name} -> ${dst.name}", e)
+            }
         }
     }
 
