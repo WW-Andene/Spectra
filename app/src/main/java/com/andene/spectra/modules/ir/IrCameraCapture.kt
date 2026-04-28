@@ -54,6 +54,12 @@ class IrCameraCapture(private val context: Context) {
          *  per-frame work bounded. */
         private const val COLUMN_PROBE_STEP = 8
 
+        /** Cap on retained frames during a single capture press. At 30fps × 720
+         *  rows × 4 bytes each, 256 frames ≈ 22 MB — well clear of OOM but
+         *  long enough (~8.5s) for any realistic IR press. Anything beyond
+         *  this is almost certainly a stuck capture. */
+        private const val MAX_CAPTURE_FRAMES = 256
+
         /**
          * Reconstruct an alternating ON/OFF microsecond timing list from a
          * sequence of (frame-start, per-row-intensity) samples.
@@ -212,6 +218,11 @@ class IrCameraCapture(private val context: Context) {
         }
 
         synchronized(frames) {
+            // Hard cap. A stuck capture can't grow without bound — at the
+            // limit we stop appending and let processTimeline run on what
+            // we have. The user still sees CAPTURING state; pressing stop
+            // produces a result from the captured prefix.
+            if (frames.size >= MAX_CAPTURE_FRAMES) return
             frames.add(frameStartNs to perRow)
         }
     }
