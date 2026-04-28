@@ -8,6 +8,8 @@ import com.andene.spectra.data.models.IrCommand
 import com.andene.spectra.data.models.IrProfile
 import com.andene.spectra.data.models.IrProtocol
 import com.andene.spectra.modules.bruteforce.IrBruteForce
+import com.andene.spectra.modules.bruteforce.IrBruteForce.Companion.brandTokens
+import com.andene.spectra.modules.bruteforce.IrBruteForce.Companion.matchesBrand
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
@@ -71,14 +73,15 @@ class IrCodeDatabase(private val context: Context) {
     }
 
     /**
-     * Filter entries by brand (case-insensitive substring match) and optional category.
-     * Pass null to skip a filter.
+     * Filter entries by brand (word-token intersection) and optional category.
+     * Pass null to skip a filter. Uses the same matcher as IrBruteForce so a
+     * detected brand routes consistently across the DB-install path and the
+     * brute-force fallback.
      */
     fun lookup(brand: String?, category: DeviceCategory? = null): List<RemoteEntry> {
-        val brandKey = brand?.trim()?.lowercase()?.takeIf { it.isNotEmpty() }
+        val tokens = brand.brandTokens()
         return all().filter { entry ->
-            (brandKey == null || entry.brand.lowercase().contains(brandKey) ||
-                brandKey.contains(entry.brand.lowercase())) &&
+            (tokens.isEmpty() || matchesBrand(entry.brand, tokens)) &&
                 (category == null || category == DeviceCategory.UNKNOWN || entry.deviceType == category)
         }
     }

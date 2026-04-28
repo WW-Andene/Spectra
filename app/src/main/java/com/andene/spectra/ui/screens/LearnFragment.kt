@@ -19,6 +19,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import com.andene.spectra.R
+import com.andene.spectra.modules.bruteforce.IrBruteForce.Companion.brandTokens
+import com.andene.spectra.modules.bruteforce.IrBruteForce.Companion.matchesBrand
 import com.andene.spectra.modules.ir.IrCameraCapture
 import com.andene.spectra.ui.MainViewModel
 import com.google.android.material.textfield.TextInputEditText
@@ -160,10 +162,12 @@ class LearnFragment : Fragment() {
 
     private fun showBrandPicker() {
         val db = vm.codeDatabase
-        val detected = vm.activeDevice.value?.manufacturer?.lowercase()
+        val detectedTokens = vm.activeDevice.value?.manufacturer.brandTokens()
         val brands = db.brands().sortedByDescending { brand ->
-            // Brands matching the detected manufacturer float to the top.
-            detected != null && (brand.lowercase().contains(detected) || detected.contains(brand.lowercase()))
+            // Brands sharing a word with the detected manufacturer float
+            // to the top — same matcher the brute-force preorder uses, so
+            // the two paths agree.
+            matchesBrand(brand, detectedTokens)
         }
         if (brands.isEmpty()) {
             AlertDialog.Builder(requireContext())
