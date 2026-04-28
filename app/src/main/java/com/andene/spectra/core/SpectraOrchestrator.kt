@@ -205,39 +205,25 @@ class SpectraOrchestrator(private val context: Context) {
 
     /**
      * Compare candidate against known device signatures.
-     * Uses weighted combination of all three fingerprint channels.
+     *
+     * RF is the only reliable cross-session anchor: a BSSID or BLE address
+     * match identifies a specific physical radio. Acoustic and EM fingerprints
+     * shift too much with device state, distance, and ambient noise to be
+     * trusted as primary identifiers — they're captured for display but not
+     * weighted into the match decision here.
      */
     private fun matchKnownDevice(candidate: DeviceProfile): DeviceProfile? {
+        val candidateRf = candidate.rfSignature ?: return null
+
         var bestMatch: DeviceProfile? = null
         var bestScore = 0f
 
         val snapshot = synchronized(knownSignatures) { knownSignatures.toList() }
         for (known in snapshot) {
-            var score = 0f
-            var weights = 0f
-
-            // EM similarity (strongest signal for identification)
-            if (candidate.emSignature != null && known.emSignature != null) {
-                score += em.compareTo(candidate.emSignature, known.emSignature) * 3f
-                weights += 3f
-            }
-
-            // Acoustic similarity
-            if (candidate.acousticSignature != null && known.acousticSignature != null) {
-                score += compareAcoustic(candidate.acousticSignature, known.acousticSignature) * 2f
-                weights += 2f
-            }
-
-            // RF match (exact MAC/name match is very strong)
-            if (candidate.rfSignature != null && known.rfSignature != null) {
-                score += compareRf(candidate.rfSignature, known.rfSignature) * 4f
-                weights += 4f
-            }
-
-            val normalized = if (weights > 0) score / weights else 0f
-
-            if (normalized > bestScore) {
-                bestScore = normalized
+            val knownRf = known.rfSignature ?: continue
+            val score = compareRf(candidateRf, knownRf)
+            if (score > bestScore) {
+                bestScore = score
                 bestMatch = known
             }
         }
@@ -245,25 +231,6 @@ class SpectraOrchestrator(private val context: Context) {
         return if (bestScore >= SIMILARITY_THRESHOLD) {
             bestMatch?.copy(confidence = bestScore)
         } else null
-    }
-
-    private fun compareAcoustic(a: AcousticSignature, b: AcousticSignature): Float {
-        // Compare dominant frequencies — how many peaks match within tolerance
-        if (a.dominantFrequencies.isEmpty() || b.dominantFrequencies.isEmpty()) return 0f
-
-        val toleranceHz = 20f
-        var matches = 0
-
-        for (peakA in a.dominantFrequencies.take(10)) {
-            for (peakB in b.dominantFrequencies.take(10)) {
-                if (kotlin.math.abs(peakA.frequencyHz - peakB.frequencyHz) < toleranceHz) {
-                    matches++
-                    break
-                }
-            }
-        }
-
-        return matches.toFloat() / minOf(a.dominantFrequencies.size, b.dominantFrequencies.size, 10)
     }
 
     private fun compareRf(a: RfSignature, b: RfSignature): Float {
