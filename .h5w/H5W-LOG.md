@@ -51,4 +51,20 @@ Context health: ok
 Decision: continuing — remaining queue is mostly medium/low T1 fixes plus a couple of T2 dead-state cleanups
 ────────────────────────────
 
+- [ts] F-005 FIXED T1 [ui/screens/LearnFragment.kt + res/values/strings.xml] — modern camera permission contract + result handling — Verified: yes
+- [ts] F-003 FIXED T1 [ui/MainViewModel.kt] — runMacro re-entry guard — Verified: yes
+- [ts] F-027 FIXED T1 [ui/MainViewModel.kt] — startBruteForce re-entry guard via bruteForceJob — Verified: yes
+- [ts] F-023 FIXED T1 [app/build.gradle.kts] — removed DataStore dep — Verified: yes (no imports)
+- [ts] F-013 FIXED T1 [modules/ir/IrCameraCapture.kt] — ensureExecutor revives shut-down executor on next bind — Verified: yes
+- [ts] F-020 FIXED T1 [ui/screens/RemoteFragment.kt] — performClick on ACTION_UP — Verified: yes
+- [ts] F-011 FIXED T1 [ui/screens/ResultsFragment.kt] — combine(activeDevice, phase) in ResultsFragment — Verified: yes
+- [ts] F-025 FIXED T1 [modules/rf/RfFingerprint.kt] — LocationManagerCompat.isLocationEnabled hint — Verified: yes
+
+──── AUTO CHECKPOINT 3 (TERMINATION) ────
+Cycle: 3 | Total fixed: 22 | Queue remaining: 3 deferred (F-019/T2, F-022/T2, F-026/T0) + 1 T3 (F-004)
+Context health: ok
+Decision: terminating — queue is empty of actionable T0/T1/T2; T3 has defer recommendation; remaining are non-actionable enhancements
+H5W-REPORT.md written.
+──────────────────────────────────────────
+
 ### Handoff Log
