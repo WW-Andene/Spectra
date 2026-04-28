@@ -3,6 +3,7 @@ package com.andene.spectra
 import android.app.Application
 import com.andene.spectra.core.SpectraOrchestrator
 import com.andene.spectra.data.codedb.IrCodeDatabase
+import com.andene.spectra.data.repository.BackupRepository
 import com.andene.spectra.data.repository.BruteForceCheckpointRepository
 import com.andene.spectra.data.repository.DeviceRepository
 import com.andene.spectra.data.repository.MacroRepository
@@ -29,6 +30,9 @@ class SpectraApp : Application() {
     lateinit var bfCheckpointRepository: BruteForceCheckpointRepository
         private set
 
+    lateinit var backupRepository: BackupRepository
+        private set
+
     // App-scoped coroutine scope for one-shot startup work that should
     // outlive any single Activity/ViewModel.
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -39,6 +43,7 @@ class SpectraApp : Application() {
         codeDatabase = IrCodeDatabase(this)
         macroRepository = MacroRepository(this)
         bfCheckpointRepository = BruteForceCheckpointRepository(this)
+        backupRepository = BackupRepository(repository, macroRepository)
         orchestrator = SpectraOrchestrator(this)
 
         // Seed the matcher and IR registry with previously saved devices so

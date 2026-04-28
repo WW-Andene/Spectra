@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.andene.spectra.SpectraApp
 import com.andene.spectra.core.SpectraOrchestrator
 import com.andene.spectra.data.models.*
+import com.andene.spectra.data.repository.BackupRepository
 import com.andene.spectra.data.repository.DeviceRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.BufferOverflow
@@ -33,6 +34,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val codeDatabase = app.codeDatabase
     private val macroRepository = app.macroRepository
     private val bfCheckpointRepository = app.bfCheckpointRepository
+    private val backupRepository = app.backupRepository
 
     /** Checkpoint of an in-flight brute-force the user was running before
      *  process death / app close. If non-null on launch, the UI offers
@@ -666,6 +668,46 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 loadSavedDevices()
             }
             onResult(imported)
+        }
+    }
+
+    // ── Library backup / restore ────────────────────────────────
+
+    /**
+     * Build a JSON string holding every saved device + macro. Suspends
+     * because both repositories load from disk; the caller (typically
+     * a SAF createDocument result handler) is on a coroutine scope.
+     * Returns null if the export fails.
+     */
+    fun exportLibrary(onResult: (String?) -> Unit) {
+        viewModelScope.launch {
+            val text = try { backupRepository.exportLibrary() } catch (e: Exception) {
+                emitToast("Couldn't build backup")
+                null
+            }
+            onResult(text)
+        }
+    }
+
+    /**
+     * Parse and merge a backup envelope into the existing library.
+     * Imported devices get fresh ids; macros are merged by id (same id
+     * replaces in place, new id appends). Reloads the active device
+     * + matcher state on success so the home screen reflects the new
+     * library without a manual refresh.
+     */
+    fun importLibrary(jsonText: String, onResult: (BackupRepository.ImportResult?) -> Unit) {
+        viewModelScope.launch {
+            val result = backupRepository.importLibrary(jsonText)
+            if (result != null && (result.devicesImported > 0 || result.macrosImported > 0)) {
+                // Re-seed orchestrator's matcher with whatever's now on disk so
+                // the next scan can re-identify imported devices.
+                val all = repository.loadAll()
+                orchestrator.loadKnownDevices(all)
+                loadSavedDevices()
+                loadMacros()
+            }
+            onResult(result)
         }
     }
 
