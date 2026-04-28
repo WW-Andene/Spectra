@@ -1,6 +1,9 @@
 package com.andene.spectra.ui.screens
 
+import android.Manifest
 import android.app.AlertDialog
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -8,6 +11,8 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -22,6 +27,20 @@ import kotlinx.coroutines.launch
 class HomeFragment : Fragment() {
 
     private val vm: MainViewModel by activityViewModels()
+
+    private val scanPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { results ->
+        if (results.values.all { it }) {
+            vm.startPassiveScan()
+        } else {
+            android.widget.Toast.makeText(
+                requireContext(),
+                getString(R.string.scan_permissions_required),
+                android.widget.Toast.LENGTH_LONG,
+            ).show()
+        }
+    }
 
     override fun onCreateView(inflater: LayoutInflater, c: ViewGroup?, s: Bundle?): View =
         inflater.inflate(R.layout.fragment_home, c, false)
@@ -65,7 +84,9 @@ class HomeFragment : Fragment() {
         }
 
         btnScan.setOnClickListener {
-            vm.startPassiveScan()
+            val missing = scanPermissionsToRequest()
+            if (missing.isEmpty()) vm.startPassiveScan()
+            else scanPermissionLauncher.launch(missing.toTypedArray())
         }
 
         view.findViewById<Button>(R.id.btnImportClipboard).setOnClickListener {
@@ -91,6 +112,28 @@ class HomeFragment : Fragment() {
                     macroRunning.visibility = View.GONE
                 }
             }
+        }
+    }
+
+    /**
+     * The runtime permissions a passive scan needs that aren't yet granted.
+     * Mirrors what the orchestrator's @RequiresPermission annotations declare:
+     * audio for acoustic + EM, fine location + BLE for RF.
+     */
+    private fun scanPermissionsToRequest(): List<String> {
+        val needed = mutableListOf(
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            needed.add(Manifest.permission.BLUETOOTH_SCAN)
+            needed.add(Manifest.permission.BLUETOOTH_CONNECT)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            needed.add(Manifest.permission.NEARBY_WIFI_DEVICES)
+        }
+        return needed.filter {
+            ContextCompat.checkSelfPermission(requireContext(), it) != PackageManager.PERMISSION_GRANTED
         }
     }
 

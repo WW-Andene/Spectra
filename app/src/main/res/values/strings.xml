@@ -17,6 +17,7 @@
     <string name="empty_macros">No macros yet.</string>
     <string name="clipboard_not_json">Clipboard doesn\'t look like a Spectra profile (expected JSON).</string>
     <string name="clipboard_parse_failed">Could not parse clipboard contents</string>
+    <string name="scan_permissions_required">Scanning needs mic, location, and Bluetooth. Grant them in Settings to continue.</string>
 
     <!-- Scanning -->
     <string name="scan_title">Scanning…</string>

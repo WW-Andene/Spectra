@@ -24,6 +24,17 @@
 
 ### Phase 2: Analyze (pending)
 
-### Phase 4: Execute (pending)
+### Phase 4: Execute
+
+- [ts] F-024 FIXED T1 [modules/ir/IrCameraCapture.kt:38-42, 134-141] — capped frames at 256 — Verified: yes
+- [ts] F-021 FIXED T1 [modules/ir/IrCameraCapture.kt:80-89, 137] — state check inside frames lock — Verified: yes
+- [ts] F-006/F-015/F-016 FIXED T1 [ui/MainViewModel.kt + ui/screens/RemoteFragment.kt + res/layout/fragment_remote.xml + res/values/strings.xml] — exposed lastTransmitResult, button-tint flash, no-blaster notice — Verified: yes
+- [ts] F-002 FIXED T1 [ui/MainViewModel.kt + ui/screens/ScanningFragment.kt] — scanJob handle + cancelPassiveScan + skip RESULTS on cancellation — Verified: yes
+
+──── AUTO CHECKPOINT 1 ────
+Cycle: 1 | Files changed: 7 | Findings fixed: 6 (F-002, F-006, F-015, F-016, F-021, F-024) | Queue remaining: 19
+Context health: ok
+Decision: continuing to cycle 2 (F-001 next, then medium-tier batch)
+────────────────────────────
 
 ### Handoff Log
