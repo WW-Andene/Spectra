@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -24,7 +25,7 @@
                 android:id="@+id/deviceName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Device"
+                tools:text="Device"
                 android:textColor="@color/text_primary"
                 android:textSize="22sp"
                 android:textStyle="bold" />
@@ -33,7 +34,7 @@
                 android:id="@+id/deviceInfo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Protocol: NEC"
+                tools:text="Protocol: NEC"
                 android:textColor="@color/text_tertiary"
                 android:textSize="12sp" />
         </LinearLayout>
@@ -42,7 +43,7 @@
             android:id="@+id/btnShareDevice"
             android:layout_width="wrap_content"
             android:layout_height="36dp"
-            android:text="SHARE"
+            android:text="@string/action_share"
             android:textSize="12sp"
             android:backgroundTint="@color/bg_card_elevated"
             android:textColor="@color/text_secondary"
@@ -52,7 +53,7 @@
             android:id="@+id/btnLearnMore"
             android:layout_width="wrap_content"
             android:layout_height="36dp"
-            android:text="+ LEARN"
+            android:text="@string/action_learn_more"
             android:textSize="12sp"
             android:backgroundTint="@color/bg_card_elevated"
             android:textColor="@color/accent_secondary" />
@@ -71,7 +72,7 @@
             style="@style/RemoteButton.Power"
             android:layout_width="80dp"
             android:layout_height="56dp"
-            android:text="POWER"
+            android:text="@string/btn_power"
             android:layout_marginEnd="16dp" />
 
         <Button
@@ -79,7 +80,7 @@
             style="@style/RemoteButton"
             android:layout_width="80dp"
             android:layout_height="56dp"
-            android:text="INPUT" />
+            android:text="@string/btn_input" />
 
         <View
             android:layout_width="0dp"
@@ -91,7 +92,7 @@
             style="@style/RemoteButton"
             android:layout_width="80dp"
             android:layout_height="56dp"
-            android:text="MUTE" />
+            android:text="@string/btn_mute" />
     </LinearLayout>
 
     <!-- Volume + Channel columns with D-Pad center -->
@@ -114,7 +115,7 @@
                 style="@style/RemoteButton"
                 android:layout_width="64dp"
                 android:layout_height="64dp"
-                android:text="VOL\n+"
+                android:text="@string/btn_vol_up"
                 android:layout_marginBottom="4dp" />
 
             <Button
@@ -122,7 +123,7 @@
                 style="@style/RemoteButton"
                 android:layout_width="64dp"
                 android:layout_height="64dp"
-                android:text="VOL\n−" />
+                android:text="@string/btn_vol_down" />
         </LinearLayout>
 
         <!-- D-Pad -->
@@ -159,7 +160,7 @@
                     android:id="@+id/btnOk"
                     android:layout_width="56dp"
                     android:layout_height="56dp"
-                    android:text="OK"
+                    android:text="@string/btn_ok"
                     android:textStyle="bold"
                     android:textSize="14sp"
                     android:backgroundTint="@color/accent_primary"
@@ -195,7 +196,7 @@
                 style="@style/RemoteButton"
                 android:layout_width="64dp"
                 android:layout_height="64dp"
-                android:text="CH\n+"
+                android:text="@string/btn_ch_up"
                 android:layout_marginBottom="4dp" />
 
             <Button
@@ -203,7 +204,7 @@
                 style="@style/RemoteButton"
                 android:layout_width="64dp"
                 android:layout_height="64dp"
-                android:text="CH\n−" />
+                android:text="@string/btn_ch_down" />
         </LinearLayout>
     </LinearLayout>
 
@@ -221,7 +222,7 @@
             android:layout_width="0dp"
             android:layout_height="48dp"
             android:layout_weight="1"
-            android:text="BACK"
+            android:text="@string/btn_back"
             android:layout_marginEnd="4dp" />
 
         <Button
@@ -230,7 +231,7 @@
             android:layout_width="0dp"
             android:layout_height="48dp"
             android:layout_weight="1"
-            android:text="HOME"
+            android:text="@string/btn_home"
             android:layout_marginStart="4dp"
             android:layout_marginEnd="4dp" />
 
@@ -240,7 +241,7 @@
             android:layout_width="0dp"
             android:layout_height="48dp"
             android:layout_weight="1"
-            android:text="MENU"
+            android:text="@string/btn_menu"
             android:layout_marginStart="4dp" />
     </LinearLayout>
 
@@ -317,7 +318,7 @@
         android:id="@+id/btnBackToHome"
         android:layout_width="match_parent"
         android:layout_height="44dp"
-        android:text="DEVICES"
+        android:text="@string/action_devices"
         android:backgroundTint="@color/bg_card_elevated"
         android:textColor="@color/text_secondary"
         android:layout_marginTop="8dp" />

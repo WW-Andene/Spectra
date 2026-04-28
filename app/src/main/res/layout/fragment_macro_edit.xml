@@ -10,7 +10,7 @@
         android:id="@+id/macroEditTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="New Macro"
+        android:text="@string/macro_new_title"
         android:textColor="@color/text_primary"
         android:textSize="24sp"
         android:textStyle="bold"
@@ -25,7 +25,7 @@
             android:id="@+id/inputMacroName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Macro name (e.g. Movie Night)"
+            android:hint="@string/hint_macro_name"
             android:textColor="@color/text_primary"
             android:textColorHint="@color/text_tertiary" />
     </com.google.android.material.textfield.TextInputLayout>
@@ -33,7 +33,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Steps"
+        android:text="@string/label_steps"
         android:textColor="@color/text_secondary"
         android:textSize="13sp"
         android:textAllCaps="true"
@@ -58,7 +58,7 @@
         android:id="@+id/btnAddStep"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:text="+ ADD STEP"
+        android:text="@string/action_add_step"
         android:backgroundTint="@color/accent_secondary"
         android:textColor="@color/bg_primary"
         android:layout_marginTop="8dp" />
@@ -74,7 +74,7 @@
             android:layout_width="0dp"
             android:layout_height="48dp"
             android:layout_weight="1"
-            android:text="CANCEL"
+            android:text="@string/action_cancel"
             android:backgroundTint="@color/bg_card_elevated"
             android:textColor="@color/text_secondary"
             android:layout_marginEnd="4dp" />
@@ -84,7 +84,7 @@
             android:layout_width="0dp"
             android:layout_height="48dp"
             android:layout_weight="1"
-            android:text="SAVE"
+            android:text="@string/action_save"
             android:backgroundTint="@color/accent_primary"
             android:layout_marginStart="4dp" />
     </LinearLayout>

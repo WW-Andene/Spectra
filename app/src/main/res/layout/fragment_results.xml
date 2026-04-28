@@ -9,7 +9,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Scan Complete"
+        android:text="@string/results_title"
         android:textColor="@color/accent_success"
         android:textSize="24sp"
         android:textStyle="bold"
@@ -28,7 +28,7 @@
             android:id="@+id/deviceStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="New device detected"
+            android:text="@string/results_new_device"
             android:textColor="@color/text_primary"
             android:textSize="16sp"
             android:layout_marginBottom="12dp" />
@@ -67,7 +67,7 @@
             android:id="@+id/inputDeviceName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Name this device"
+            android:hint="@string/hint_device_name"
             android:textColor="@color/text_primary"
             android:textColorHint="@color/text_tertiary" />
     </com.google.android.material.textfield.TextInputLayout>
@@ -77,7 +77,7 @@
         android:id="@+id/btnLearnCamera"
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:text="LEARN FROM REMOTE (Camera)"
+        android:text="@string/action_learn_camera"
         android:textSize="14sp"
         android:backgroundTint="@color/module_ir"
         android:layout_marginBottom="8dp" />
@@ -86,7 +86,7 @@
         android:id="@+id/btnBruteForce"
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:text="DISCOVER PROTOCOL (No Remote)"
+        android:text="@string/action_brute_force"
         android:textSize="14sp"
         android:backgroundTint="@color/accent_warning"
         android:layout_marginBottom="8dp" />
@@ -95,7 +95,7 @@
         android:id="@+id/btnSaveDevice"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:text="SAVE DEVICE"
+        android:text="@string/action_save_device"
         android:textSize="14sp"
         android:backgroundTint="@color/accent_primary"
         android:layout_marginBottom="8dp" />
@@ -109,7 +109,7 @@
         android:id="@+id/btnBack"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:text="BACK"
+        android:text="@string/action_back"
         android:backgroundTint="@color/bg_card_elevated"
         android:textColor="@color/text_secondary" />
 

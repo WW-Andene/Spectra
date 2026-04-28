@@ -10,7 +10,7 @@
         android:id="@+id/learnTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Learn Commands"
+        android:text="@string/learn_title"
         android:textColor="@color/text_primary"
         android:textSize="24sp"
         android:textStyle="bold"
@@ -29,7 +29,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Pick from Database"
+            android:text="@string/db_title"
             android:textColor="@color/accent_secondary"
             android:textSize="16sp"
             android:textStyle="bold"
@@ -38,7 +38,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Install a complete remote in one tap. Brands matching the detected device are listed first."
+            android:text="@string/db_help"
             android:textColor="@color/text_secondary"
             android:textSize="13sp"
             android:layout_marginBottom="12dp" />
@@ -47,7 +47,7 @@
             android:id="@+id/btnPickFromDb"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:text="BROWSE BUNDLED REMOTES"
+            android:text="@string/action_browse_remotes"
             android:backgroundTint="@color/accent_secondary"
             android:textColor="@color/bg_primary" />
     </LinearLayout>
@@ -65,7 +65,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Camera Capture"
+            android:text="@string/learn_camera_title"
             android:textColor="@color/module_ir"
             android:textSize="16sp"
             android:textStyle="bold"
@@ -74,7 +74,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Point remote at front camera, then press and hold a button."
+            android:text="@string/learn_camera_help"
             android:textColor="@color/text_secondary"
             android:textSize="13sp"
             android:layout_marginBottom="12dp" />
@@ -97,7 +97,7 @@
                 android:id="@+id/inputCommandName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Button name (e.g. power, vol_up)"
+                android:hint="@string/hint_button_name"
                 android:textColor="@color/text_primary"
                 android:textColorHint="@color/text_tertiary"
                 android:textSize="14sp" />
@@ -113,7 +113,7 @@
                 android:layout_width="0dp"
                 android:layout_height="48dp"
                 android:layout_weight="1"
-                android:text="START"
+                android:text="@string/action_start"
                 android:backgroundTint="@color/accent_success"
                 android:layout_marginEnd="4dp" />
 
@@ -122,7 +122,7 @@
                 android:layout_width="0dp"
                 android:layout_height="48dp"
                 android:layout_weight="1"
-                android:text="STOP"
+                android:text="@string/action_stop"
                 android:backgroundTint="@color/accent_error"
                 android:enabled="false"
                 android:layout_marginStart="4dp" />
@@ -151,7 +151,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Brute Force Discovery"
+            android:text="@string/brute_force_title"
             android:textColor="@color/accent_warning"
             android:textSize="16sp"
             android:textStyle="bold"
@@ -161,7 +161,7 @@
             android:id="@+id/bruteForceStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Sweeps through all known IR protocols until device responds."
+            android:text="@string/brute_force_help"
             android:textColor="@color/text_secondary"
             android:textSize="13sp"
             android:layout_marginBottom="12dp" />
@@ -179,7 +179,7 @@
                 android:id="@+id/promptText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Did the device react?"
+                android:text="@string/brute_force_prompt"
                 android:textColor="@color/text_primary"
                 android:textSize="16sp"
                 android:layout_marginBottom="8dp" />
@@ -194,7 +194,7 @@
                     android:layout_width="0dp"
                     android:layout_height="48dp"
                     android:layout_weight="1"
-                    android:text="YES!"
+                    android:text="@string/action_yes"
                     android:backgroundTint="@color/accent_success"
                     android:layout_marginEnd="4dp" />
 
@@ -203,7 +203,7 @@
                     android:layout_width="0dp"
                     android:layout_height="48dp"
                     android:layout_weight="1"
-                    android:text="NO"
+                    android:text="@string/action_no"
                     android:backgroundTint="@color/bg_card_elevated"
                     android:textColor="@color/text_secondary"
                     android:layout_marginStart="4dp" />
@@ -220,7 +220,7 @@
                 android:layout_width="0dp"
                 android:layout_height="48dp"
                 android:layout_weight="1"
-                android:text="START SWEEP"
+                android:text="@string/action_start_sweep"
                 android:backgroundTint="@color/accent_warning"
                 android:layout_marginEnd="4dp" />
 
@@ -229,7 +229,7 @@
                 android:layout_width="0dp"
                 android:layout_height="48dp"
                 android:layout_weight="1"
-                android:text="STOP"
+                android:text="@string/action_stop"
                 android:backgroundTint="@color/accent_error"
                 android:enabled="false"
                 android:layout_marginStart="4dp" />
@@ -241,7 +241,7 @@
         android:id="@+id/learnedLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Learned Commands"
+        android:text="@string/label_learned_commands"
         android:textColor="@color/text_secondary"
         android:textSize="13sp"
         android:textAllCaps="true"
@@ -263,7 +263,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Tap a command to test, long-press to rename or delete."
+        android:text="@string/learned_help"
         android:textColor="@color/text_tertiary"
         android:textSize="11sp"
         android:layout_marginTop="4dp"
@@ -281,7 +281,7 @@
             android:layout_width="0dp"
             android:layout_height="48dp"
             android:layout_weight="1"
-            android:text="BACK"
+            android:text="@string/action_back"
             android:backgroundTint="@color/bg_card_elevated"
             android:textColor="@color/text_secondary"
             android:layout_marginEnd="4dp" />
@@ -291,7 +291,7 @@
             android:layout_width="0dp"
             android:layout_height="48dp"
             android:layout_weight="1"
-            android:text="OPEN REMOTE"
+            android:text="@string/action_open_remote"
             android:backgroundTint="@color/accent_primary"
             android:layout_marginStart="4dp" />
     </LinearLayout>

@@ -10,7 +10,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Scanning..."
+        android:text="@string/scan_title"
         android:textColor="@color/accent_secondary"
         android:textSize="24sp"
         android:textStyle="bold"
@@ -19,7 +19,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hold phone 5–30 cm from device"
+        android:text="@string/scan_hint"
         android:textColor="@color/text_secondary"
         android:textSize="14sp"
         android:layout_marginBottom="24dp" />
@@ -42,14 +42,14 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Acoustic"
+                android:text="@string/scan_module_acoustic"
                 android:textColor="@color/module_acoustic"
                 android:textSize="13sp" />
             <TextView
                 android:id="@+id/statusAcoustic"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="listening..."
+                android:text="@string/scan_listening"
                 android:textColor="@color/text_tertiary"
                 android:textSize="13sp" />
         </LinearLayout>
@@ -63,14 +63,14 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="RF Scan"
+                android:text="@string/scan_module_rf"
                 android:textColor="@color/module_rf"
                 android:textSize="13sp" />
             <TextView
                 android:id="@+id/statusRf"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="scanning..."
+                android:text="@string/scan_scanning"
                 android:textColor="@color/text_tertiary"
                 android:textSize="13sp" />
         </LinearLayout>
@@ -83,14 +83,14 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="EM Field"
+                android:text="@string/scan_module_em"
                 android:textColor="@color/module_em"
                 android:textSize="13sp" />
             <TextView
                 android:id="@+id/statusEm"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="reading..."
+                android:text="@string/scan_reading"
                 android:textColor="@color/text_tertiary"
                 android:textSize="13sp" />
         </LinearLayout>
@@ -117,7 +117,7 @@
         android:id="@+id/btnCancel"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:text="CANCEL"
+        android:text="@string/action_cancel"
         android:backgroundTint="@color/bg_card_elevated"
         android:textColor="@color/text_secondary"
         android:layout_marginTop="12dp" />

@@ -43,7 +43,7 @@ class MacroEditFragment : Fragment() {
         // Seed from the macro being edited (null => creating)
         val existing = vm.editingMacro.value
         if (existing != null) {
-            title.text = "Edit Macro"
+            title.text = getString(R.string.macro_edit_title)
             nameInput.setText(existing.name)
             workingSteps.clear()
             workingSteps.addAll(existing.steps)
@@ -84,7 +84,7 @@ class MacroEditFragment : Fragment() {
         container.removeAllViews()
         if (workingSteps.isEmpty()) {
             val empty = TextView(requireContext()).apply {
-                text = "No steps yet. Tap Add Step."
+                text = getString(R.string.empty_steps)
                 setTextColor(resources.getColor(R.color.text_tertiary, null))
                 setPadding(16, 16, 16, 16)
             }
@@ -130,15 +130,15 @@ class MacroEditFragment : Fragment() {
         val devices = vm.savedDevices.value.filter { !it.irProfile?.commands.isNullOrEmpty() }
         if (devices.isEmpty()) {
             AlertDialog.Builder(requireContext())
-                .setTitle("No devices with commands")
-                .setMessage("Add or learn at least one IR device before building a macro.")
-                .setPositiveButton("OK", null)
+                .setTitle(R.string.macro_no_devices_title)
+                .setMessage(R.string.macro_no_devices_message)
+                .setPositiveButton(android.R.string.ok, null)
                 .show()
             return
         }
         val deviceLabels = devices.map { it.name ?: "Unnamed" }.toTypedArray()
         AlertDialog.Builder(requireContext())
-            .setTitle("Pick device")
+            .setTitle(R.string.macro_pick_device)
             .setItems(deviceLabels) { _, which ->
                 pickCommand(devices[which], container)
             }
@@ -149,7 +149,7 @@ class MacroEditFragment : Fragment() {
         val commands = device.irProfile?.commands?.keys?.toList()?.sorted().orEmpty()
         if (commands.isEmpty()) return
         AlertDialog.Builder(requireContext())
-            .setTitle("Pick command")
+            .setTitle(R.string.macro_pick_command)
             .setItems(commands.toTypedArray()) { _, which ->
                 pickDelay(device, commands[which], container)
             }
@@ -163,10 +163,10 @@ class MacroEditFragment : Fragment() {
             setText("0")
         }
         AlertDialog.Builder(requireContext())
-            .setTitle("Delay before this step (ms)")
-            .setMessage("Useful for waiting after a power-on. 0 = immediate.")
+            .setTitle(R.string.macro_delay_title)
+            .setMessage(R.string.macro_delay_message)
             .setView(input)
-            .setPositiveButton("Add") { _, _ ->
+            .setPositiveButton(R.string.action_add) { _, _ ->
                 val delay = input.text.toString().toIntOrNull()?.coerceIn(0, 30_000) ?: 0
                 workingSteps.add(
                     MacroStep(
@@ -178,7 +178,7 @@ class MacroEditFragment : Fragment() {
                 )
                 renderSteps(container)
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(R.string.action_cancel_dialog, null)
             .show()
     }
 }

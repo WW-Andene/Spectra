@@ -106,7 +106,7 @@ class HomeFragment : Fragment() {
         if (text.isNullOrEmpty() || !text.startsWith("{")) {
             android.widget.Toast.makeText(
                 requireContext(),
-                "Clipboard doesn't look like a Spectra profile (expected JSON).",
+                getString(R.string.clipboard_not_json),
                 android.widget.Toast.LENGTH_LONG,
             ).show()
             return
@@ -114,7 +114,7 @@ class HomeFragment : Fragment() {
         vm.importDeviceFromJson(text) { imported ->
             val msg = if (imported != null) {
                 "Imported ${imported.name ?: "device"} with ${imported.irProfile?.commands?.size ?: 0} commands"
-            } else "Could not parse clipboard contents"
+            } else getString(R.string.clipboard_parse_failed)
             android.widget.Toast.makeText(requireContext(), msg, android.widget.Toast.LENGTH_LONG).show()
         }
     }
@@ -123,7 +123,7 @@ class HomeFragment : Fragment() {
         container.removeAllViews()
         if (macros.isEmpty()) {
             val empty = TextView(requireContext()).apply {
-                text = "No macros yet."
+                text = getString(R.string.empty_macros)
                 setTextColor(resources.getColor(R.color.text_tertiary, null))
                 textSize = 12f
                 setPadding(0, 0, 0, 0)

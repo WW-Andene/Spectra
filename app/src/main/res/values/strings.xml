@@ -1,4 +1,101 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Spectra</string>
+
+    <!-- Home -->
+    <string name="home_subtitle">Universal device control</string>
+    <string name="status_ir">IR ●</string>
+    <string name="status_mic">MIC ●</string>
+    <string name="status_rf">RF ●</string>
+    <string name="status_em">EM ●</string>
+    <string name="action_scan">SCAN NEARBY DEVICE</string>
+    <string name="action_import_clipboard">IMPORT DEVICE FROM CLIPBOARD</string>
+    <string name="label_macros">Macros</string>
+    <string name="label_saved_devices">Saved Devices</string>
+    <string name="action_new_macro">+ NEW</string>
+    <string name="empty_devices">No devices learned yet.\nHold your phone near a device and tap Scan.</string>
+    <string name="empty_macros">No macros yet.</string>
+    <string name="clipboard_not_json">Clipboard doesn\'t look like a Spectra profile (expected JSON).</string>
+    <string name="clipboard_parse_failed">Could not parse clipboard contents</string>
+
+    <!-- Scanning -->
+    <string name="scan_title">Scanning…</string>
+    <string name="scan_hint">Hold phone 5–30 cm from device</string>
+    <string name="scan_module_acoustic">Acoustic</string>
+    <string name="scan_module_rf">RF Scan</string>
+    <string name="scan_module_em">EM Field</string>
+    <string name="scan_listening">listening…</string>
+    <string name="scan_scanning">scanning…</string>
+    <string name="scan_reading">reading…</string>
+    <string name="action_cancel">CANCEL</string>
+
+    <!-- Results -->
+    <string name="results_title">Scan Complete</string>
+    <string name="results_new_device">New device detected</string>
+    <string name="hint_device_name">Name this device</string>
+    <string name="action_learn_camera">LEARN FROM REMOTE (Camera)</string>
+    <string name="action_brute_force">DISCOVER PROTOCOL (No Remote)</string>
+    <string name="action_save_device">SAVE DEVICE</string>
+    <string name="action_back">BACK</string>
+
+    <!-- Learn -->
+    <string name="learn_title">Learn Commands</string>
+    <string name="db_title">Pick from Database</string>
+    <string name="db_help">Install a complete remote in one tap. Brands matching the detected device are listed first.</string>
+    <string name="action_browse_remotes">BROWSE BUNDLED REMOTES</string>
+    <string name="learn_camera_title">Camera Capture</string>
+    <string name="learn_camera_help">Point remote at front camera, then press and hold a button.</string>
+    <string name="hint_button_name">Button name (e.g. power, vol_up)</string>
+    <string name="action_start">START</string>
+    <string name="action_stop">STOP</string>
+    <string name="brute_force_title">Brute Force Discovery</string>
+    <string name="brute_force_help">Sweeps through all known IR protocols until device responds.</string>
+    <string name="brute_force_prompt">Did the device react?</string>
+    <string name="action_yes">YES!</string>
+    <string name="action_no">NO</string>
+    <string name="action_start_sweep">START SWEEP</string>
+    <string name="label_learned_commands">Learned Commands</string>
+    <string name="learned_help">Tap a command to test, long-press to rename or delete.</string>
+    <string name="action_open_remote">OPEN REMOTE</string>
+
+    <!-- Remote -->
+    <string name="action_share">SHARE</string>
+    <string name="action_learn_more">+ LEARN</string>
+    <string name="action_devices">DEVICES</string>
+    <string name="btn_power">POWER</string>
+    <string name="btn_input">INPUT</string>
+    <string name="btn_mute">MUTE</string>
+    <string name="btn_vol_up">VOL\n+</string>
+    <string name="btn_vol_down">VOL\n−</string>
+    <string name="btn_ch_up">CH\n+</string>
+    <string name="btn_ch_down">CH\n−</string>
+    <string name="btn_back">BACK</string>
+    <string name="btn_home">HOME</string>
+    <string name="btn_menu">MENU</string>
+    <string name="btn_ok">OK</string>
+
+    <!-- Macros -->
+    <string name="macro_new_title">New Macro</string>
+    <string name="macro_edit_title">Edit Macro</string>
+    <string name="hint_macro_name">Macro name (e.g. Movie Night)</string>
+    <string name="label_steps">Steps</string>
+    <string name="empty_steps">No steps yet. Tap Add Step.</string>
+    <string name="action_add_step">+ ADD STEP</string>
+    <string name="action_save">SAVE</string>
+    <string name="macro_no_devices_title">No devices with commands</string>
+    <string name="macro_no_devices_message">Add or learn at least one IR device before building a macro.</string>
+    <string name="macro_pick_device">Pick device</string>
+    <string name="macro_pick_command">Pick command</string>
+    <string name="macro_delay_title">Delay before this step (ms)</string>
+    <string name="macro_delay_message">Useful for waiting after a power-on. 0 = immediate.</string>
+    <string name="action_add">Add</string>
+    <string name="action_cancel_dialog">Cancel</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_run">Run</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_test">Test</string>
+    <string name="action_rename">Rename</string>
+    <string name="action_move_up">Move up</string>
+    <string name="action_move_down">Move down</string>
+    <string name="action_remove">Remove</string>
 </resources>
