@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/dest_home">
+
+    <fragment
+        android:id="@+id/dest_home"
+        android:name="com.andene.spectra.ui.screens.HomeFragment"
+        android:label="Home" />
+
+    <fragment
+        android:id="@+id/dest_scanning"
+        android:name="com.andene.spectra.ui.screens.ScanningFragment"
+        android:label="Scanning" />
+
+    <fragment
+        android:id="@+id/dest_results"
+        android:name="com.andene.spectra.ui.screens.ResultsFragment"
+        android:label="Results" />
+
+    <fragment
+        android:id="@+id/dest_learn"
+        android:name="com.andene.spectra.ui.screens.LearnFragment"
+        android:label="Learn" />
+
+    <fragment
+        android:id="@+id/dest_remote"
+        android:name="com.andene.spectra.ui.screens.RemoteFragment"
+        android:label="Remote" />
+
+    <fragment
+        android:id="@+id/dest_macro_edit"
+        android:name="com.andene.spectra.ui.screens.MacroEditFragment"
+        android:label="Macro" />
+
+</navigation>

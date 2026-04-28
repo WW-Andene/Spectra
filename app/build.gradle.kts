@@ -43,6 +43,11 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
+    // Navigation Component
+    val navVersion = "2.7.7"
+    implementation("androidx.navigation:navigation-fragment-ktx:$navVersion")
+    implementation("androidx.navigation:navigation-ui-ktx:$navVersion")
+
     // CameraX (Module 1 — IR Camera Capture)
     val cameraxVersion = "1.3.1"
     implementation("androidx.camera:camera-core:$cameraxVersion")
