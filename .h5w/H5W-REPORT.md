@@ -72,6 +72,42 @@ in favour of a clipboard-write affordance: macro long-press →
 "Copy NFC trigger URI" copies `spectra://macro/<id>` for paste
 into any existing NFC writer app.
 
+### B-002 phase 2 — Pinned-widget config activity
+
+**Commit:** `e4c9b1b`
+
+Each pinned widget now targets a specific device chosen at pin
+time, persisted per-appWidgetId. Launcher invokes the new
+configuration activity on widget drop. Auto-pick fallback
+preserved for widgets pinned before this code shipped.
+
+### B-002 phase 3 — Per-widget command picker
+
+**Commit:** `addd26e`
+
+After picking a device, the user picks which of its commands the
+widget fires (VOL_UP / MUTE / INPUT / custom — not just POWER).
+Device list filter relaxed from "has POWER" to "has any command".
+
+### B-003 phase 2 — Per-tile target picker
+
+**Commit:** `c5b1c62`
+
+In-app picker (QS tiles don't get a system-invoked config screen)
+that binds the tile to either a macro or a single (device, command)
+pair. SpectraQuickTile reads the binding on tap; falls back to the
+phase 1 primary-device auto-pick when nothing is bound.
+
+### B-005 phase 2 — Boot reschedule + countdown banner
+
+**Commit:** `5fcbcc3`
+
+AlarmManager is wiped on reboot — the BootRescheduleReceiver now
+re-arms a pending sleep timer from persisted SharedPreferences.
+Home shows a card-elevated banner with "⏱ '<label>' in N min" + a
+Cancel button while a timer is active, ticking once a minute via
+a fragment-scoped coroutine inside repeatOnLifecycle.
+
 ### B-005 phase 1 — Sleep timer
 
 **Commit:** `aa308f9`
