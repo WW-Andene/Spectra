@@ -63,12 +63,22 @@ class SpectraQuickWidget : AppWidgetProvider() {
             try {
                 val app = context.applicationContext as? SpectraApp ?: return@launch
                 val devices = app.repository.loadAll()
-                // QuickPowerKit centralises the "primary device" definition so
-                // the widget label and the QS tile target the same device.
-                val primary = QuickPowerKit.selectPrimary(devices) ?: devices.firstOrNull()
+                // Auto-pick fallback for widgets pinned before the
+                // configuration activity shipped (B-002 phase 1) — those
+                // widgets have no per-id binding in WidgetConfigStore so
+                // onUpdate uses QuickPowerKit's primary-device pick.
+                val autoPrimary = QuickPowerKit.selectPrimary(devices) ?: devices.firstOrNull()
 
                 for (id in appWidgetIds) {
-                    val views = buildViews(context, primary)
+                    val target = WidgetConfigStore.get(context, id)?.let { binding ->
+                        // Look up the bound device. If it was deleted
+                        // since the widget was configured, fall through
+                        // to autoPrimary so the tile keeps working.
+                        devices.firstOrNull { it.id == binding.deviceId }
+                    } ?: autoPrimary
+                    val commandName = WidgetConfigStore.get(context, id)?.commandName
+                        ?: IrControl.Commands.POWER
+                    val views = buildViews(context, target, commandName)
                     appWidgetManager.updateAppWidget(id, views)
                 }
             } finally {
@@ -77,13 +87,21 @@ class SpectraQuickWidget : AppWidgetProvider() {
         }
     }
 
+    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
+        // Drop per-widget bindings so the SharedPreferences file doesn't
+        // grow unbounded over years of widget churn.
+        WidgetConfigStore.clear(context, appWidgetIds)
+        super.onDeleted(context, appWidgetIds)
+    }
+
     private fun buildViews(
         context: Context,
-        primary: com.andene.spectra.data.models.DeviceProfile?,
+        target: com.andene.spectra.data.models.DeviceProfile?,
+        commandName: String,
     ): RemoteViews {
         val views = RemoteViews(context.packageName, R.layout.widget_quick_command)
 
-        if (primary == null || primary.irProfile?.commands?.containsKey(IrControl.Commands.POWER) != true) {
+        if (target == null || target.irProfile?.commands?.containsKey(commandName) != true) {
             // No usable device → tile becomes a "launch app" affordance.
             views.setTextViewText(
                 R.id.widgetDeviceName,
@@ -103,24 +121,33 @@ class SpectraQuickWidget : AppWidgetProvider() {
 
         views.setTextViewText(
             R.id.widgetDeviceName,
-            primary.name ?: context.getString(R.string.device_default_label),
+            target.name ?: context.getString(R.string.device_default_label),
         )
-        views.setTextViewText(R.id.widgetActionLabel, context.getString(R.string.btn_power))
+        // Render the command name as the action label. POWER stays
+        // localized via R.string.btn_power; other commands fall back
+        // to the raw name (UPPERCASED) until per-command label maps
+        // exist.
+        val actionLabel = if (commandName == IrControl.Commands.POWER) {
+            context.getString(R.string.btn_power)
+        } else {
+            commandName.uppercase()
+        }
+        views.setTextViewText(R.id.widgetActionLabel, actionLabel)
 
-        // Tap = fire POWER. Use the device id as the requestCode so two
-        // widgets pinned to different devices don't clobber each other's
-        // PendingIntent extras.
+        // Tap = fire the bound command. Use device-id+command as the
+        // requestCode + URI so two widgets pinned to different
+        // devices/commands don't clobber each other's PendingIntent
+        // extras (PendingIntent.filterEquals doesn't compare extras —
+        // distinct request codes + distinct data URIs disambiguate).
         val fireIntent = Intent(context, WidgetCommandReceiver::class.java).apply {
             action = WidgetCommandReceiver.ACTION_FIRE
-            putExtra(WidgetCommandReceiver.EXTRA_DEVICE_ID, primary.id)
-            putExtra(WidgetCommandReceiver.EXTRA_COMMAND_NAME, IrControl.Commands.POWER)
-            // Set a unique data URI so PendingIntent.filterEquals doesn't
-            // collapse two pending intents that differ only in extras.
-            data = android.net.Uri.parse("spectra-widget://${primary.id}/power")
+            putExtra(WidgetCommandReceiver.EXTRA_DEVICE_ID, target.id)
+            putExtra(WidgetCommandReceiver.EXTRA_COMMAND_NAME, commandName)
+            data = android.net.Uri.parse("spectra-widget://${target.id}/$commandName")
         }
         val firePi = PendingIntent.getBroadcast(
             context,
-            primary.id.hashCode(),
+            (target.id + commandName).hashCode(),
             fireIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )

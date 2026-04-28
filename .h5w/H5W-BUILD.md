@@ -29,8 +29,8 @@ camera capture, RF discovery currently dead-ending in the matcher).
 
 | ID | Feature | Phase | Status | Notes |
 |----|---------|-------|--------|-------|
-| B-002 | Home screen widget | 2 — config activity (pick device + command) | TODO | per-widget instance config |
-| B-002 | Home screen widget | 3 — macro chips on multi-cell widget | TODO | requires phase 2 first |
+| B-002 | Home screen widget | 3 — per-widget command picker (vs hardcoded POWER) | TODO | extends config activity |
+| B-002 | Home screen widget | 4 — macro chips on multi-cell widget | TODO | requires phase 3 first |
 | B-003 | Quick Settings tile | 2 — top-macro picker | TODO | persist user pick in DataStore |
 | B-004 | Smart-home control over RF | 1 — BLE write to discovered devices | TODO | leverages existing RfFingerprint |
 | B-004 | Smart-home control over RF | 2 — mDNS HTTP control (Roku, etc.) | TODO | extends existing inferIdentity hints |
@@ -54,7 +54,8 @@ camera capture, RF discovery currently dead-ending in the matcher).
 | B-008 | Universal "all off" | 1+2 — sequence builder + home menu action | `0050d3d` |
 | B-007 | NFC tag triggers | 1 — read tag URI + clipboard-write affordance | `57178f4` |
 | B-005 | Scheduled / timed commands | 1 — sleep-timer macro fire | `aa308f9` |
-| B-005 | Scheduled / timed commands | 2 — boot reschedule + countdown banner | (this commit) |
+| B-005 | Scheduled / timed commands | 2 — boot reschedule + countdown banner | `5fcbcc3` |
+| B-002 | Home screen widget | 2 — pinned-widget config activity | (this commit) |
 
 ---
 

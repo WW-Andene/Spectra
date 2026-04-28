@@ -115,6 +115,21 @@
                 android:resource="@xml/widget_info_quick" />
         </receiver>
 
+        <!-- Widget configuration activity (B-002 phase 2). Launched by
+             the launcher when a Spectra widget is pinned, and again
+             when the user taps "Reconfigure widget" thanks to the
+             reconfigurable widgetFeatures flag in widget_info_quick. -->
+        <activity
+            android:name=".widget.SpectraWidgetConfigActivity"
+            android:exported="true"
+            android:label="@string/widget_config_title"
+            android:theme="@style/Theme.Spectra"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
         <receiver
             android:name=".widget.WidgetCommandReceiver"
             android:exported="false">

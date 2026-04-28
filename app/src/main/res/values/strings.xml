@@ -54,6 +54,9 @@
     <string name="widget_description">Tap to fire POWER on your most-recent device. No app open required.</string>
     <string name="widget_no_device">No device</string>
     <string name="widget_open_app">Open Spectra</string>
+    <string name="widget_config_title">Pick a device</string>
+    <string name="widget_config_subtitle">The widget will fire POWER on this device when tapped.</string>
+    <string name="widget_config_no_devices">No saved devices with a POWER command. Save one in Spectra first, then return.</string>
 
     <!-- Quick Settings tile (B-003) -->
     <string name="qs_tile_label">Spectra Power</string>
