@@ -60,6 +60,7 @@
 
     <!-- Remote -->
     <string name="action_share">SHARE</string>
+    <string name="notice_no_blaster">This phone has no IR blaster. Buttons won\'t transmit — the device profile is saved for sharing only.</string>
     <string name="action_learn_more">+ LEARN</string>
     <string name="action_devices">DEVICES</string>
     <string name="btn_power">POWER</string>

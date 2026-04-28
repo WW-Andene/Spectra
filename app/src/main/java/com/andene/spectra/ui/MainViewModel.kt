@@ -413,6 +413,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // ── Transmit feedback ─────────────────────────────────────
+
+    /** Result of the most recent IR transmit. Consumed by RemoteFragment to
+     *  flash a button green/red so the user actually sees something happened
+     *  (or not). */
+    val lastTransmitResult: StateFlow<com.andene.spectra.modules.control.IrControl.TransmitResult?> =
+        orchestrator.control.lastTransmitResult
+
     // ── Hardware checks ───────────────────────────────────────
 
     fun hasIrBlaster(): Boolean = orchestrator.bruteForce.isAvailable()

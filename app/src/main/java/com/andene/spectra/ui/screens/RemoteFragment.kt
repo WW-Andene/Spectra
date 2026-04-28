@@ -32,6 +32,11 @@ class RemoteFragment : Fragment() {
         val btnLearnMore = view.findViewById<Button>(R.id.btnLearnMore)
         val btnShareDevice = view.findViewById<Button>(R.id.btnShareDevice)
         val btnBackToHome = view.findViewById<Button>(R.id.btnBackToHome)
+        val noBlasterNotice = view.findViewById<TextView>(R.id.noBlasterNotice)
+
+        // Show no-blaster notice once on entry. Static state so we don't
+        // recompute on every emission of activeDevice.
+        if (!vm.hasIrBlaster()) noBlasterNotice.visibility = View.VISIBLE
 
         btnShareDevice.setOnClickListener { shareActiveDevice() }
 
@@ -74,9 +79,13 @@ class RemoteFragment : Fragment() {
             R.id.btn9 to IrControl.Commands.NUM_9,
         )
 
+        // Index buttons by command name so the transmit-result collector can
+        // flash the right one. Includes both tap and repeat buttons.
+        val buttonsByCommand = HashMap<String, Button>()
         tapButtons.forEach { (id, command) ->
-            view.findViewById<Button>(id)?.setOnClickListener {
-                vm.sendCommand(command)
+            view.findViewById<Button>(id)?.let { btn ->
+                buttonsByCommand[command] = btn
+                btn.setOnClickListener { vm.sendCommand(command) }
             }
         }
 
@@ -89,7 +98,9 @@ class RemoteFragment : Fragment() {
         )
 
         repeatButtons.forEach { (id, command) ->
-            view.findViewById<Button>(id)?.setOnTouchListener { _, event ->
+            view.findViewById<Button>(id)?.also { btn ->
+                buttonsByCommand[command] = btn
+            }?.setOnTouchListener { _, event ->
                 when (event.action) {
                     MotionEvent.ACTION_DOWN -> {
                         vm.sendCommand(command)
@@ -119,6 +130,20 @@ class RemoteFragment : Fragment() {
 
         btnBackToHome.setOnClickListener {
             vm.navigate(MainViewModel.Screen.HOME)
+        }
+
+        // Flash a button green on success / red on failure for ~150 ms so the
+        // user can tell whether the press transmitted. Catches both
+        // no-blaster failures and unknown-command misses.
+        viewLifecycleOwner.lifecycleScope.launch {
+            vm.lastTransmitResult.collect { result ->
+                val btn = result?.let { buttonsByCommand[it.commandName] } ?: return@collect
+                val tint = if (result.success) R.color.accent_success else R.color.accent_error
+                val original = btn.backgroundTintList
+                btn.backgroundTintList = androidx.core.content.ContextCompat
+                    .getColorStateList(requireContext(), tint)
+                btn.postDelayed({ btn.backgroundTintList = original }, 150)
+            }
         }
     }
 
