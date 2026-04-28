@@ -1,0 +1,119 @@
+{
+  "_comment": "Starter IR remote database. Each entry is one remote layout. NEC/SAMSUNG/SIRC entries use protocol+address+command (the encoders in IrBruteForce build the timings); RAW entries provide pre-computed pulse timings.",
+  "remotes": [
+    {
+      "brand": "Samsung",
+      "model": "TV (Generic NEC)",
+      "deviceType": "TV",
+      "protocol": "NEC",
+      "carrierFrequency": 38000,
+      "commands": {
+        "power":    { "address": 7, "command": 2 },
+        "vol_up":   { "address": 7, "command": 7 },
+        "vol_down": { "address": 7, "command": 11 },
+        "ch_up":    { "address": 7, "command": 18 },
+        "ch_down":  { "address": 7, "command": 16 },
+        "mute":     { "address": 7, "command": 15 },
+        "input":    { "address": 7, "command": 1 },
+        "menu":     { "address": 7, "command": 26 },
+        "ok":       { "address": 7, "command": 104 },
+        "up":       { "address": 7, "command": 96 },
+        "down":     { "address": 7, "command": 97 },
+        "left":     { "address": 7, "command": 101 },
+        "right":    { "address": 7, "command": 98 },
+        "back":     { "address": 7, "command": 88 },
+        "home":     { "address": 7, "command": 121 }
+      }
+    },
+    {
+      "brand": "LG",
+      "model": "TV (NEC variant)",
+      "deviceType": "TV",
+      "protocol": "NEC",
+      "carrierFrequency": 38000,
+      "commands": {
+        "power":    { "address": 4, "command": 8 },
+        "vol_up":   { "address": 4, "command": 2 },
+        "vol_down": { "address": 4, "command": 3 },
+        "ch_up":    { "address": 4, "command": 0 },
+        "ch_down":  { "address": 4, "command": 1 },
+        "mute":     { "address": 4, "command": 9 },
+        "input":    { "address": 4, "command": 11 },
+        "menu":     { "address": 4, "command": 67 },
+        "ok":       { "address": 4, "command": 68 },
+        "up":       { "address": 4, "command": 64 },
+        "down":     { "address": 4, "command": 65 },
+        "left":     { "address": 4, "command": 7 },
+        "right":    { "address": 4, "command": 6 },
+        "back":     { "address": 4, "command": 40 },
+        "home":     { "address": 4, "command": 124 }
+      }
+    },
+    {
+      "brand": "Sony",
+      "model": "TV (SIRC 12-bit)",
+      "deviceType": "TV",
+      "protocol": "SIRC_12",
+      "carrierFrequency": 40000,
+      "commands": {
+        "power":    { "address": 1, "command": 21 },
+        "vol_up":   { "address": 1, "command": 18 },
+        "vol_down": { "address": 1, "command": 19 },
+        "ch_up":    { "address": 1, "command": 16 },
+        "ch_down":  { "address": 1, "command": 17 },
+        "mute":     { "address": 1, "command": 20 },
+        "input":    { "address": 1, "command": 37 },
+        "menu":     { "address": 1, "command": 96 },
+        "ok":       { "address": 1, "command": 101 },
+        "up":       { "address": 1, "command": 116 },
+        "down":     { "address": 1, "command": 117 },
+        "left":     { "address": 1, "command": 52 },
+        "right":    { "address": 1, "command": 51 },
+        "back":     { "address": 1, "command": 99 },
+        "home":     { "address": 1, "command": 96 },
+        "num_0":    { "address": 1, "command": 9 },
+        "num_1":    { "address": 1, "command": 0 },
+        "num_2":    { "address": 1, "command": 1 },
+        "num_3":    { "address": 1, "command": 2 },
+        "num_4":    { "address": 1, "command": 3 },
+        "num_5":    { "address": 1, "command": 4 },
+        "num_6":    { "address": 1, "command": 5 },
+        "num_7":    { "address": 1, "command": 6 },
+        "num_8":    { "address": 1, "command": 7 },
+        "num_9":    { "address": 1, "command": 8 }
+      }
+    },
+    {
+      "brand": "Vizio",
+      "model": "TV (NEC, addr 4)",
+      "deviceType": "TV",
+      "protocol": "NEC",
+      "carrierFrequency": 38000,
+      "commands": {
+        "power":    { "address": 4, "command": 8 },
+        "vol_up":   { "address": 4, "command": 2 },
+        "vol_down": { "address": 4, "command": 3 },
+        "ch_up":    { "address": 4, "command": 0 },
+        "ch_down":  { "address": 4, "command": 1 },
+        "mute":     { "address": 4, "command": 9 }
+      }
+    },
+    {
+      "brand": "TCL / Hisense",
+      "model": "Generic NEC TV",
+      "deviceType": "TV",
+      "protocol": "NEC",
+      "carrierFrequency": 38000,
+      "commands": {
+        "power":    { "address": 0, "command": 8 },
+        "vol_up":   { "address": 0, "command": 25 },
+        "vol_down": { "address": 0, "command": 26 },
+        "ch_up":    { "address": 0, "command": 19 },
+        "ch_down":  { "address": 0, "command": 18 },
+        "mute":     { "address": 0, "command": 12 },
+        "input":    { "address": 0, "command": 4 },
+        "menu":     { "address": 0, "command": 32 }
+      }
+    }
+  ]
+}
