@@ -127,13 +127,22 @@ class RfFingerprint(private val context: Context) {
             bleJob.await()
             mdnsJob.await()
 
-            // Enrich WiFi devices with mDNS hints
-            val enrichedWifi = wifiDevices.map { device ->
-                val mdnsHint = discoveredMdns.entries
-                    .firstOrNull { it.key.contains(device.bssid.takeLast(5), ignoreCase = true) }
-                    ?.value
-                device.copy(modelHint = mdnsHint ?: device.modelHint)
-            }
+            // Enrich the strongest WiFi device with a category hint when
+            // any mDNS responder was discovered. The previous heuristic
+            // tried to match the last 5 hex chars of a BSSID against mDNS
+            // service names — mDNS instance names are user-chosen device
+            // labels (e.g. 'Living Room TV._googlecast._tcp.local'), not
+            // MAC fragments, so the join almost never fired. Dropping
+            // straight to "any mDNS hit on this Wi-Fi adds the strongest
+            // mDNS hint to the closest AP" gives the matcher something
+            // actionable without pretending precision we can't deliver.
+            val mdnsCategoryHint = discoveredMdns.values.firstOrNull()
+            val enrichedWifi = if (mdnsCategoryHint == null) wifiDevices else
+                wifiDevices.mapIndexed { index, device ->
+                    if (index == 0 && device.modelHint == null)
+                        device.copy(modelHint = mdnsCategoryHint)
+                    else device
+                }
 
             val sig = RfSignature(
                 wifiDevices = enrichedWifi,
