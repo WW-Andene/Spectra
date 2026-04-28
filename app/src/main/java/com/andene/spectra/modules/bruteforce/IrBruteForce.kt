@@ -32,6 +32,24 @@ class IrBruteForce(private val context: Context) {
         private const val SEND_DELAY_MS = 600L // Pause between attempts
 
         /**
+         * Per-protocol carrier frequency. Most consumer IR uses 38 kHz, but
+         * Sharp's TVs and many split-system air conditioners use 33–56 kHz.
+         * The sweep tries the protocol's preferred carrier first.
+         */
+        private val PROTOCOL_CARRIER: Map<IrProtocol, Int> = mapOf(
+            IrProtocol.NEC to 38000,
+            IrProtocol.SAMSUNG to 38000,
+            IrProtocol.LG to 38000,
+            IrProtocol.SIRC_12 to 40000,
+            IrProtocol.SIRC_15 to 40000,
+            IrProtocol.SIRC_20 to 40000,
+            IrProtocol.PANASONIC to 38000,
+            IrProtocol.SHARP to 38000,
+            IrProtocol.RC5 to 36000,
+            IrProtocol.RC6 to 36000,
+        )
+
+        /**
          * Encode an NEC command from address + command bytes.
          * NEC format: 9000µs mark, 4500µs space, then 32 bits
          * Bit 0: 562µs mark + 562µs space
@@ -241,8 +259,22 @@ class IrBruteForce(private val context: Context) {
             POWER_CODES.entries.map { it.toPair() }
         }
 
+        // Pick the carrier matching what the receiver expects; fall back to
+        // 38 kHz (the most common) plus the supported range from the hardware
+        // so we cover AC remotes that diverge from the protocol default.
+        val supportedCarriers = irManager.carrierFrequencies?.toList().orEmpty()
         for ((protocol, codes) in codeOrder) {
+            val carriersToTry = buildList {
+                add(PROTOCOL_CARRIER[protocol] ?: CARRIER_FREQ)
+                if (CARRIER_FREQ !in this) add(CARRIER_FREQ)
+            }.filter { freq ->
+                // Skip carriers the blaster can't actually generate.
+                supportedCarriers.isEmpty() ||
+                    supportedCarriers.any { freq in it.minFrequency..it.maxFrequency }
+            }
+
             for ((manufacturer, timings) in codes) {
+                val carrier = carriersToTry.firstOrNull() ?: CARRIER_FREQ
                 totalAttempts++
                 _state.value = _state.value.copy(
                     currentProtocol = protocol,
@@ -251,9 +283,9 @@ class IrBruteForce(private val context: Context) {
 
                 // Transmit the code
                 try {
-                    irManager.transmit(CARRIER_FREQ, timings)
+                    irManager.transmit(carrier, timings)
                 } catch (e: Exception) {
-                    Log.w(TAG, "Transmit failed for $manufacturer/$protocol", e)
+                    Log.w(TAG, "Transmit failed for $manufacturer/$protocol @ ${carrier}Hz", e)
                     continue
                 }
 
@@ -264,7 +296,7 @@ class IrBruteForce(private val context: Context) {
                 if (confirmed) {
                     lastFoundPattern = timings
                     lastFoundManufacturer = manufacturer
-                    lastFoundCarrier = CARRIER_FREQ
+                    lastFoundCarrier = carrier
                     _state.value = _state.value.copy(
                         isRunning = false,
                         foundProtocol = protocol,
