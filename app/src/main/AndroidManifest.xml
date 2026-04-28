@@ -30,6 +30,14 @@
     <uses-permission android:name="android.permission.TRANSMIT_IR" />
     <uses-feature android:name="android.hardware.consumerir" android:required="false" />
 
+    <!-- ScanService: foreground service for the passive-scan lifecycle.
+         FOREGROUND_SERVICE is the API-28+ baseline; CONNECTED_DEVICE is the
+         API-34+ specific subtype required when a foreground service touches
+         BLE / WiFi scanning, which our orchestrator does. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
         android:name=".SpectraApp"
         android:allowBackup="true"
@@ -62,6 +70,11 @@
                 <data android:scheme="spectra" android:host="device" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".services.ScanService"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
 
     </application>
 

@@ -29,6 +29,7 @@
     <string name="perm_label_location">location</string>
     <string name="perm_label_bluetooth">Bluetooth</string>
     <string name="perm_label_ir">infrared</string>
+    <string name="perm_label_notifications">notifications</string>
     <string name="camera_permission_required">Camera permission is required to learn IR commands by pointing a remote at the front camera.</string>
     <string name="undo_deleted_device">Deleted %1$s</string>
     <string name="undo_deleted_macro">Deleted macro %1$s</string>
@@ -82,6 +83,10 @@
     <string name="action_resume">RESUME</string>
     <string name="action_dismiss">DISMISS</string>
     <string name="resume_brute_force_format">Resume brute force for %1$s? (%2$d attempts done)</string>
+    <string name="scan_channel_name">Spectra scanning</string>
+    <string name="scan_channel_description">Notifies while a passive device scan is running.</string>
+    <string name="scan_notification_title">Spectra is scanning</string>
+    <string name="scan_notification_text">Looking for nearby smart and IR devices…</string>
     <string name="camera_bind_failed">Camera couldn\'t start. Try going back and reopening Learn, or reboot the phone if the issue persists.</string>
 
     <!-- Scanning -->

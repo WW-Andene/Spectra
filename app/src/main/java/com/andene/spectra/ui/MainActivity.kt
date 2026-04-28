@@ -51,6 +51,7 @@ class MainActivity : AppCompatActivity() {
         Manifest.permission.BLUETOOTH_SCAN,
         Manifest.permission.BLUETOOTH_CONNECT -> getString(R.string.perm_label_bluetooth)
         Manifest.permission.TRANSMIT_IR -> getString(R.string.perm_label_ir)
+        Manifest.permission.POST_NOTIFICATIONS -> getString(R.string.perm_label_notifications)
         else -> name.substringAfterLast('.').lowercase().replace('_', ' ')
     }
 
@@ -173,6 +174,11 @@ class MainActivity : AppCompatActivity() {
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions.add(Manifest.permission.NEARBY_WIFI_DEVICES)
+            // Android 13+ requires runtime permission to post notifications.
+            // ScanService wants this for its ongoing-scan notification — the
+            // service still runs without it, but the user wouldn't see the
+            // status banner or have the in-notification cancel button.
+            permissions.add(Manifest.permission.POST_NOTIFICATIONS)
         }
 
         for (perm in permissions) {

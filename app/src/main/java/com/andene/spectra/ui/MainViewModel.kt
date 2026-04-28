@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -315,33 +316,49 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val undoActions: SharedFlow<UndoAction> = _undoActions.asSharedFlow()
 
     // ── Passive Scan ──────────────────────────────────────────
+    //
+    // The scan now runs inside ScanService (foreground service) so it
+    // outlives a brief background → foreground transition and is compliant
+    // with Android 14+ BLE-from-background rules. The viewmodel still
+    // observes orchestrator state directly (it's a singleton on
+    // SpectraApp, so the service writes through to the same flows the
+    // viewmodel reads). The viewmodel itself just dispatches start/stop
+    // intents and watches for completion to flip the screen.
 
-    private var scanJob: kotlinx.coroutines.Job? = null
+    private var scanWatchJob: kotlinx.coroutines.Job? = null
 
     fun startPassiveScan() {
-        scanJob?.cancel()
-        scanJob = viewModelScope.launch {
-            _isScanning.value = true
-            _screen.value = Screen.SCANNING
-            orchestrator.clearLog()
-
+        _isScanning.value = true
+        _screen.value = Screen.SCANNING
+        val ctx = getApplication<android.app.Application>()
+        androidx.core.content.ContextCompat.startForegroundService(
+            ctx,
+            com.andene.spectra.services.ScanService.startIntent(ctx),
+        )
+        // Watch the orchestrator's phase so when scanPassive finishes we
+        // navigate to Results. Replaces the old coroutine's straight-line
+        // post-await transition. Cancels any prior watcher to keep the
+        // single-active-scan invariant.
+        scanWatchJob?.cancel()
+        scanWatchJob = viewModelScope.launch {
             try {
-                orchestrator.scanPassive()
+                // Two-step wait: the service kicks scanPassive() asynchronously
+                // so phase is still pre-scan when this coroutine starts. First
+                // wait for it to ENTER SCANNING_PASSIVE, then for it to LEAVE.
+                // Bound the entry wait so a service-failed-to-start scenario
+                // doesn't hang the screen forever.
+                kotlinx.coroutines.withTimeoutOrNull(10_000) {
+                    orchestrator.phase.first { it == SpectraOrchestrator.Phase.SCANNING_PASSIVE }
+                } ?: run {
+                    // Service never entered SCANNING_PASSIVE — drop back to Home
+                    // and surface a hint. Stays user-recoverable.
+                    emitToast("Scan didn't start. Try again, or check that Bluetooth and Location are on.")
+                    _screen.value = Screen.HOME
+                    return@launch
+                }
+                orchestrator.phase.first { it != SpectraOrchestrator.Phase.SCANNING_PASSIVE }
                 _activeDevice.value = orchestrator.discoveredDevice.value
                 _screen.value = Screen.RESULTS
-            } catch (e: kotlinx.coroutines.CancellationException) {
-                // User cancelled — don't transition to RESULTS, leave them
-                // wherever they navigated to.
-                throw e
-            } catch (e: SecurityException) {
-                // Tell the user how to recover, not just what failed.
-                _scanLog.value = _scanLog.value +
-                    "Permission denied (${e.message?.take(80) ?: "unknown"}). " +
-                    "Open Settings → Apps → Spectra → Permissions to grant the missing access, then tap Scan again."
-            } catch (e: Exception) {
-                _scanLog.value = _scanLog.value +
-                    "Scan failed (${e.message?.take(80) ?: "unknown"}). " +
-                    "Make sure WiFi, Bluetooth, and Location are turned on, then retry."
             } finally {
                 _isScanning.value = false
             }
@@ -349,8 +366,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun cancelPassiveScan() {
-        scanJob?.cancel()
-        scanJob = null
+        scanWatchJob?.cancel()
+        scanWatchJob = null
+        val ctx = getApplication<android.app.Application>()
+        ctx.startService(com.andene.spectra.services.ScanService.stopIntent(ctx))
+        _isScanning.value = false
     }
 
     // ── IR Camera Learning ────────────────────────────────────

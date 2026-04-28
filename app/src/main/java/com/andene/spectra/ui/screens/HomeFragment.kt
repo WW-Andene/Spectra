@@ -233,6 +233,8 @@ class HomeFragment : Fragment() {
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             needed.add(Manifest.permission.NEARBY_WIFI_DEVICES)
+            // ScanService's foreground notification needs this on API 33+.
+            needed.add(Manifest.permission.POST_NOTIFICATIONS)
         }
         return needed.filter {
             ContextCompat.checkSelfPermission(requireContext(), it) != PackageManager.PERMISSION_GRANTED
