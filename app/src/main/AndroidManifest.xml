@@ -38,6 +38,10 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- B-005 phase 2: re-schedule a pending sleep timer after device
+         reboot (AlarmManager doesn't survive reboot). -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <application
         android:name=".SpectraApp"
         android:allowBackup="true"
@@ -128,6 +132,21 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="com.andene.spectra.scheduling.action.FIRE_SCHEDULED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Boot reschedule receiver (B-005 phase 2): re-arms a pending
+             sleep timer after device reboot. AlarmManager doesn't
+             survive reboot — every pending alarm is wiped when the
+             system goes down. We persist the timer record in
+             SharedPreferences and re-schedule from this receiver. -->
+        <receiver
+            android:name=".scheduling.BootRescheduleReceiver"
+            android:exported="true"
+            android:directBootAware="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 

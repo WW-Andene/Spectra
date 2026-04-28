@@ -75,6 +75,7 @@
     <string name="sleep_timer_active_format">\'%1$s\' will run in about %2$d minute(s).</string>
     <string name="sleep_timer_cancelled">Sleep timer cancelled</string>
     <string name="sleep_timer_scheduled_format">\'%1$s\' will run in %2$d minutes</string>
+    <string name="sleep_timer_banner_format">⏱  \'%1$s\' in %2$d min</string>
 
     <!-- NFC tag triggers (B-007) -->
     <string name="action_copy_nfc_uri">Copy NFC trigger URI</string>

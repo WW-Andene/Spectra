@@ -29,11 +29,25 @@ object SleepTimer {
     private const val PREFS = "spectra_sleep_timer"
     private const val KEY_FIRE_AT = "fireAt"
     private const val KEY_LABEL = "label"
-    private const val PI_REQUEST_CODE = 0x5757  // arbitrary stable
+    private const val KEY_KIND = "kind"
+    private const val KEY_MACRO_ID = "macroId"
+    private const val KEY_DEVICE_ID = "deviceId"
+    private const val KEY_COMMAND_NAME = "commandName"
+    internal const val PI_REQUEST_CODE = 0x5757  // arbitrary stable
 
     data class Active(val fireAtMs: Long, val label: String) {
         val remainingMs: Long get() = (fireAtMs - System.currentTimeMillis()).coerceAtLeast(0)
     }
+
+    /** Payload needed to re-build the dispatch Intent after a reboot wipes
+     *  the AlarmManager slot. [BootRescheduleReceiver] reads this, the
+     *  schedule* methods write it. */
+    data class Payload(
+        val kind: String,
+        val macroId: String? = null,
+        val deviceId: String? = null,
+        val commandName: String? = null,
+    )
 
     fun scheduleMacro(
         context: Context,
@@ -42,12 +56,8 @@ object SleepTimer {
         delayMinutes: Int,
     ) {
         val fireAt = System.currentTimeMillis() + delayMinutes * 60_000L
-        val intent = Intent(context, ScheduledFireReceiver::class.java).apply {
-            action = ScheduledFireReceiver.ACTION_FIRE
-            putExtra(ScheduledFireReceiver.EXTRA_KIND, ScheduledFireReceiver.KIND_MACRO)
-            putExtra(ScheduledFireReceiver.EXTRA_MACRO_ID, macroId)
-        }
-        scheduleInternal(context, intent, fireAt, macroLabel)
+        val payload = Payload(kind = ScheduledFireReceiver.KIND_MACRO, macroId = macroId)
+        scheduleInternal(context, payload, fireAt, macroLabel)
     }
 
     fun scheduleCommand(
@@ -58,16 +68,22 @@ object SleepTimer {
         delayMinutes: Int,
     ) {
         val fireAt = System.currentTimeMillis() + delayMinutes * 60_000L
-        val intent = Intent(context, ScheduledFireReceiver::class.java).apply {
-            action = ScheduledFireReceiver.ACTION_FIRE
-            putExtra(ScheduledFireReceiver.EXTRA_KIND, ScheduledFireReceiver.KIND_COMMAND)
-            putExtra(ScheduledFireReceiver.EXTRA_DEVICE_ID, deviceId)
-            putExtra(ScheduledFireReceiver.EXTRA_COMMAND_NAME, commandName)
-        }
-        scheduleInternal(context, intent, fireAt, "$deviceLabel · $commandName")
+        val payload = Payload(
+            kind = ScheduledFireReceiver.KIND_COMMAND,
+            deviceId = deviceId,
+            commandName = commandName,
+        )
+        scheduleInternal(context, payload, fireAt, "$deviceLabel · $commandName")
     }
 
-    private fun scheduleInternal(context: Context, intent: Intent, fireAt: Long, label: String) {
+    private fun scheduleInternal(context: Context, payload: Payload, fireAt: Long, label: String) {
+        val intent = Intent(context, ScheduledFireReceiver::class.java).apply {
+            action = ScheduledFireReceiver.ACTION_FIRE
+            putExtra(ScheduledFireReceiver.EXTRA_KIND, payload.kind)
+            payload.macroId?.let { putExtra(ScheduledFireReceiver.EXTRA_MACRO_ID, it) }
+            payload.deviceId?.let { putExtra(ScheduledFireReceiver.EXTRA_DEVICE_ID, it) }
+            payload.commandName?.let { putExtra(ScheduledFireReceiver.EXTRA_COMMAND_NAME, it) }
+        }
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val pi = PendingIntent.getBroadcast(
             context,
@@ -84,7 +100,27 @@ object SleepTimer {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .putLong(KEY_FIRE_AT, fireAt)
             .putString(KEY_LABEL, label)
+            .putString(KEY_KIND, payload.kind)
+            .putString(KEY_MACRO_ID, payload.macroId)
+            .putString(KEY_DEVICE_ID, payload.deviceId)
+            .putString(KEY_COMMAND_NAME, payload.commandName)
             .apply()
+    }
+
+    /** Read the persisted payload (B-005 phase 2). Used by
+     *  [BootRescheduleReceiver] to rebuild the dispatch Intent after a
+     *  reboot wipes the AlarmManager slot. Returns null if the
+     *  payload is incomplete (eg. timer was scheduled before this
+     *  field was added to the persisted record). */
+    fun persistedPayload(context: Context): Payload? {
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val kind = prefs.getString(KEY_KIND, null) ?: return null
+        return Payload(
+            kind = kind,
+            macroId = prefs.getString(KEY_MACRO_ID, null),
+            deviceId = prefs.getString(KEY_DEVICE_ID, null),
+            commandName = prefs.getString(KEY_COMMAND_NAME, null),
+        )
     }
 
     fun cancel(context: Context) {

@@ -200,6 +200,42 @@ class HomeFragment : Fragment() {
             }
         }
 
+        // Sleep-timer countdown banner (B-005 phase 2). Tick once a minute
+        // while active; render "X minute(s) left for '<label>'". Cancel
+        // button kills the alarm and clears the persisted record. We use
+        // a fragment-scoped coroutine instead of a viewmodel flow because
+        // SleepTimer's source of truth is SharedPreferences (so it can be
+        // read by BroadcastReceivers in any process state) — adding a
+        // viewmodel flow would just be a less-reliable cache of the same
+        // state.
+        val sleepTimerBanner = view.findViewById<LinearLayout>(R.id.sleepTimerBanner)
+        val sleepTimerText = view.findViewById<TextView>(R.id.sleepTimerText)
+        view.findViewById<Button>(R.id.btnCancelSleepTimer).setOnClickListener {
+            com.andene.spectra.scheduling.SleepTimer.cancel(requireContext())
+            sleepTimerBanner.visibility = View.GONE
+            toast(getString(R.string.sleep_timer_cancelled))
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                while (true) {
+                    val active = com.andene.spectra.scheduling.SleepTimer.active(requireContext())
+                    if (active != null) {
+                        // Round up to the next minute so a 0:30-remaining
+                        // doesn't render as "0 minutes" — the user expects
+                        // to see "1 minute" until it actually fires.
+                        val mins = (active.remainingMs + 59_000L) / 60_000L
+                        sleepTimerText.text = getString(
+                            R.string.sleep_timer_banner_format, active.label, mins,
+                        )
+                        sleepTimerBanner.visibility = View.VISIBLE
+                    } else {
+                        sleepTimerBanner.visibility = View.GONE
+                    }
+                    kotlinx.coroutines.delay(60_000L)
+                }
+            }
+        }
+
         // Surface viewmodel-emitted toasts (save failures, etc.). Home is
         // always the surviving root destination so collecting here gives us
         // user feedback for every persistence error regardless of which

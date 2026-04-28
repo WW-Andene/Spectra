@@ -110,6 +110,41 @@
         android:textColor="@color/text_secondary"
         android:layout_marginBottom="20dp" />
 
+    <!-- Sleep-timer countdown banner (B-005 phase 2). Visibility toggled
+         at runtime from a coroutine that ticks once a minute while
+         active. Mirrors the brute-force resume banner pattern. -->
+    <LinearLayout
+        android:id="@+id/sleepTimerBanner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@color/bg_card_elevated"
+        android:padding="12dp"
+        android:layout_marginBottom="12dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/sleepTimerText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="@color/accent_secondary"
+            android:textSize="13sp" />
+
+        <Button
+            android:id="@+id/btnCancelSleepTimer"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="@string/action_cancel_timer"
+            android:textSize="11sp"
+            android:backgroundTint="@color/bg_card"
+            android:textColor="@color/text_secondary"
+            android:minWidth="0dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp" />
+    </LinearLayout>
+
     <!-- Resumable brute-force banner — visibility toggled at runtime -->
     <LinearLayout
         android:id="@+id/resumeBanner"
