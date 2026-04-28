@@ -29,6 +29,12 @@ camera capture, RF discovery currently dead-ending in the matcher).
 
 | ID | Feature | Phase | Status | Notes |
 |----|---------|-------|--------|-------|
+| B-100 | IR camera capture decode upgrade | 2 — Samsung + LG codecs | TODO | mirrors NEC pattern |
+| B-100 | IR camera capture decode upgrade | 3 — RC6, JVC, Panasonic, NEC2 | TODO | wider protocol coverage |
+| B-100 | IR camera capture decode upgrade | 4 — multi-press averaging | TODO | reduces rolling-shutter jitter at source |
+| B-101 | Brute-force smart ordering + auto-confirm | 1 — order protocols by manufacturer/category | TODO | ranking, no new IR code |
+| B-101 | Brute-force smart ordering + auto-confirm | 2 — acoustic auto-confirm via mic delta | TODO | listen for fan/TV change post-fire |
+| B-102 | Multi-device disambiguation | 1 — confidence-scored top-N picker on Results | TODO | when multiple matches close in score |
 | B-002 | Home screen widget | 4 — macro chips on multi-cell widget | TODO | bigger scope: multi-tile RemoteViews |
 | B-004 | Smart-home control over RF | 1 — BLE write to discovered devices | TODO | leverages existing RfFingerprint |
 | B-004 | Smart-home control over RF | 2 — mDNS HTTP control (Roku, etc.) | TODO | extends existing inferIdentity hints |
@@ -55,7 +61,8 @@ camera capture, RF discovery currently dead-ending in the matcher).
 | B-005 | Scheduled / timed commands | 2 — boot reschedule + countdown banner | `5fcbcc3` |
 | B-002 | Home screen widget | 2 — pinned-widget config activity | `e4c9b1b` |
 | B-003 | Quick Settings tile | 2 — in-app target picker (macro / command) | `c5b1c62` |
-| B-002 | Home screen widget | 3 — per-widget command picker | (this commit) |
+| B-002 | Home screen widget | 3 — per-widget command picker | `addd26e` |
+| B-100 | IR camera capture decode upgrade | 1 — NEC1 codec + decode-on-capture + encode-on-transmit | (this commit) |
 
 ---
 

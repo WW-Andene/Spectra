@@ -125,6 +125,7 @@ class IrControl(private val context: Context) {
             ?: return@withContext false
         val carrier = device.irProfile?.carrierFrequency ?: DEFAULT_CARRIER
 
+        val timings = synthesizeOrFallback(command)
         // Hold the mutex across the whole repeat sequence so a single
         // press-and-hold transmits as a coherent N-burst train rather
         // than interleaving with another caller's bursts.
@@ -132,7 +133,7 @@ class IrControl(private val context: Context) {
             var ok = true
             for (i in 0 until repeatCount) {
                 try {
-                    irManager?.transmit(carrier, command.rawTimings)
+                    irManager?.transmit(carrier, timings)
                     delay(REPEAT_DELAY_MS)
                 } catch (e: Exception) {
                     Log.e(TAG, "Repeated transmit failed at iteration $i", e)
@@ -162,13 +163,22 @@ class IrControl(private val context: Context) {
             ?: _devices.value[deviceId]?.irProfile?.carrierFrequency
             ?: DEFAULT_CARRIER
 
+        // Pick the best timings to actually send. When we have a
+        // protocol-decoded code (NEC for now, more codecs queued in the
+        // build plan), re-synthesize fresh canonical timings instead of
+        // replaying the rolling-shutter-jittered raw capture. This
+        // significantly improves transmit reliability on devices with
+        // strict NEC tolerances and lets shared profiles fire correctly
+        // on any blaster regardless of the original capturer's jitter.
+        val timings = synthesizeOrFallback(command)
+
         // Serialize: ConsumerIrManager.transmit() is a blocking call on
         // shared hardware; concurrent invocations are not safe across
         // OEM implementations. A waiter just queues — pleasant from the
         // caller's perspective since suspendable.
         txMutex.withLock {
             try {
-                irManager.transmit(carrier, command.rawTimings)
+                irManager.transmit(carrier, timings)
                 _lastTransmitResult.value = TransmitResult(true, deviceId, commandName)
                 Log.d(TAG, "Transmitted '$commandName' to $deviceId @ ${carrier}Hz")
                 true
@@ -186,6 +196,29 @@ class IrControl(private val context: Context) {
      * Standard command names used across the app.
      * UI maps these to buttons on the remote screen.
      */
+    /**
+     * Pick the timings array to actually transmit. When the IrCommand has
+     * a protocol-decoded [IrCommand.code] for a protocol we can encode
+     * (currently NEC), re-synthesize canonical timings — same address +
+     * command, but emitted with nominal microsecond widths instead of
+     * the rolling-shutter-jittered values captured by the camera.
+     *
+     * Falls back to [IrCommand.rawTimings] for any protocol we don't
+     * have an encoder for, for codes that are null, or for commands
+     * captured via brute-force / DB import where rawTimings is the
+     * canonical form.
+     */
+    private fun synthesizeOrFallback(command: IrCommand): IntArray {
+        val code = command.code
+        if (code != null) {
+            when (command.protocol) {
+                IrProtocol.NEC -> return com.andene.spectra.modules.ir.protocols.NecCodec.encodeFromPacked(code)
+                else -> Unit
+            }
+        }
+        return command.rawTimings
+    }
+
     object Commands {
         const val POWER = "power"
         const val VOL_UP = "vol_up"

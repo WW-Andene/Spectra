@@ -262,14 +262,33 @@ class IrCameraCapture(private val context: Context) {
         }
 
         val protocol = attemptProtocolDecode(timings.toList())
+
+        // Try a full bit-decode for protocols we have a codec for. When
+        // it succeeds we store the protocol code on the IrCommand —
+        // smaller, canonical, and re-synthesizable on any IR blaster
+        // regardless of the original capture's per-row jitter. The raw
+        // timings stay populated as a fallback for IrControl.transmit
+        // until B-100 phase 3 wires the encode path.
+        val packedCode: Long? = when (protocol) {
+            IrProtocol.NEC ->
+                com.andene.spectra.modules.ir.protocols.NecCodec.decode(timings)?.let {
+                    if (it.isRepeat) null else it.packed()
+                }
+            else -> null
+        }
+
         _capturedCommand.value = IrCommand(
             name = "captured_${System.currentTimeMillis()}",
             rawTimings = timings,
             protocol = protocol ?: IrProtocol.RAW,
+            code = packedCode,
             capturedVia = CaptureMethod.CAMERA_DECODE,
         )
         _captureState.value = CaptureState.DECODED
-        Log.d(TAG, "Decoded ${timings.size} pulses, protocol: $protocol, threshold: $threshold")
+        Log.d(
+            TAG,
+            "Decoded ${timings.size} pulses, protocol: $protocol, code: ${packedCode?.let { "0x%04X".format(it) }}, threshold: $threshold",
+        )
     }
 
     /**
