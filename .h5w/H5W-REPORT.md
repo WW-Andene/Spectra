@@ -72,6 +72,61 @@ in favour of a clipboard-write affordance: macro long-press →
 "Copy NFC trigger URI" copies `spectra://macro/<id>` for paste
 into any existing NFC writer app.
 
+## §BUILD-LOOP — weakness-bypass run (user pivot: "implement all the fixes... then innovate")
+
+Audit produced a 16-item weakness list across architecture, coverage,
+operations, and UX tiers. Run shipped 9 atomic commits closing 13
+weaknesses; 3 deferred with documented rationale.
+
+### Closed in this run
+
+| ID | Weakness | Commit |
+|----|----------|--------|
+| B-200 | Carrier auto-tune retry on transmit failure | `c78ef24` |
+| B-201 | Atomic device save (Files.move ATOMIC_MOVE) | `c78ef24` |
+| B-202 | Hold-to-repeat on remote pad uses NEC repeat frames | `c78ef24` |
+| B-203 | Anonymised library export option | `c78ef24` |
+| B-205 | Panasonic / Kaseikyo codec (48-bit, vendor-aware) | `2c6c218` |
+| B-206 | RC6 mode 0 codec (Manchester encoding) | `9926af9` |
+| B-208 | Acoustic+EM as matcher tiebreakers | `08c3f48` |
+| B-209 | Roku ECP control over LAN | `216e357` |
+| B-210 | LAN IR-blaster bridge (HTTP relay for blaster-less phones) | `216e357` |
+| B-214 | First-launch onboarding (4-modality explainer) | `b0a8479` |
+| B-215 | Rooms / zones with filter chips | `b0a8479` |
+| INNOV-1 | SSDP Roku auto-discovery in network endpoint dialog | `5f291d0` |
+
+### Deferred with rationale
+
+| ID | Reason |
+|----|--------|
+| B-207 | Brute-force whole-remote — bundled-DB picker covers the same need without per-button sweep |
+| B-211 | BLE smart-bulb GATT — needs per-vendor protocol impls (Hue / Tuya / Yeelight); endpoint scheme `ble:` reserved for future work |
+| B-212 | NFC P2P share — Android Beam removed in API 33+, NFC tag capacity (~500 bytes) too small for typical IR-with-rawTimings profile, clipboard share covers device-to-device |
+| B-213 | Custom remote layouts — significant drag-drop UI work; queued for a focused phase |
+
+### Architecture impact
+
+Two structural shifts in this run that change Spectra's ceiling:
+
+1. **Network-control architecture (B-209/B-210).** DeviceProfile
+   gains a free-form `controlEndpoint` with scheme prefixes
+   (`roku:`, `bridge:`, future `ble:`). IrControl.sendCommand
+   prefers network when present, falls back to IR on failure.
+   This breaks the "RF discovery dead-ends in identification only"
+   architectural ceiling — a discovered Roku is now a controllable
+   Roku. Closes weakness #2.
+
+2. **Codec round-trip coverage.** With NEC, Samsung, LG, Sony,
+   Panasonic, and RC6 codecs in place, captured commands now
+   re-synthesize to canonical timings on transmit instead of
+   replaying rolling-shutter-jittered raw bursts. Cross-phone
+   profile sharing now produces clean IR even when phones differ
+   in camera characteristics. Closes weakness #4 partially (still
+   missing JVC, NEC2, Mitsubishi, AC remotes — diminishing-return
+   territory).
+
+---
+
 ## §BUILD-LOOP — core-feature run (user pivot: "focus on improving main feature")
 
 The audit had been climbing through Tier 1/2 convenience features
