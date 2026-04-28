@@ -50,6 +50,30 @@ class IrBruteForce(private val context: Context) {
         )
 
         /**
+         * Tokenise a brand string into lowercase word tokens of length ≥ 2.
+         * Used by the brand-narrowing prefix; tokens shorter than 2 chars
+         * (e.g. punctuation) produce no useful match.
+         */
+        fun String?.brandTokens(): Set<String> =
+            this?.lowercase()
+                ?.split(Regex("\\W+"))
+                ?.filter { it.length >= 2 }
+                ?.toSet()
+                .orEmpty()
+
+        /**
+         * Whether a database manufacturer entry shares any word token with
+         * the user's detected brand. Word-level intersection avoids the
+         * false positives substring matching produced (e.g. detected
+         * 'lginsignia' would substring-match 'lg' but doesn't share a token).
+         */
+        fun matchesBrand(manufacturer: String, brandTokens: Set<String>): Boolean {
+            if (brandTokens.isEmpty()) return false
+            val mfTokens = manufacturer.brandTokens()
+            return mfTokens.any { it in brandTokens }
+        }
+
+        /**
          * Encode an NEC command from address + command bytes.
          * NEC format: 9000µs mark, 4500µs space, then 32 bits
          * Bit 0: 562µs mark + 562µs space
@@ -240,17 +264,15 @@ class IrBruteForce(private val context: Context) {
 
         // When the caller already knows the brand (e.g. inferred from RF),
         // try those entries first before falling back to the full sweep.
-        val brand = brandFilter?.trim()?.lowercase()?.takeIf { it.isNotEmpty() }
-        val codeOrder: List<Pair<IrProtocol, List<Pair<String, IntArray>>>> = if (brand != null) {
+        val brandTokens = brandFilter.brandTokens()
+        val codeOrder: List<Pair<IrProtocol, List<Pair<String, IntArray>>>> = if (brandTokens.isNotEmpty()) {
             val (prefer, rest) = POWER_CODES.entries.map { it.toPair() }.partition { (_, codes) ->
-                codes.any { (manufacturer, _) ->
-                    manufacturer.lowercase().contains(brand) || brand.contains(manufacturer.lowercase().substringBefore(' '))
-                }
+                codes.any { (manufacturer, _) -> matchesBrand(manufacturer, brandTokens) }
             }
             // Within preferred protocols, also reorder so brand-matching entries fire first.
             val reorderedPrefer = prefer.map { (proto, codes) ->
                 val (matching, others) = codes.partition { (manufacturer, _) ->
-                    manufacturer.lowercase().contains(brand) || brand.contains(manufacturer.lowercase().substringBefore(' '))
+                    matchesBrand(manufacturer, brandTokens)
                 }
                 proto to (matching + others)
             }
