@@ -16,7 +16,7 @@
     <string name="confirm_delete_macro">Delete macro \'%1$s\'?</string>
     <string name="empty_devices">No devices learned yet.\nHold your phone near a device and tap Scan.</string>
     <string name="empty_macros">No macros yet.</string>
-    <string name="clipboard_not_json">Clipboard doesn\'t look like a Spectra profile (expected JSON).</string>
+    <string name="clipboard_not_json">Clipboard doesn\'t look like a Spectra profile. Tap SHARE on a saved device first to copy a valid profile to your clipboard.</string>
     <string name="clipboard_parse_failed">Could not parse clipboard contents</string>
     <string name="scan_permissions_required">Scanning needs mic, location, and Bluetooth. Grant them in Settings to continue.</string>
     <string name="cap_ir">IR — infrared blaster for sending remote codes. Disabled if your phone has no IR transmitter.</string>

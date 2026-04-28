@@ -53,10 +53,17 @@ class DeviceRepository(private val context: Context) {
     }
 
     /**
-     * Load all saved device profiles.
+     * Load all saved device profiles. Skips and logs files that fail to
+     * parse — a single corrupted profile shouldn't poison the rest of the
+     * library. The count of skips is surfaced via [lastLoadSkipCount] so
+     * the viewmodel can tell the user some profiles were dropped.
      */
+    var lastLoadSkipCount: Int = 0
+        private set
+
     suspend fun loadAll(): List<DeviceProfile> = withContext(Dispatchers.IO) {
-        try {
+        var skips = 0
+        val results = try {
             devicesDir.listFiles { f -> f.extension == "json" }
                 ?.mapNotNull { file ->
                     try {
@@ -64,13 +71,17 @@ class DeviceRepository(private val context: Context) {
                         data.toModel()
                     } catch (e: Exception) {
                         Log.w(TAG, "Failed to load ${file.name}", e)
+                        skips++
                         null
                     }
                 } ?: emptyList()
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to load devices", e)
+            Log.e(TAG, "Failed to load devices directory", e)
+            skips = -1 // sentinel: directory-level failure
             emptyList()
         }
+        lastLoadSkipCount = skips
+        results
     }
 
     /**

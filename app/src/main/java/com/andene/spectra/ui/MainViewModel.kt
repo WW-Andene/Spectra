@@ -193,6 +193,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private fun loadSavedDevices() {
         viewModelScope.launch {
             _savedDevices.value = repository.loadAll()
+            // Surface a parse-skip count so the user knows some profiles
+            // were corrupted (rather than silently treating them as
+            // "deleted"). -1 means the whole devices directory failed.
+            val skips = repository.lastLoadSkipCount
+            when {
+                skips > 0 -> emitToast("$skips saved profile(s) couldn't be loaded — files may be corrupted")
+                skips < 0 -> emitToast("Couldn't read saved devices folder")
+            }
         }
     }
 

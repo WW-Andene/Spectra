@@ -130,6 +130,20 @@ class SpectraOrchestrator(private val context: Context) {
         appendLog("  RF: ${rfSig.wifiDevices.size} WiFi, ${rfSig.bleDevices.size} BLE devices")
         appendLog("  EM: field strength ${emSig?.fieldStrength ?: 0f} µT")
 
+        // Surface module-level errors that were previously logcat-only — the
+        // user couldn't tell whether 'no signature' meant 'we listened and
+        // heard silence' or 'the mic refused to open'.
+        if (acoustic.state.value == AcousticFingerprint.State.ERROR) {
+            appendLog("  ⚠ Acoustic module errored — check microphone access.")
+        }
+        if (rf.state.value == RfFingerprint.State.ERROR) {
+            appendLog("  ⚠ RF module errored — check Bluetooth + Location.")
+        }
+        if (em.state.value == EmFingerprint.State.ERROR ||
+            em.state.value == EmFingerprint.State.NO_SENSOR) {
+            appendLog("  ⚠ EM module unavailable — phone may have no magnetometer.")
+        }
+
         // Build candidate profile, with a best-effort manufacturer/category
         // guess from the RF + mDNS hints that the RF module already produced.
         val (inferredManufacturer, inferredCategory) = inferIdentity(rfSig)
