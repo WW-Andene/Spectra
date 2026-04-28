@@ -103,6 +103,18 @@ class HomeFragment : Fragment() {
             importFromClipboard()
         }
 
+        // Surface viewmodel-emitted toasts (save failures, etc.). Home is
+        // always the surviving root destination so collecting here gives us
+        // user feedback for every persistence error regardless of which
+        // screen the user was on when the save fired.
+        viewLifecycleOwner.lifecycleScope.launch {
+            vm.toasts.collect { msg ->
+                android.widget.Toast.makeText(
+                    requireContext(), msg, android.widget.Toast.LENGTH_LONG,
+                ).show()
+            }
+        }
+
         // ── Macros ────────────────────────────────────────────
         val macroChips = view.findViewById<LinearLayout>(R.id.macroChips)
         val macroRunning = view.findViewById<TextView>(R.id.macroRunning)

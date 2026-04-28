@@ -31,11 +31,32 @@ Full §FMT detail in `H5W-FINDINGS.md`. This is the priority view.
 | 24 | F-026 | low | T0 | CODE | high | code review | Brand-filter substring matching could over-match in edge cases (no current victims) |
 | 25 | F-015 | low | T1 | CODE | confirmed | code review | `_lastTransmitResult` written but no consumer; dead state |
 
+### Cycle 3 (2026-04-28, anti-exhaustion 55Q sweep)
+
+After cycle 2 declared queue empty, applied §SIM.6 to detect Premature
+Completion. 11 new findings — every layer of the 55-question sweep
+contributed. Premature completion confirmed: cycles 1+2 missed an
+entire delivery-infrastructure dimension.
+
+| # | ID | Sev | Tier | Mod | Source | Summary |
+|---|------|-----|------|-----|--------|---------|
+| 31 | F-030 | medium | T1 | CODE | §SIM.6 L1.Q2 | Brute-force silent transmit-failure skip — no scanLog entry on hardware reject |
+| 32 | F-032 | medium | T1 | CODE | §SIM.6 L1.Q2 + L2.Q14 | DeviceRepository / MacroRepository swallow save errors; no UI feedback |
+| 33 | F-035 | medium | T1 | APP | §SIM.6 L4.Q40 | No README.md — new dev can't onboard |
+| 34 | F-031 | low | T2 | CODE | §SIM.6 L1.Q3 | IrCodeDatabase first-load on main thread (Json.decodeFromString blocking) |
+| 35 | F-033 | medium | T2 | APP | §SIM.6 L3.Q26 | No R8/ProGuard config; debug Log statements ship in release |
+| 36 | F-034 | low | T1 | H5W | §SIM.6 L4.Q39 | No undo on device/macro deletion — destructive without recovery |
+| 37 | F-036 | low | T1 | H5W | §SIM.6 L5.Q49 | scanLog error messages don't tell user how to recover |
+| 38 | F-040 | low | T0 | CODE | §SIM.6 L3.Q28 | Duplicate `kotlinx.coroutines.launch` import in RemoteFragment alongside wildcard |
+| 39 | F-037 | low | T2 | APP | §SIM.6 L6.Q51,Q55 | Build/run/test instructions absent — fixed by F-035 README addition |
+
 ### T3-Blocked findings (require user decision)
 
 | # | ID | Decision Needed | Recommendation | Why T3 |
 |---|----|-----------------|----------------|--------|
 | - | F-004 | Persist mid-flow brute-force state across process death? | **Defer permanently** — uncommon, complex (would require persisting a coroutine waypoint). Adds complexity for marginal gain. | Schema change to persist mid-flow state |
+| - | F-038 | Configure CI/CD pipeline? | **Defer** — requires choice of provider (GitHub Actions, GitLab, etc.) and a working secret store for signing. Out of scope without user infrastructure decisions. | Infrastructure / external account |
+| - | F-039 | Configure release signing? | **Defer** — requires user keystore + a secret-management plan. Cannot generate a real signing key autonomously without leaking it. | Cryptographic key material |
 
 ### Cycle 2 (2026-04-28, post-CLAUDE.md autonomy)
 

@@ -250,6 +250,7 @@ class IrBruteForce(private val context: Context) {
      */
     suspend fun startSweep(
         brandFilter: String? = null,
+        onSkip: ((protocol: IrProtocol, manufacturer: String, reason: String) -> Unit)? = null,
         onAttempt: suspend (protocol: IrProtocol, manufacturer: String, attemptNum: Int) -> Boolean,
     ) {
         if (irManager == null || !irManager.hasIrEmitter()) {
@@ -308,6 +309,7 @@ class IrBruteForce(private val context: Context) {
                     irManager.transmit(carrier, timings)
                 } catch (e: Exception) {
                     Log.w(TAG, "Transmit failed for $manufacturer/$protocol @ ${carrier}Hz", e)
+                    onSkip?.invoke(protocol, manufacturer, e.message ?: "transmit error")
                     continue
                 }
 

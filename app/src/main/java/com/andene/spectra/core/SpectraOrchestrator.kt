@@ -199,7 +199,14 @@ class SpectraOrchestrator(private val context: Context) {
             appendLog("Module 5: Starting brute force sweep...")
         }
 
-        bruteForce.startSweep(brandFilter = brandHint) { protocol, manufacturer, attempt ->
+        bruteForce.startSweep(
+            brandFilter = brandHint,
+            onSkip = { protocol, manufacturer, reason ->
+                // Surface transmit-time skips into the user-visible scan log
+                // — silent skips were hiding hardware-reject failures.
+                appendLog("  ⚠ Skipped $manufacturer ($protocol): $reason")
+            },
+        ) { protocol, manufacturer, attempt ->
             appendLog("  Trying $manufacturer ($protocol) — attempt #$attempt")
             onAttempt(protocol, manufacturer, attempt)
         }

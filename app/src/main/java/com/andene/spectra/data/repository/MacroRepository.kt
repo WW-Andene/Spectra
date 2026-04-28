@@ -47,15 +47,17 @@ class MacroRepository(private val context: Context) {
      * Replace the on-disk macro list with this one.
      * Atomic via temp-file-then-rename so a crash mid-write doesn't corrupt.
      */
-    suspend fun saveAll(macros: List<Macro>) = withContext(Dispatchers.IO) {
+    suspend fun saveAll(macros: List<Macro>): Boolean = withContext(Dispatchers.IO) {
         try {
             val data = MacroFile(macros = macros.map { it.toSerializable() })
             val tmp = File(file.parentFile, "$FILE_NAME.tmp")
             tmp.writeText(json.encodeToString(data))
             if (file.exists()) file.delete()
             tmp.renameTo(file)
+            true
         } catch (e: Exception) {
             Log.e(TAG, "Failed to save macros", e)
+            false
         }
     }
 

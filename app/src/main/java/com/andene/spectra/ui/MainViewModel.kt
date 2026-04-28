@@ -8,8 +8,12 @@ import com.andene.spectra.core.SpectraOrchestrator
 import com.andene.spectra.data.models.*
 import com.andene.spectra.data.repository.DeviceRepository
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -19,6 +23,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: DeviceRepository = app.repository
     val codeDatabase = app.codeDatabase
     private val macroRepository = app.macroRepository
+
+    /** Transient one-shot toasts (e.g. "Save failed"). Replay=0 so a
+     *  subscribed fragment doesn't see stale events on rebind. */
+    private val _toasts = MutableSharedFlow<String>(
+        replay = 0,
+        extraBufferCapacity = 8,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
+    val toasts: SharedFlow<String> = _toasts.asSharedFlow()
+
+    private fun emitToast(message: String) {
+        _toasts.tryEmit(message)
+    }
+
+    private suspend fun saveDeviceWithFeedback(profile: DeviceProfile) {
+        if (!repository.save(profile)) emitToast("Couldn't save ${profile.name ?: "device"} — storage may be full")
+    }
+
+    private suspend fun saveMacrosWithFeedback(macros: List<Macro>) {
+        if (!macroRepository.saveAll(macros)) emitToast("Couldn't save macros — storage may be full")
+    }
 
     // Narrow facades so fragments don't reach into orchestrator internals.
     val orchestratorPhase: StateFlow<SpectraOrchestrator.Phase> = orchestrator.phase
@@ -115,13 +140,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             if (existing >= 0) set(existing, macro) else add(macro)
         }
         _macros.value = updated
-        viewModelScope.launch { macroRepository.saveAll(updated) }
+        viewModelScope.launch { saveMacrosWithFeedback(updated) }
     }
 
     fun deleteMacro(id: String) {
         val updated = _macros.value.filterNot { it.id == id }
         _macros.value = updated
-        viewModelScope.launch { macroRepository.saveAll(updated) }
+        viewModelScope.launch { saveMacrosWithFeedback(updated) }
     }
 
     /**
@@ -187,7 +212,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val updated = device.copy(name = name)
         _activeDevice.value = updated
         orchestrator.control.saveDevice(updated)
-        viewModelScope.launch { repository.save(updated) }
+        viewModelScope.launch { saveDeviceWithFeedback(updated) }
         loadSavedDevices()
     }
 
@@ -196,7 +221,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val updated = device.copy(category = category)
         _activeDevice.value = updated
         orchestrator.control.saveDevice(updated)
-        viewModelScope.launch { repository.save(updated) }
+        viewModelScope.launch { saveDeviceWithFeedback(updated) }
     }
 
     fun deleteDevice(deviceId: String) {
@@ -265,7 +290,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (command != null && device != null) {
             val namedCommand = command.copy(name = name)
             orchestrator.control.addCommand(device.id, namedCommand)
-            viewModelScope.launch { repository.save(device) }
+            viewModelScope.launch { saveDeviceWithFeedback(device) }
             _commandNameInput.value = ""
         }
     }
@@ -305,7 +330,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 if (device != null) {
                     _activeDevice.value = device
                     orchestrator.registerKnownDevice(device)
-                    repository.save(device)
+                    saveDeviceWithFeedback(device)
                     loadSavedDevices()
                 }
                 _screen.value = Screen.REMOTE
@@ -351,7 +376,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         orchestrator.registerKnownDevice(named)
         _activeDevice.value = named
         viewModelScope.launch {
-            repository.save(named)
+            saveDeviceWithFeedback(named)
             loadSavedDevices()
         }
     }
@@ -371,7 +396,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _activeDevice.value = updated
         orchestrator.control.saveDevice(updated)
         viewModelScope.launch {
-            repository.save(updated)
+            saveDeviceWithFeedback(updated)
             loadSavedDevices()
         }
     }
@@ -385,7 +410,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _activeDevice.value = updated
         orchestrator.control.saveDevice(updated)
         viewModelScope.launch {
-            repository.save(updated)
+            saveDeviceWithFeedback(updated)
             loadSavedDevices()
         }
     }
@@ -413,7 +438,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _activeDevice.value = updated
         orchestrator.registerKnownDevice(updated)
         viewModelScope.launch {
-            repository.save(updated)
+            saveDeviceWithFeedback(updated)
             loadSavedDevices()
         }
     }
@@ -435,7 +460,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val imported = repository.importProfile(jsonText)
             if (imported != null) {
                 orchestrator.registerKnownDevice(imported)
-                repository.save(imported)
+                saveDeviceWithFeedback(imported)
                 _activeDevice.value = imported
                 loadSavedDevices()
             }

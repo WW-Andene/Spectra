@@ -15,7 +15,6 @@ import com.andene.spectra.R
 import com.andene.spectra.modules.control.IrControl
 import com.andene.spectra.ui.MainViewModel
 import kotlinx.coroutines.*
-import kotlinx.coroutines.launch
 
 class RemoteFragment : Fragment() {
 

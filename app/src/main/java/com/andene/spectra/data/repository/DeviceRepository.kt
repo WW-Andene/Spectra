@@ -35,16 +35,20 @@ class DeviceRepository(private val context: Context) {
         get() = File(context.filesDir, DEVICES_DIR).also { it.mkdirs() }
 
     /**
-     * Save a device profile to disk.
+     * Save a device profile to disk. Returns true on success so callers can
+     * surface failures (storage full, permission revoked, etc.) instead of
+     * pretending the save worked.
      */
-    suspend fun save(profile: DeviceProfile) = withContext(Dispatchers.IO) {
+    suspend fun save(profile: DeviceProfile): Boolean = withContext(Dispatchers.IO) {
         try {
             val serializable = profile.toSerializable()
             val jsonStr = json.encodeToString(serializable)
             File(devicesDir, "${profile.id}.json").writeText(jsonStr)
             Log.d(TAG, "Saved device ${profile.id}")
+            true
         } catch (e: Exception) {
             Log.e(TAG, "Failed to save device ${profile.id}", e)
+            false
         }
     }
 
