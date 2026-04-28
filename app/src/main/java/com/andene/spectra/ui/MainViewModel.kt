@@ -69,6 +69,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val captureState: StateFlow<com.andene.spectra.modules.ir.IrCameraCapture.CaptureState> =
         orchestrator.irCapture.captureState
 
+    /** Other plausible matches the most recent scan turned up. The
+     *  Results screen renders these so the user can correct an
+     *  ambiguous auto-pick (B-102). */
+    val alternateMatches: StateFlow<List<DeviceProfile>> = orchestrator.alternateMatches
+
+    /** Switch the chosen device to one of the alternates. Updates
+     *  activeDevice; the orchestrator's discoveredDevice stays at the
+     *  scan's top-pick so re-running matchers doesn't reset the user's
+     *  manual override. */
+    fun chooseAlternateMatch(profile: DeviceProfile) {
+        _activeDevice.value = profile
+    }
+
     fun buildIrCameraAnalyzer() = orchestrator.irCapture.buildAnalyzer()
 
     // UI state

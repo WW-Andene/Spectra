@@ -32,7 +32,6 @@ camera capture, RF discovery currently dead-ending in the matcher).
 | B-100 | IR camera capture decode upgrade | 3 — RC6, JVC, Panasonic, NEC2 | TODO | wider protocol coverage |
 | B-100 | IR camera capture decode upgrade | 5 — Panasonic + RC6 codecs | TODO | RC6 needs Manchester encoding (different from PulseDistance) |
 | B-101 | Brute-force smart ordering + auto-confirm | 2 — category-hint ordering + bulk-test option | TODO | adds category metadata to POWER_CODES |
-| B-102 | Multi-device disambiguation | 1 — confidence-scored top-N picker on Results | TODO | when multiple matches close in score |
 | B-002 | Home screen widget | 4 — macro chips on multi-cell widget | TODO | bigger scope: multi-tile RemoteViews |
 | B-004 | Smart-home control over RF | 1 — BLE write to discovered devices | TODO | leverages existing RfFingerprint |
 | B-004 | Smart-home control over RF | 2 — mDNS HTTP control (Roku, etc.) | TODO | extends existing inferIdentity hints |
@@ -64,7 +63,8 @@ camera capture, RF discovery currently dead-ending in the matcher).
 | B-100 | IR camera capture decode upgrade | 2 — Samsung + LG codecs + shared PulseDistance impl | `608009a` |
 | B-100 | IR camera capture decode upgrade | 3 — multi-press averaging + per-press vote | `4ad0c58` |
 | B-100 | IR camera capture decode upgrade | 4 — Sony SIRC codec + 40 kHz protocol carrier | `cf03b2c` |
-| B-101 | Brute-force smart ordering + auto-confirm | 1 — acoustic auto-confirm via mic delta | (this commit) |
+| B-101 | Brute-force smart ordering + auto-confirm | 1 — acoustic auto-confirm via mic delta | `f6d62c4` |
+| B-102 | Multi-device disambiguation | 1 — top-N matcher + Results picker | (this commit) |
 
 ---
 

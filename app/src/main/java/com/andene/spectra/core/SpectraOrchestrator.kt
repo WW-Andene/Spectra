@@ -73,6 +73,13 @@ class SpectraOrchestrator(private val context: Context) {
     private val _discoveredDevice = MutableStateFlow<DeviceProfile?>(null)
     val discoveredDevice: StateFlow<DeviceProfile?> = _discoveredDevice
 
+    /** Other plausible matches the scan turned up beyond the chosen
+     *  one (B-102). Empty when only one candidate cleared the
+     *  threshold. The Results screen surfaces these so the user can
+     *  correct an ambiguous auto-pick. */
+    private val _alternateMatches = MutableStateFlow<List<DeviceProfile>>(emptyList())
+    val alternateMatches: StateFlow<List<DeviceProfile>> = _alternateMatches
+
     private val _log = MutableStateFlow<List<String>>(emptyList())
     val log: StateFlow<List<String>> = _log
 
@@ -113,6 +120,7 @@ class SpectraOrchestrator(private val context: Context) {
         // (which would let the viewmodel promote it as if it had just been
         // discovered).
         _discoveredDevice.value = null
+        _alternateMatches.value = emptyList()
         _phase.value = Phase.SCANNING_PASSIVE
         appendLog("Starting passive scan — hold phone near device")
 
@@ -165,12 +173,20 @@ class SpectraOrchestrator(private val context: Context) {
                 emSignature = emSig
             )
 
-            // Try to match against known devices
-            val match = matchKnownDevice(candidate)
+            // Try to match against known devices. We pull the top 3
+            // candidates so the UI can surface ambiguous cases (two
+            // TVs in the same room, etc.) — the chosen primary is
+            // matches[0], alternateMatches gets the rest.
+            val matches = matchTopNKnownDevices(candidate, n = 3)
+            val match = matches.firstOrNull()
 
             if (match != null) {
                 appendLog("Device identified: ${match.name ?: match.manufacturer ?: "Unknown"}")
                 _discoveredDevice.value = match
+                _alternateMatches.value = matches.drop(1)
+                if (matches.size > 1) {
+                    appendLog("  (${matches.size - 1} other candidate(s) in range — alternates available)")
+                }
                 _phase.value = if (match.irProfile?.commands?.isNotEmpty() == true) {
                     Phase.READY
                 } else {
@@ -179,6 +195,7 @@ class SpectraOrchestrator(private val context: Context) {
             } else {
                 appendLog("New device — not in known database")
                 _discoveredDevice.value = candidate
+                _alternateMatches.value = emptyList()
                 _phase.value = Phase.DEVICE_UNKNOWN
             }
         } finally {
@@ -329,6 +346,14 @@ class SpectraOrchestrator(private val context: Context) {
     private fun matchKnownDevice(candidate: DeviceProfile): DeviceProfile? {
         val snapshot = synchronized(knownSignatures) { knownSignatures.toList() }
         return matchKnownDevice(candidate, snapshot, SIMILARITY_THRESHOLD)
+    }
+
+    /** Top-N matches above the similarity threshold (B-102). Sorted by
+     *  confidence descending. Used to populate [alternateMatches] when
+     *  scanPassive finds more than one plausible candidate. */
+    private fun matchTopNKnownDevices(candidate: DeviceProfile, n: Int = 3): List<DeviceProfile> {
+        val snapshot = synchronized(knownSignatures) { knownSignatures.toList() }
+        return matchTopN(candidate, snapshot, SIMILARITY_THRESHOLD, n)
     }
 
     // ── Persistence Hooks ─────────────────────────────────────

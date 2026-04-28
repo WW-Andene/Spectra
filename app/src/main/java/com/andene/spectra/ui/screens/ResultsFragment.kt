@@ -93,6 +93,34 @@ class ResultsFragment : Fragment() {
             btnBruteForce.text = getString(R.string.brute_force_no_blaster)
         }
 
+        // B-102 multi-device disambiguation. When the scan turned up
+        // more than one plausible match for the room's RF, show a
+        // banner with the alternate names; tap to open a picker that
+        // re-targets activeDevice. Banner stays hidden when there's
+        // only one match.
+        val alternateMatchesHint = view.findViewById<TextView>(R.id.alternateMatchesHint)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                vm.alternateMatches.collect { alternates ->
+                    if (alternates.isEmpty()) {
+                        alternateMatchesHint.visibility = View.GONE
+                    } else {
+                        alternateMatchesHint.visibility = View.VISIBLE
+                        alternateMatchesHint.text = getString(
+                            R.string.alternate_matches_hint_format,
+                            alternates.size,
+                            alternates.joinToString(", ") {
+                                it.name ?: getString(R.string.device_unnamed_label)
+                            },
+                        )
+                        alternateMatchesHint.setOnClickListener {
+                            showAlternateMatchPicker(alternates)
+                        }
+                    }
+                }
+            }
+        }
+
         btnLearnCamera.setOnClickListener {
             val name = inputName.text?.toString() ?: ""
             if (name.isNotBlank()) vm.saveDiscoveredDevice(name)
@@ -142,6 +170,26 @@ class ResultsFragment : Fragment() {
                 vm.navigate(MainViewModel.Screen.HOME)
             }
             .setNegativeButton(R.string.action_keep_editing, null)
+            .show()
+    }
+
+    private fun showAlternateMatchPicker(alternates: List<com.andene.spectra.data.models.DeviceProfile>) {
+        // Each label includes the confidence percentage so the user can
+        // sanity-check the matcher's ranking — e.g. "Living Room TV
+        // (95%)" vs "Bedroom TV (76%)".
+        val labels = alternates.map {
+            getString(
+                R.string.alternate_matches_picker_item_format,
+                it.name ?: getString(R.string.device_unnamed_label),
+                (it.confidence * 100).toInt(),
+            )
+        }.toTypedArray()
+        android.app.AlertDialog.Builder(requireContext())
+            .setTitle(R.string.alternate_matches_picker_title)
+            .setItems(labels) { _, which ->
+                vm.chooseAlternateMatch(alternates[which])
+            }
+            .setNegativeButton(R.string.action_cancel_dialog, null)
             .show()
     }
 }

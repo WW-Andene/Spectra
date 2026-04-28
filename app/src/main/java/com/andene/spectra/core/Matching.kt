@@ -97,20 +97,33 @@ internal fun matchKnownDevice(
     candidate: DeviceProfile,
     known: List<DeviceProfile>,
     threshold: Float,
-): DeviceProfile? {
-    val candidateRf = candidate.rfSignature ?: return null
+): DeviceProfile? = matchTopN(candidate, known, threshold, n = 1).firstOrNull()
 
-    var bestMatch: DeviceProfile? = null
-    var bestScore = 0f
-
-    for (k in known) {
-        val knownRf = k.rfSignature ?: continue
-        val score = compareRf(candidateRf, knownRf)
-        if (score > bestScore) {
-            bestScore = score
-            bestMatch = k
+/**
+ * Find up to [n] top-scoring matches for a candidate, sorted by score
+ * descending. Used by B-102 multi-device disambiguation: when a scan
+ * lands on a room with multiple registered devices that share parts
+ * of their RF signature (two TVs on the same WiFi AP, or a TV +
+ * soundbar with overlapping BLE), the UI surfaces alternates so the
+ * user can correct an ambiguous auto-pick.
+ *
+ * Returned profiles each have [DeviceProfile.confidence] set to their
+ * computed score so the caller can render confidence indicators.
+ * Profiles with score < [threshold] are filtered out — same gate as
+ * the single-best [matchKnownDevice].
+ */
+internal fun matchTopN(
+    candidate: DeviceProfile,
+    known: List<DeviceProfile>,
+    threshold: Float,
+    n: Int = 3,
+): List<DeviceProfile> {
+    val candidateRf = candidate.rfSignature ?: return emptyList()
+    return known
+        .mapNotNull { k ->
+            val score = k.rfSignature?.let { compareRf(candidateRf, it) } ?: return@mapNotNull null
+            if (score < threshold) null else k.copy(confidence = score)
         }
-    }
-
-    return if (bestScore >= threshold) bestMatch?.copy(confidence = bestScore) else null
+        .sortedByDescending { it.confidence }
+        .take(n)
 }

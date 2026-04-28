@@ -57,6 +57,21 @@
             android:textSize="12sp" />
     </LinearLayout>
 
+    <!-- Alternate-match hint (B-102). Shown when the scan turned up
+         multiple plausible candidates within range; tap opens a
+         picker so the user can correct an ambiguous auto-pick. -->
+    <TextView
+        android:id="@+id/alternateMatchesHint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/accent_warning"
+        android:textSize="12sp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="12dp"
+        android:padding="8dp"
+        android:background="@color/bg_card_elevated"
+        android:visibility="gone" />
+
     <!-- Name input -->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
