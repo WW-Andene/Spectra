@@ -271,4 +271,42 @@ Decision: writing checkpoint and continuing into cycle 6 per CLAUDE.md
 permitted. Pushing cycle 5 results before cycle 6 begins.
 ──────────────────────────────────────────────────
 
+## Session: 2026-04-28 (cycle 6) — Mode: §AUTO Full + always-loop
+
+### Phase 4 (cycle 6): execute fresh sweep
+
+- [ts] F-079 FIXED T1 [ResultsFragment.kt + strings.xml] — back-press confirm when device-name input has unsaved text — Verified: yes
+- [ts] F-080 FIXED T1 [themes.xml + colors.xml] — removed 3 unused resources (ModuleBadge style, divider colour, btn_remote_pressed colour) — Verified: yes (zero remaining grep hits)
+- [ts] F-081 FIXED T0 [RfFingerprint.kt] — removed unused BluetoothAdapter import — Verified: yes
+
+### Phase 5: Verify + Expansion (cycle 6)
+
+- Cross-cycle micro-H5W on cycle 5 commits: F-067 chip warning correctly
+  surfaces stale steps that F-066 catches at runtime; F-073/074 boxing fix
+  verified via re-read of System.arraycopy concat path; F-078 DB merge has
+  no dropped-data path for any existing command name not in the entry.
+- §SIM.6 sweep on resources: F-080 caught dead style + 2 dead colours
+  (lint flagged them but warningsAsErrors was rolled back, so they
+  needed an explicit removal pass).
+- §SIM.6 sweep on imports: F-081 caught one orphaned BluetoothAdapter.
+  Other files clean per heuristic scan.
+- §SIM.6 sweep on back-press dirty-state: F-079 mirrors F-060 onto
+  ResultsFragment; LearnFragment + HomeFragment + RemoteFragment have
+  no per-screen unsaved state to lose.
+
+### Phase 6: Evolve (cycle 6)
+
+──── AUTO CHECKPOINT 8 (CYCLE 6 LOOP-POINT) ────
+Cycle: 8 | Cycle-6 fixes: 3
+Total session fixes: 70 (cycles 1–5) + 3 (cycle 6) = 73
+Marginal-find rate: dropping. Cycle 6 was a polish + cleanup pass — the
+real defects from cycle 5's micro-H5W are closed; remaining T2 candidates
+are architectural (Compose, deep links, predictive back, edge-to-edge,
+repeatOnLifecycle, foreground-service, ViewModelFactory hardening) and
+need user direction.
+Decision: pushing cycle 6 results. Per CLAUDE.md the loop continues into
+cycle 7, but useful work-rate is now ≤1 finding per pass — the loop has
+reached equilibrium pending architectural choices from the user.
+──────────────────────────────────────────────────
+
 ### Handoff Log
