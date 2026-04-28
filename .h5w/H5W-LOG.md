@@ -327,6 +327,25 @@ reached equilibrium pending architectural choices from the user.
 
 ### Phase 6: Evolve (cycle 7)
 
+## Session: 2026-04-28 (cycle 8) — Mode: §AUTO Full + always-loop
+
+User: "fix t3". Both T3 items closed.
+
+### Phase 4 (cycle 8)
+
+- [ts] F-039 FIXED T3→done [build.gradle.kts + keystore.properties.example + .gitignore + README.md] — pluggable release signing via keystore.properties; falls back to debug signing when absent — Verified: yes
+- [ts] F-004 FIXED T3→done [Models.kt + BruteForceCheckpointRepository.kt (new) + SpectraApp.kt + IrBruteForce.kt + SpectraOrchestrator.kt + MainViewModel.kt + HomeFragment.kt + fragment_home.xml + strings.xml] — atomic single-slot checkpoint, 24h stale cutoff, resume banner on Home with Resume/Dismiss — Verified: yes
+
+──── AUTO CHECKPOINT 10 (CYCLE 8 — T3 CLOSED) ────
+Cycle: 10 | Cycle-8 fixes: 2 (both T3 → done)
+Total session fixes: 75 + 2 = 77
+T3 queue: empty (F-004, F-038, F-039 all closed)
+Remaining T2 candidates are architectural (Compose, deep links,
+predictive back, edge-to-edge, repeatOnLifecycle, foreground-service,
+ViewModelFactory hardening).
+Decision: pushing cycle 8. Loop continues per CLAUDE.md.
+──────────────────────────────────────────────────
+
 ──── AUTO CHECKPOINT 9 (CYCLE 7 LOOP-POINT) ────
 Cycle: 9 | Cycle-7 fixes: 2
 Total session fixes: 73 (cycles 1–6) + 2 (cycle 7) = 75

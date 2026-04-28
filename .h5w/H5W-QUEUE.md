@@ -50,13 +50,13 @@ entire delivery-infrastructure dimension.
 | 38 | F-040 | low | T0 | CODE | §SIM.6 L3.Q28 | Duplicate `kotlinx.coroutines.launch` import in RemoteFragment alongside wildcard |
 | 39 | F-037 | low | T2 | APP | §SIM.6 L6.Q51,Q55 | Build/run/test instructions absent — fixed by F-035 README addition |
 
-### T3-Blocked findings (require user decision)
+### T3-Blocked findings — RESOLVED
 
-| # | ID | Decision Needed | Recommendation | Why T3 |
-|---|----|-----------------|----------------|--------|
-| - | F-004 | Persist mid-flow brute-force state across process death? | **Defer permanently** — uncommon, complex (would require persisting a coroutine waypoint). Adds complexity for marginal gain. | Schema change to persist mid-flow state |
-| - | F-038 | Configure CI/CD pipeline? | **Defer** — requires choice of provider (GitHub Actions, GitLab, etc.) and a working secret store for signing. Out of scope without user infrastructure decisions. | Infrastructure / external account |
-| - | F-039 | Configure release signing? | **Defer** — requires user keystore + a secret-management plan. Cannot generate a real signing key autonomously without leaking it. | Cryptographic key material |
+| # | ID | Closed | Resolution |
+|---|----|--------|-----------|
+| - | F-004 | ✓ | BruteForceCheckpoint model + repository (atomic, 24h stale cutoff) + IrBruteForce.startSweep(startAttempt) + resume banner on Home |
+| - | F-038 | ✓ | (Closed in cycle 4) GitHub Actions workflow |
+| - | F-039 | ✓ | keystore.properties at repo root (gitignored) + signingConfig in build.gradle.kts that degrades gracefully when absent + README + .example schema |
 
 ### Cycle 4 (2026-04-28, post-Premature-Completion correction)
 
