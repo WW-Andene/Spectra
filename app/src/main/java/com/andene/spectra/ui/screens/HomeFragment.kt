@@ -155,10 +155,12 @@ class HomeFragment : Fragment() {
         // primary "library management" affordances.
         view.findViewById<ImageButton>(R.id.btnOverflow).setOnClickListener { anchor ->
             PopupMenu(requireContext(), anchor).apply {
-                menu.add(0, MENU_BACKUP, 0, R.string.action_backup_library)
-                menu.add(0, MENU_RESTORE, 1, R.string.action_restore_library)
+                menu.add(0, MENU_ALL_OFF, 0, R.string.action_all_off)
+                menu.add(0, MENU_BACKUP, 1, R.string.action_backup_library)
+                menu.add(0, MENU_RESTORE, 2, R.string.action_restore_library)
                 setOnMenuItemClickListener { item ->
                     when (item.itemId) {
+                        MENU_ALL_OFF -> { vm.runAllOff(); true }
                         MENU_BACKUP -> { startBackupExport(); true }
                         MENU_RESTORE -> { startBackupImport(); true }
                         else -> false
@@ -523,7 +525,8 @@ class HomeFragment : Fragment() {
     }
 
     companion object {
-        private const val MENU_BACKUP = 1
-        private const val MENU_RESTORE = 2
+        private const val MENU_ALL_OFF = 1
+        private const val MENU_BACKUP = 2
+        private const val MENU_RESTORE = 3
     }
 }

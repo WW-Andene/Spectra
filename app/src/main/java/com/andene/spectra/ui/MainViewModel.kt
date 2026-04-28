@@ -181,7 +181,46 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun runMacro(id: String) {
         if (macroJob?.isActive == true) return
         val macro = _macros.value.firstOrNull { it.id == id } ?: return
+        executeMacro(macro)
+    }
 
+    /**
+     * Synthesize and run an "all off" macro — fire POWER on every saved
+     * device that has a POWER command bound. The macro isn't persisted;
+     * users who want a customized version can build a regular macro
+     * themselves. Inter-step delay is small (250 ms) so close-together
+     * IR receivers don't drop bursts that arrive within their internal
+     * debounce window.
+     *
+     * No-op when no devices have POWER bound (toast surfaces that).
+     */
+    fun runAllOff() {
+        if (macroJob?.isActive == true) return
+        val poweredDevices = _savedDevices.value.filter {
+            it.irProfile?.commands?.containsKey(
+                com.andene.spectra.modules.control.IrControl.Commands.POWER
+            ) == true
+        }
+        if (poweredDevices.isEmpty()) {
+            emitToast("No devices with POWER configured")
+            return
+        }
+        val synthesized = Macro(
+            id = "spectra-synth-all-off",
+            name = "All Off",
+            steps = poweredDevices.map { device ->
+                MacroStep(
+                    deviceId = device.id,
+                    deviceName = device.name ?: "Device",
+                    commandName = com.andene.spectra.modules.control.IrControl.Commands.POWER,
+                    delayBeforeMs = 250,
+                )
+            },
+        )
+        executeMacro(synthesized)
+    }
+
+    private fun executeMacro(macro: Macro) {
         // Validate device references up front. A macro built six months ago
         // may reference a device the user has since deleted; running it
         // would silently no-op for those steps. Surface the count instead.
