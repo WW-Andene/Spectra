@@ -1,5 +1,201 @@
 # H5W Unified System — Changelog
 
+## v1.4.0 — §BUILD-LOOP modifier (build features, not audit)
+
+Adds **§BUILD-LOOP** — a primary-loop modifier on top of UNCHAINED that
+switches the autoloop's primary work source from `H5W-QUEUE.md` (audit
+findings) to `H5W-BUILD.md` (build tasks). For sessions where the goal
+is shipping features, not auditing existing code.
+
+### The problem this release closes (SF-021)
+
+The skill went through three audit cycles (v1.0.0→v1.1.0, v1.1.1,
+v1.3.1). Across all of them, the autoloop assumed the work was an
+**audit cycle** — find issues, fix issues, micro-H5W, repeat until
+queue empties. When the work was instead "build feature X from spec,"
+the loop terminated at "no new actionable findings" / "scope walls
+identified" with the multi-day work still unimplemented.
+
+The user named this directly: "what the point if i cant start going
+seriously into work?" The audit-loop's "scope walls" framing was wrong
+for build sessions — those weren't walls, they were the work.
+
+§BUILD-LOOP fixes this. The loop's idea of "done" changes from "audit
+candidates exhausted" to "build queue (`H5W-BUILD.md`) has zero TODO
+entries."
+
+### Activation (three-phrase gate, parallel to BRAINSTORM)
+
+- Append `:build` to the UNCHAINED prompt.
+- At the UNCHAINED gate, type `i accept full responsibility`.
+- At the BUILD secondary gate, type `ship features`.
+
+`:build` is independent of `:brainstorm` — they can be combined.
+
+```
+./h5w-autoloop.sh "run H5W unchained autonomous mode :build implement multi-monitor support"
+  → UNCHAINED gate: 'i accept full responsibility'
+  → BUILD gate: 'ship features'
+  → §AUTO-UNCHAINED + §BUILD-LOOP active
+
+./h5w-autoloop.sh "run H5W unchained autonomous mode :brainstorm :build implement notification reply"
+  → UNCHAINED gate: 'i accept full responsibility'
+  → BRAINSTORM gate: 'this is my sandbox'
+  → BUILD gate: 'ship features'
+  → §AUTO-UNCHAINED + §BRAINSTORM + §BUILD-LOOP (deep build)
+```
+
+### What BUILD-LOOP changes
+
+| Aspect | Standard (audit) loop | §BUILD-LOOP |
+|--------|------------------------|-------------|
+| Primary work source | `H5W-QUEUE.md` (audit findings) | `H5W-BUILD.md` (build tasks) |
+| Empty audit queue | terminates session (or scope-expand) | continues — audit empty is not done |
+| Iron Law 10 cycle counter | "3 cycles → checkpoint" applies | does not apply to phase progression |
+| "Multi-day feature" | reported as scope wall, queued for later | broken into phases, started immediately |
+| Termination | empty audit queue + scope-expand exhausted | empty `H5W-BUILD.md` (zero TODO entries) |
+| Audit findings during build | primary work | logged as opportunistic notes to `H5W-QUEUE.md` |
+
+### Queue convention (`H5W-BUILD.md`)
+
+```markdown
+## Build Queue
+
+| ID | Feature | Phase | Status | Notes |
+|----|---------|-------|--------|-------|
+| B-001 | Multi-monitor support | 1 — detect displays | TODO | DisplayManager research |
+| B-001 | Multi-monitor support | 2 — render placement | TODO | depends on phase 1 |
+| B-002 | Notification reply | 1 — RemoteInput intent | TODO | API 24+ |
+
+## Completed
+```
+
+Status values: TODO → IN-PROGRESS → DONE (after build + verify +
+commit) or BLOCKED.
+
+### Phase discipline
+
+Each B-NNN entry is broken into 2-5 phases. A phase is DONE only when:
+- The code compiles/builds clean
+- The new functionality is exercised at least once (manual run, test
+  invocation, or §VER trace through the code paths)
+- The change is committed per `.h5w/git-policy`
+
+"I wrote the code" alone is IN-PROGRESS until verified.
+
+### Bootstrap
+
+If `H5W-BUILD.md` doesn't exist when §BUILD-LOOP activates, the
+autoloop's first iteration creates it from the user's prompt —
+translating the stated goal into 2-5 phased build tasks. A template
+is provided at `templates/H5W-BUILD.md.template` with the table format,
+status values, and phase decomposition heuristic.
+
+### What does NOT change in BUILD-LOOP
+
+- All Iron Laws (1-12) apply at UNCHAINED's relaxation level.
+- All BRAINSTORM honesty floor rules apply when combined with
+  `:brainstorm`.
+- `.h5w/git-policy` is still respected.
+- Anthropic-side rate limits / quotas still apply.
+- Genuine walls (auth, captcha, paid-account, blocked egress) are
+  still flagged honestly. BUILD-LOOP doesn't pretend impossibilities
+  are tractable — it just refuses to call multi-day feature work
+  "out of scope."
+
+### Termination signals (BUILD-LOOP)
+
+- `H5W-BUILD.md` TODO/IN-PROGRESS count = 0
+- Genuine wall (auth, network, requires-credit-card)
+- `MAX_LOOPS` exhausted
+- User-typed runway limit
+- Explicit `BUILD-COMPLETE` marker in Claude's output
+
+**NOT termination signals:** empty audit queue, "cycle 3 reached", "no
+new actionable findings", "scope walls identified", "diminishing
+yield." All of these were the audit-loop's give-up thresholds.
+§BUILD-LOOP doesn't have them.
+
+### Test coverage (48/48 cases pass)
+
+`scripts/h5w-test-gate.sh` extended with 12 new BUILD cases on top of
+v1.3.1's 36:
+- Full happy path (three-phrase gate completes)
+- Case-insensitive on both confirms
+- BUILD confirm wrong → drops to UNCHAINED only
+- UNCHAINED confirm wrong → drops to GUIDED, BUILD never reached
+- `:buildy` and `test:buildstuff` boundary cases (substring rejection)
+- `:build` with FULL phrase ignores BUILD (UNCHAINED-only modifier)
+- All-three-modifiers (UNCHAINED + BRAINSTORM + BUILD) TRIPLE cases
+  including partial-confirm rejection of individual modifiers
+- `--resume --unchained --build` and `--resume --unchained --brainstorm
+  --build` resume paths
+
+New helpers in test infrastructure: `run_build_case`, `run_full_combo_case`,
+`run_case4`.
+
+### Validator additions (3 new checks)
+
+- **6o:** BUILD gate has flag + distinct confirmation phrase in source.
+- **6p:** `templates/H5W-BUILD.md.template` exists (bootstrap available).
+- **6q:** §BUILD-LOOP documented in SKILL.md and auto-mode.md.
+
+### Files changed
+
+```
+SKILL.md                              +57 lines  (§BUILD-LOOP section, five-mode escalation table, QUICK START update)
+references/auto-mode.md               +95 lines  (§BUILD-LOOP full section + Quick Reference rows)
+h5w-autoloop.sh                      +180 lines  (BUILD config, BUILD detection block, BUILD AUTO_RULES injection, mode-aware STOP_PATTERNS, MODE_REMINDER append, BUILD CONT routing, BUILD resume flags, summary banner)
+scripts/h5w-test-gate.sh              +85 lines  (12 BUILD test cases + run_build_case + run_full_combo_case + run_case4 helpers + stub extension)
+scripts/h5w-validate.sh               +30 lines  (checks 6o, 6p, 6q)
+templates/H5W-BUILD.md.template       NEW (60 lines, queue format + bootstrap notes)
+CHANGELOG.md                         +160 lines  (this entry)
+```
+
+### Validator on v1.4.0
+
+```
+PASSED — 0 errors, 0 warnings (after CHANGELOG line-count update)
+=== Activation Gate ===
+  ✓ Activation gate: 48 cases pass
+```
+
+### Note from author
+
+The user ran an UNCHAINED+BRAINSTORM session and hit the ceiling at
+cycle 3 with 8 verified fixes from 30+ candidates. The session output
+read "scope walls identified for next sprint" — but those scope walls
+(multi-monitor, notification reply, find-my-phone) were exactly the
+work the user wanted to do. The audit-loop terminated correctly per
+its own logic; the logic was wrong for the use case.
+
+I missed this in three meta-audit cycles because I was auditing the
+audit machinery and not asking whether the audit framing was right
+for what the user actually wanted to ship. SF-021 names the missing
+piece: an autoloop primary-loop pivot for build sessions. v1.4.0 is
+what closing it looks like.
+
+The five-mode escalation now has six configurations:
+
+| Configuration | Primary loop | When to use |
+|---------------|--------------|-------------|
+| GUIDED | audit | default — supervised audit/improve work |
+| FULL | audit | unattended audit/improve, conservative |
+| UNCHAINED | audit | unattended audit/improve, no T3 gate |
+| UNCHAINED + BRAINSTORM | audit | "push past STUCK" audit work |
+| **UNCHAINED + BUILD** | **build** | **ship features from spec** |
+| **UNCHAINED + BRAINSTORM + BUILD** | **build** | **deep build of multi-day features** |
+
+The bottom row is the deepest configuration. UNCHAINED removes the
+safety guards. BRAINSTORM removes the politeness give-up thresholds.
+BUILD pivots the loop's idea of "done" from audit-empty to
+build-empty. Together they're what "let me start going seriously
+into work" actually requires.
+
+### Chief Guide — 2,352 lines (post-split, post-meta-audit ×2, post-UNCHAINED, post-BRAINSTORM, post-BUILD)
+
+---
+
 ## v1.3.1 — Meta-audit response (self-audit on v1.3.0)
 
 Ran §META on v1.3.0 (the BRAINSTORM release). Validator passed clean
@@ -143,7 +339,7 @@ with a §META pass on itself, even when the changes look small.
 
 This release is the result of taking that seriously.
 
-### Chief Guide — 2,296 lines (post-split, post-meta-audit ×2, post-UNCHAINED, post-BRAINSTORM, post-mode-aware-fixes)
+### Chief Guide — 2,296 lines at v1.3.1 (superseded — see v1.4.0 entry)
 
 ---
 

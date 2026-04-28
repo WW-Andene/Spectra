@@ -24,12 +24,15 @@ UNCHAINED_PHRASE="run H5W unchained autonomous mode"
 UNCHAINED_CONFIRM="i accept full responsibility"
 BRAINSTORM_FLAG=":brainstorm"   # Append to UNCHAINED phrase to enable
 BRAINSTORM_CONFIRM="this is my sandbox"
+BUILD_FLAG=":build"             # Append to switch primary loop from audit to build
+BUILD_CONFIRM="ship features"   # Confirmation phrase for BUILD modifier
 
 # Default: GUIDED mode (permission prompts active). FULL or UNCHAINED only
 # when the user's prompt contains the corresponding literal activation phrase.
 PERMISSION_MODE="default"  # overridden below if FULL/UNCHAINED is opted into
 MODE="GUIDED"
 BRAINSTORM=false           # Set true when UNCHAINED + :brainstorm flag triggers
+BUILD=false                # Set true when UNCHAINED + :build flag triggers (build-loop primary)
 
 # UNCHAINED stop patterns are looser — only true terminations stop the loop.
 STOP_PATTERNS="^RUNWAY LIMIT|^SESSION END|H5W-REPORT\.md (written|complete)|^STUCK.*cannot proceed"
@@ -251,6 +254,90 @@ BRAINSTORM_ACK
                 echo "[$(date)] :brainstorm flag detected but sandbox confirmation not matched — staying in plain UNCHAINED" >> "$LOG"
             fi
         fi
+
+        # Check for :build flag — pivots primary loop from audit to build.
+        # This is independent of BRAINSTORM (you can have :build alone, or
+        # :build :brainstorm together). The :build modifier addresses the
+        # "audit queue empties → terminate even though there's real work
+        # left" problem (SF-021).
+        if echo "$PROMPT" | grep -qiE "(^|[[:space:]])${BUILD_FLAG}([[:space:]]|$)"; then
+            echo "" >&2
+            cat <<'BUILD_ACK' >&2
+─────────────────────────────────────────────────────────────────────
+                §BUILD-LOOP — primary-loop modifier (build, not audit)
+─────────────────────────────────────────────────────────────────────
+
+DETECTED: ':build' flag in prompt.
+
+§BUILD-LOOP changes the autoloop's primary work source from "audit
+findings queue (H5W-QUEUE.md)" to "build tasks queue (H5W-BUILD.md)."
+This is for sessions where the goal is implementing real features —
+not finding-then-fixing existing code, but writing new code from
+specs.
+
+WHAT IT CHANGES:
+
+  • Primary loop reads H5W-BUILD.md, not H5W-QUEUE.md.
+  • Empty audit queue does NOT terminate the session — only empty
+    BUILD queue does. Audit findings still happen as side-output
+    (logged to H5W-QUEUE.md as opportunistic notes).
+  • §SIM.5 checkpoint cycle counter (Law 10) does NOT apply to
+    build progression. Cycles count "scope expansion in audit
+    mode" — building feature phases is not expansion, it's
+    advancement through a planned spec.
+  • "Scope walls" (multi-day features the audit loop refuses to
+    start) ARE the work in §BUILD-LOOP. The autoloop will not
+    terminate them as out-of-scope.
+  • Termination: H5W-BUILD.md empty, OR runway limit, OR genuine
+    walls (auth, network, etc).
+
+WHAT IT REQUIRES:
+
+  ✓ H5W-BUILD.md must exist and contain at least one task before
+    activation. If absent, the autoloop will help create it from
+    your prompt as the first iteration's work.
+  ✓ Tasks should be phased — "implement multi-monitor: phase 1
+    detect displays, phase 2 render placement, phase 3 persistence"
+    rather than "implement multi-monitor." Phases give the loop
+    something concrete to iterate against.
+
+QUEUE CONVENTION (H5W-BUILD.md):
+
+  ## Build Queue
+  | ID | Feature | Phase | Status | Notes |
+  |----|---------|-------|--------|-------|
+  | B-001 | Multi-monitor support | 1 — detect displays | TODO | DisplayManager API research first |
+  | B-001 | Multi-monitor support | 2 — render placement | TODO | depends on phase 1 |
+  | B-002 | Notification reply | 1 — RemoteInput intent setup | TODO | API 24+ |
+
+  Status values: TODO, IN-PROGRESS, BLOCKED, DONE
+  When DONE: move to # Completed section, log to H5W-LOG.md
+
+INTERACTION WITH §BRAINSTORM:
+
+  :build alone — primary loop is build, default effort caps.
+  :build :brainstorm — primary loop is build, raised effort caps
+                       AND §SIM.8 routing on stuck-during-build.
+                       This is the "deep build" combination.
+
+─────────────────────────────────────────────────────────────────────
+BUILD_ACK
+            echo -en "${R}Type EXACTLY: ship features${N}\n${R}(anything else stays in audit-loop mode):${N} " >&2
+            read -r BUILD_CONF
+            if [ "${BUILD_CONF,,}" = "$BUILD_CONFIRM" ]; then
+                BUILD=true
+                echo -e "${R}═══ §BUILD-LOOP ENABLED — primary work source: H5W-BUILD.md ═══${N}" >&2
+                echo "[$(date)] §BUILD-LOOP enabled. Primary loop is build, not audit. Cycle 3 termination disabled." >> "$LOG"
+                # Bootstrap: if H5W-BUILD.md doesn't exist, instruct Claude
+                # to create it from the prompt on iteration 1.
+                if [ ! -f "H5W-BUILD.md" ]; then
+                    echo -e "${Y}    H5W-BUILD.md not present — first iteration will create it from your prompt.${N}" >&2
+                fi
+            else
+                echo -e "${Y}═══ §BUILD-LOOP not confirmed — staying in audit-loop mode ═══${N}" >&2
+                echo "[$(date)] :build flag detected but ship-features confirmation not matched — staying in audit-loop mode" >> "$LOG"
+            fi
+        fi
     else
         echo -e "${C}═══ Dropped to §AUTO-GUIDED (confirmation phrase not matched) ═══${N}" >&2
         echo "[$(date)] UNCHAINED phrase detected but confirmation not matched — running GUIDED" >> "$LOG"
@@ -313,6 +400,14 @@ RISK_ACK
             echo "[$(date)] Activation phrase detected but user did not confirm with 'proceed' — running GUIDED" >> "$LOG"
             ;;
     esac
+elif [ "$2" = "--unchained" ] && [ "$3" = "--brainstorm" ] && [ "$4" = "--build" ] && [ "$CONTINUE_MODE" = true ]; then
+    MODE="UNCHAINED"
+    PERMISSION_MODE="auto"
+    BRAINSTORM=true
+    BUILD=true
+    MAX_LOOPS="$MAX_LOOPS_BRAINSTORM"
+    echo -e "${R}═══ §AUTO-UNCHAINED + §BRAINSTORM + §BUILD-LOOP resume ═══${N}" >&2
+    echo "[$(date)] §AUTO-UNCHAINED + §BRAINSTORM + §BUILD-LOOP resumed via flags" >> "$LOG"
 elif [ "$2" = "--unchained" ] && [ "$3" = "--brainstorm" ] && [ "$CONTINUE_MODE" = true ]; then
     MODE="UNCHAINED"
     PERMISSION_MODE="auto"
@@ -320,6 +415,13 @@ elif [ "$2" = "--unchained" ] && [ "$3" = "--brainstorm" ] && [ "$CONTINUE_MODE"
     MAX_LOOPS="$MAX_LOOPS_BRAINSTORM"
     echo -e "${R}═══ §AUTO-UNCHAINED + §BRAINSTORM resume (--unchained --brainstorm) ═══${N}" >&2
     echo "[$(date)] §AUTO-UNCHAINED + §BRAINSTORM resumed via flags" >> "$LOG"
+elif [ "$2" = "--unchained" ] && [ "$3" = "--build" ] && [ "$CONTINUE_MODE" = true ]; then
+    MODE="UNCHAINED"
+    PERMISSION_MODE="auto"
+    BUILD=true
+    MAX_LOOPS="$MAX_LOOPS_UNCHAINED"
+    echo -e "${R}═══ §AUTO-UNCHAINED + §BUILD-LOOP resume (--unchained --build) ═══${N}" >&2
+    echo "[$(date)] §AUTO-UNCHAINED + §BUILD-LOOP resumed via flags" >> "$LOG"
 elif [ "$2" = "--unchained" ] && [ "$CONTINUE_MODE" = true ]; then
     MODE="UNCHAINED"
     PERMISSION_MODE="auto"
@@ -337,6 +439,7 @@ else
     echo -e "${C}To activate FULL:       type '$ACTIVATION_PHRASE' at start of prompt → 'proceed'${N}" >&2
     echo -e "${C}To activate UNCHAINED:  type '$UNCHAINED_PHRASE' at start of prompt → '$UNCHAINED_CONFIRM'${N}" >&2
     echo -e "${C}To add :brainstorm:     append '$BRAINSTORM_FLAG' to UNCHAINED prompt → '$BRAINSTORM_CONFIRM'${N}" >&2
+    echo -e "${C}To add :build:          append '$BUILD_FLAG' to UNCHAINED prompt → '$BUILD_CONFIRM' (build features, not audit)${N}" >&2
 fi
 
 # ─── §AUTO injection (concise pointer; full rules in references/auto-mode.md) ─
@@ -465,6 +568,85 @@ LOG TAGS unique to BRAINSTORM:
 
 === END §BRAINSTORM ==="
 fi
+
+# Append BUILD-LOOP modifier when enabled. This is independent of BRAINSTORM
+# — they can be active together (deep build) or BUILD alone (standard build).
+if [ "$BUILD" = true ]; then
+AUTO_RULES="$AUTO_RULES
+
+=== §BUILD-LOOP — primary-loop modifier ===
+The user typed ':build' on UNCHAINED activation AND confirmed with
+'ship features'. The autoloop's primary work source is now H5W-BUILD.md
+(build tasks queue), NOT H5W-QUEUE.md (audit findings queue). This
+session's purpose is shipping features, not auditing existing code.
+
+PRIMARY LOOP CHANGES:
+
+L1. Read H5W-BUILD.md as the primary queue. If it doesn't exist, your
+    first action is to create it from the user's prompt — translate
+    their stated goal into 2-5 phased build tasks (B-001 through
+    B-NNN). Use the table format documented in BUILD_ACK.
+
+L2. Empty H5W-QUEUE.md (audit findings) does NOT terminate this
+    session. Only empty H5W-BUILD.md does. If you find yourself
+    'done with audit work', that is NOT a termination — pivot to
+    the next BUILD task.
+
+L3. §SIM.5 checkpoint cycle counter (Iron Law 10) does NOT apply to
+    build progression. 'Cycle 1, 2, 3' counts apply when you are
+    expanding audit scope. Advancing through B-001 phase 1 → B-001
+    phase 2 → B-002 phase 1 is build progression, not expansion.
+    Do not terminate at 'cycle 3' if there are TODO entries in
+    H5W-BUILD.md.
+
+L4. 'Multi-day features' / 'scope walls' are NOT walls in §BUILD-LOOP
+    — they ARE the work. Do not terminate them as out-of-scope.
+    Break them into phases and start phase 1.
+
+L5. Audit findings that arise WHILE building (e.g., 'this existing
+    function has a bug I just noticed') get appended to H5W-QUEUE.md
+    as opportunistic notes — do NOT pivot to fixing them. The build
+    task is the priority. Audit can run in a separate session.
+
+L6. Termination conditions for §BUILD-LOOP:
+    - H5W-BUILD.md has zero TODO entries (all DONE or BLOCKED)
+    - Genuine wall (auth, network, requires-credit-card)
+    - MAX_LOOPS exhausted
+    - User-typed runway limit
+    NOT terminating conditions: empty audit queue, 'cycle 3 reached',
+    'no new actionable findings', 'scope walls identified'.
+
+L7. Phase status tracking. Each B-NNN entry has a Status column.
+    Update it as you work:
+      TODO → IN-PROGRESS (when starting)
+      IN-PROGRESS → DONE (after verification)
+      IN-PROGRESS → BLOCKED (with [BLOCKER: reason] note)
+    Move DONE entries to '## Completed' section at session end.
+
+L8. Phase verification. A phase is DONE only when:
+    - The code compiles/builds clean
+    - The new functionality is exercised at least once (manual run,
+      test invocation, or §VER trace through the code paths)
+    - The change is committed per .h5w/git-policy
+    Do not mark DONE on 'I wrote the code' alone — that's IN-PROGRESS
+    until verified.
+
+L9. Audit-as-side-effect. While building, you'll touch existing code.
+    If §SIM.4 micro-H5W after a build phase finds an audit issue
+    BLOCKING the build phase, fix it inline (it's part of the build).
+    If it finds an issue UNRELATED to the build phase, log to
+    H5W-QUEUE.md and continue building.
+
+INTERACTION WITH §BRAINSTORM:
+  - BUILD alone: standard effort caps within build phases.
+  - BUILD + BRAINSTORM: raised caps apply to build obstacles. If
+    phase implementation gets stuck, §SIM.8 PIVOT applies (research
+    wider, decompose phase further, reframe the phase, sleep on it).
+  - In both cases, the loop continues until H5W-BUILD.md is empty,
+    not until audit findings run out.
+
+=== END §BUILD-LOOP ==="
+fi
 elif [ "$MODE" = "FULL" ]; then
 AUTO_RULES="
 
@@ -523,11 +705,14 @@ run_claude() {
         2>&1 | tee -a "$LOG"
 }
 
-# Mode-aware stop patterns. BRAINSTORM strips even more triggers since
-# "STUCK" is no longer a stopping signal in that mode — it's a routing
-# signal to §SIM.8 BRAINSTORM-PIVOT. Only context-full and the wall-clock
-# loop cap should end a BRAINSTORM session.
-if [ "$BRAINSTORM" = true ]; then
+# Mode-aware stop patterns. BRAINSTORM strips STUCK; BUILD additionally
+# strips audit-completion patterns since BUILD-LOOP terminates on empty
+# H5W-BUILD.md, not on audit-queue completion.
+if [ "$BUILD" = true ]; then
+    # In BUILD-LOOP, the only termination signals are runway / session-end /
+    # report-written / explicit BUILD-COMPLETE marker.
+    ACTIVE_STOP_PATTERNS="^RUNWAY LIMIT|^SESSION END|H5W-REPORT\.md (written|complete)|^BUILD-COMPLETE"
+elif [ "$BRAINSTORM" = true ]; then
     ACTIVE_STOP_PATTERNS="^RUNWAY LIMIT|^SESSION END|H5W-REPORT\.md (written|complete)"
 elif [ "$MODE" = "UNCHAINED" ]; then
     ACTIVE_STOP_PATTERNS="$STOP_PATTERNS"
@@ -552,6 +737,11 @@ elif [ "$MODE" = "FULL" ]; then
     MODE_REMINDER=" [MODE-CONTEXT: §AUTO FULL. T3 queues. All Iron Laws enforced. §META proposals only. See references/auto-mode.md.]"
 else
     MODE_REMINDER=""
+fi
+
+# Append BUILD-LOOP context when active (orthogonal to BRAINSTORM).
+if [ "$BUILD" = true ]; then
+    MODE_REMINDER="$MODE_REMINDER [BUILD-LOOP: primary work source is H5W-BUILD.md, NOT H5W-QUEUE.md. Empty audit queue does NOT terminate. Iron Law 10 cycle counter does NOT apply to build progression. 'Scope walls' / 'multi-day features' ARE the work — break into phases and start phase 1. Phase status: TODO → IN-PROGRESS → DONE (after build+verify+commit) or BLOCKED. Termination: H5W-BUILD.md TODO count = 0, OR runway, OR genuine wall.]"
 fi
 
 # ─── Main loop ────────────────────────────────────────────────
@@ -580,11 +770,17 @@ while [ $ITER -lt $MAX_LOOPS ]; do
         fi
     fi
 
-    # Check for very short response (stuck). In BRAINSTORM, push toward
-    # §SIM.8 pivot rather than the standard 50-Q nudge.
+    # Check for very short response (stuck). Routing depends on active mode:
+    # - BUILD: push toward H5W-BUILD.md and current phase
+    # - BRAINSTORM (no BUILD): push toward §SIM.8 pivot
+    # - default: push toward audit queue / §SIM.6 nudge
     if [ ${#OUTPUT} -lt 50 ]; then
         echo -e "${Y}Short response — sending specific continue...${N}"
-        if [ "$BRAINSTORM" = true ]; then
+        if [ "$BUILD" = true ] && [ "$BRAINSTORM" = true ]; then
+            CONT="Your last response was too short. Read H5W-BUILD.md — find the IN-PROGRESS task or the next TODO. If you're stuck on the current phase, run §SIM.8 BRAINSTORM-PIVOT on it. DO NOT declare BUILD-COMPLETE unless H5W-BUILD.md has zero TODO entries. NEXT: [phase action or pivot step]."
+        elif [ "$BUILD" = true ]; then
+            CONT="Your last response was too short. Read H5W-BUILD.md — find the IN-PROGRESS task or the next TODO. If H5W-BUILD.md doesn't exist yet, create it from the user's prompt with phased B-NNN tasks. DO NOT declare done unless H5W-BUILD.md has zero TODO entries. NEXT: [phase action or task creation]."
+        elif [ "$BRAINSTORM" = true ]; then
             CONT="Your last response was too short. If you're STUCK, run §SIM.8 BRAINSTORM-PIVOT (research wider → decompose → reframe → sleep-on-it). DO NOT declare done. NEXT: [pivot step or specific action]."
         else
             CONT="Your last response was too short. Read H5W-QUEUE.md. If findings remain, fix the next one. If empty, run §SIM.6 question $(shuf -i 1-50 -n 1) on the codebase. Do real work. NEXT: [action]."
@@ -599,6 +795,12 @@ while [ $ITER -lt $MAX_LOOPS ]; do
         CONT="$CONT [BRAINSTORM-NOTES.md exists ($BS_NOTES_LINES lines). If ≥3 iterations have passed since the last entry, re-read the file before deciding NEXT.]"
     fi
 
+    # BUILD-LOOP: surface build queue status in every CONT message.
+    if [ "$BUILD" = true ] && [ -f H5W-BUILD.md ]; then
+        TODO_COUNT=$(grep -cE '\| TODO \||\| IN-PROGRESS \|' H5W-BUILD.md 2>/dev/null || echo 0)
+        CONT="$CONT [H5W-BUILD.md status: $TODO_COUNT TODO/IN-PROGRESS entries remaining. Session terminates only when this reaches 0.]"
+    fi
+
     sleep $COOLDOWN
     ITER=$((ITER + 1))
     echo -e "${C}── Iteration $ITER / $MAX_LOOPS ──${N}"
@@ -607,19 +809,29 @@ done
 
 # ─── Summary ──────────────────────────────────────────────────
 echo -e "${G}═══ H5W AUTO-LOOP ENDED ═══${N}"
-if [ "$BRAINSTORM" = true ]; then
-    echo "  Mode: $MODE + BRAINSTORM"
-else
-    echo "  Mode: $MODE"
-fi
+MODE_LABEL="$MODE"
+[ "$BRAINSTORM" = true ] && MODE_LABEL="$MODE_LABEL + BRAINSTORM"
+[ "$BUILD" = true ] && MODE_LABEL="$MODE_LABEL + BUILD-LOOP"
+echo "  Mode: $MODE_LABEL"
 echo "  Iterations: $ITER / $MAX_LOOPS"
 echo "  Log: $LOG"
 [ -f H5W-REPORT.md ] && echo -e "  ${G}✓ H5W-REPORT.md generated${N}"
-[ -f H5W-QUEUE.md ] && echo "  Queue: $(grep -c '^|' H5W-QUEUE.md 2>/dev/null || echo 0) items"
+[ -f H5W-QUEUE.md ] && echo "  Audit queue: $(grep -c '^|' H5W-QUEUE.md 2>/dev/null || echo 0) items"
+if [ -f H5W-BUILD.md ]; then
+    BUILD_TODO=$(grep -cE '\| TODO \||\| IN-PROGRESS \|' H5W-BUILD.md 2>/dev/null || echo 0)
+    BUILD_DONE=$(grep -cE '\| DONE \|' H5W-BUILD.md 2>/dev/null || echo 0)
+    echo "  Build queue: $BUILD_TODO TODO/IN-PROGRESS, $BUILD_DONE DONE"
+fi
 [ -f BRAINSTORM-NOTES.md ] && echo "  Brainstorm notes: $(wc -l < BRAINSTORM-NOTES.md) lines"
 [ -d skill-improvements ] && echo "  Skill proposals: $(ls skill-improvements/SF-*.md 2>/dev/null | wc -l) file(s)"
 echo ""
-if [ "$BRAINSTORM" = true ]; then
+
+# Resume hint construction — match the active modifier combination.
+if [ "$BUILD" = true ] && [ "$BRAINSTORM" = true ]; then
+    echo "  Resume UNCHAINED + BRAINSTORM + BUILD: ./h5w-autoloop.sh --resume --unchained --brainstorm --build"
+elif [ "$BUILD" = true ]; then
+    echo "  Resume UNCHAINED + BUILD: ./h5w-autoloop.sh --resume --unchained --build"
+elif [ "$BRAINSTORM" = true ]; then
     echo "  Resume UNCHAINED + BRAINSTORM: ./h5w-autoloop.sh --resume --unchained --brainstorm"
 else
     case "$MODE" in

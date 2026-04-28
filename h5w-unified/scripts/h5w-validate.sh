@@ -294,6 +294,33 @@ else
     warn "scripts/h5w-brainstorm-check.sh missing or not executable (SF-013 enforcement absent)"
 fi
 
+# 6o. SF-021: BUILD-LOOP modifier gate must require flag + distinct
+# confirmation phrase. Three components: BUILD_FLAG, BUILD_CONFIRM, the
+# literal "ship features" check.
+build_flag=$(grep -c 'BUILD_FLAG=' "$SKILL_DIR/h5w-autoloop.sh" || true)
+build_confirm_var=$(grep -c 'BUILD_CONFIRM=' "$SKILL_DIR/h5w-autoloop.sh" || true)
+build_check=$(grep -c "ship features" "$SKILL_DIR/h5w-autoloop.sh" || true)
+if [ "$build_flag" -ge 1 ] && [ "$build_confirm_var" -ge 1 ] && [ "$build_check" -ge 1 ]; then
+    pass "BUILD-LOOP gate has flag + distinct confirmation phrase (SF-021)"
+else
+    fail "BUILD-LOOP gate missing components (flag=$build_flag confirm_var=$build_confirm_var check=$build_check — SF-021)"
+fi
+
+# 6p. SF-021: BUILD template exists for bootstrapping H5W-BUILD.md.
+if [ -f "$SKILL_DIR/templates/H5W-BUILD.md.template" ]; then
+    pass "templates/H5W-BUILD.md.template exists (SF-021 bootstrap)"
+else
+    warn "templates/H5W-BUILD.md.template missing (SF-021 bootstrap unavailable)"
+fi
+
+# 6q. SF-021: §BUILD-LOOP documented in SKILL.md and references/auto-mode.md.
+build_doc=$(grep -lE "§BUILD-LOOP|BUILD-LOOP" "$SKILL_DIR/SKILL.md" "$SKILL_DIR"/references/auto-mode.md 2>/dev/null | wc -l)
+if [ "$build_doc" -ge 2 ]; then
+    pass "§BUILD-LOOP documented in SKILL.md and auto-mode.md (SF-021)"
+else
+    warn "§BUILD-LOOP documentation incomplete ($build_doc files — SF-021)"
+fi
+
 echo ""
 
 # 7. Activation gate behavior tests

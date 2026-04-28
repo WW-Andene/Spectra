@@ -377,10 +377,126 @@ BRAINSTORM's raised caps, run §SIM.8 instead of declaring failure:
 - Production code where "broken" actually matters.
 - Problems where you'd rather know fast that something's impossible.
 
+### §BUILD-LOOP — primary-loop modifier (build features, not audit)
+
+**The problem this solves:** the standard autoloop is built around an
+audit cycle — find issues, fix them, micro-H5W, repeat. When the audit
+queue runs out (or when the work is "implement multi-monitor support"
+rather than "find what's wrong"), the loop terminates even though
+there's real work left. Multi-day features get classified as "scope
+walls" and the session ends with `[SCOPE-WALL]` tags instead of
+implementations.
+
+§BUILD-LOOP changes the autoloop's primary work source from
+`H5W-QUEUE.md` (audit findings) to `H5W-BUILD.md` (build tasks). Empty
+audit queue does NOT terminate; only empty build queue does.
+
+**Activation:** append `:build` to the UNCHAINED prompt; at the BUILD
+secondary gate type **exactly** `ship features`. Like BRAINSTORM, this
+is a modifier on top of UNCHAINED — independent of BRAINSTORM, can be
+combined with it.
+
+```
+run H5W unchained autonomous mode :build implement multi-monitor support
+  → UNCHAINED gate ('i accept full responsibility')
+  → BUILD gate ('ship features')
+  → §AUTO-UNCHAINED + §BUILD-LOOP active
+```
+
+**What BUILD-LOOP changes:**
+
+| Aspect | Standard (audit) loop | §BUILD-LOOP |
+|--------|------------------------|-------------|
+| Primary work source | `H5W-QUEUE.md` (audit findings) | `H5W-BUILD.md` (build tasks) |
+| Empty audit queue | terminates session (or scope-expand) | continues — audit empty is not done |
+| Iron Law 10 cycle counter | "3 cycles → checkpoint" applies | does not apply to phase progression |
+| "Multi-day feature" | reported as scope wall, queued for later | broken into phases, started immediately |
+| Termination | empty audit queue + scope-expand exhausted | empty `H5W-BUILD.md` (zero TODO entries) |
+| Audit findings during build | primary work | logged as opportunistic notes to `H5W-QUEUE.md` |
+
+**Queue convention (`H5W-BUILD.md`):**
+
+```markdown
+## Build Queue
+
+| ID | Feature | Phase | Status | Notes |
+|----|---------|-------|--------|-------|
+| B-001 | Multi-monitor support | 1 — detect displays | TODO | DisplayManager research |
+| B-001 | Multi-monitor support | 2 — render placement | TODO | depends on phase 1 |
+| B-002 | Notification reply | 1 — RemoteInput intent | TODO | API 24+ |
+
+## Completed
+
+(DONE entries get moved here at session end with one-line summary.)
+```
+
+Status values: `TODO` → `IN-PROGRESS` (when starting) → `DONE` (after
+build + verify + commit) or `BLOCKED` (with `[BLOCKER: reason]` note).
+
+**Phase discipline:** each B-NNN entry has a Phase column. A phase is
+DONE only when the code compiles clean, the new functionality is
+exercised at least once (manual run, test invocation, or §VER trace
+through the code paths), and the change is committed per
+`.h5w/git-policy`. "I wrote the code" alone is `IN-PROGRESS` until
+verified.
+
+**Bootstrap:** if `H5W-BUILD.md` doesn't exist when §BUILD-LOOP
+activates, the autoloop's first iteration's work is to create it from
+the user's prompt — translate the stated goal into 2-5 phased build
+tasks. A template is provided at `templates/H5W-BUILD.md.template`.
+
+**Phase decomposition heuristic** (when bootstrapping):
+- Phase 1 — research/discovery (read existing code, identify
+  integration points, document API choices)
+- Phase 2 — scaffolding (create new files/classes, stub interfaces,
+  ensure it compiles)
+- Phase 3 — core implementation (actual feature logic)
+- Phase 4 — integration (wire into existing code paths, edge cases)
+- Phase 5 — verification (manual run or test invocation, fix breaks)
+
+Some features need more or fewer phases. The point is each phase is
+self-contained enough to be DONE on its own.
+
+**Interaction with §BRAINSTORM:**
+- `:build` alone — primary loop is build, default UNCHAINED effort caps.
+- `:build :brainstorm` — primary loop is build, raised effort caps
+  apply to build obstacles. If a phase implementation gets stuck,
+  §SIM.8 PIVOT applies (research the problem class wider, decompose
+  the phase further, reframe the phase, sleep on it). This is the
+  "deep build" combination.
+- In both cases, the loop continues until `H5W-BUILD.md` has zero
+  TODO entries.
+
+**Termination signals (BUILD-LOOP):**
+- `H5W-BUILD.md` TODO/IN-PROGRESS count = 0
+- Genuine wall (auth, network, requires-credit-card)
+- `MAX_LOOPS` exhausted
+- User-typed runway limit
+- Explicit `BUILD-COMPLETE` marker in Claude's output
+
+**NOT termination signals:** empty audit queue, "cycle 3 reached",
+"no new actionable findings", "scope walls identified", "diminishing
+yield." All of these were the audit-loop's give-up thresholds.
+§BUILD-LOOP doesn't have them.
+
+**When to use:**
+- ✓ Implementing real features from a spec
+- ✓ Multi-day work the audit-loop would call "scope walls"
+- ✓ When you want to start building, not auditing
+- ✓ When you've already audited and now you want to ship
+
+**When NOT to use:**
+- ✗ You actually want an audit pass — use plain UNCHAINED or
+  UNCHAINED+BRAINSTORM
+- ✗ The work is genuinely undefined — BUILD-LOOP needs at least
+  the prompt to be specific enough to bootstrap H5W-BUILD.md
+
 ### Quick Reference
 
 | User says | Claude routes to | Permission prompts | §META edits | autoloop flag |
 |-----------|------------------|--------------------|-----------:|--------------:|
+| "run H5W unchained autonomous mode :brainstorm :build" + `i accept full responsibility` + `this is my sandbox` + `ship features` | **§AUTO-UNCHAINED + §BRAINSTORM + §BUILD-LOOP** | suppressed | direct + mirror | `--permission-mode auto`, `MAX_LOOPS=200`, build queue |
+| "run H5W unchained autonomous mode :build" + `i accept full responsibility` + `ship features` | **§AUTO-UNCHAINED + §BUILD-LOOP** | suppressed | direct + mirror | `--permission-mode auto`, build queue |
 | "run H5W unchained autonomous mode :brainstorm" + `i accept full responsibility` + `this is my sandbox` | **§AUTO-UNCHAINED + §BRAINSTORM** | suppressed | direct + mirror | `--permission-mode auto`, `MAX_LOOPS=200` |
 | "run H5W unchained autonomous mode" + `i accept full responsibility` | **§AUTO-UNCHAINED** | suppressed | direct + mirror | `--permission-mode auto` |
 | "run H5W full autonomous mode" + `proceed` | **§AUTO FULL** | suppressed | proposed only | `--permission-mode auto` |

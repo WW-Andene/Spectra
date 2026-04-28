@@ -1,6 +1,6 @@
 ---
 name: h5w-unified
-version: 1.3.1
+version: 1.4.0
 target: claude-code            # Designed for Claude Code CLI. Activates allowed-tools and
                                # tools like Agent / AskUserQuestion / TodoWrite that are
                                # Claude Code-specific. The skill loads in claude.ai too,
@@ -286,16 +286,27 @@ Running both creates trigger phrase conflicts.
 > # in prompt + 'this is my sandbox' at the second gate):
 > ./h5w-autoloop.sh "run H5W unchained autonomous mode :brainstorm push through this hard problem"
 >
+> # UNCHAINED + BUILD-LOOP (build features, not audit; primary work source
+> # is H5W-BUILD.md; empty audit queue does NOT terminate; needs ':build'
+> # in prompt + 'ship features' at the second gate):
+> ./h5w-autoloop.sh "run H5W unchained autonomous mode :build implement multi-monitor support"
+>
+> # UNCHAINED + BRAINSTORM + BUILD (deep build — all three modifiers;
+> # for shipping multi-day features the audit-loop would refuse to start):
+> ./h5w-autoloop.sh "run H5W unchained autonomous mode :brainstorm :build implement notification reply with RemoteInput"
+>
 > # Resume — drops to GUIDED for safety unless the matching flag is passed:
-> ./h5w-autoloop.sh --resume                              # GUIDED (safe default)
-> ./h5w-autoloop.sh --resume --full                       # resume FULL session
-> ./h5w-autoloop.sh --resume --unchained                  # resume UNCHAINED session
-> ./h5w-autoloop.sh --resume --unchained --brainstorm     # resume UNCHAINED + BRAINSTORM
+> ./h5w-autoloop.sh --resume                                          # GUIDED (safe default)
+> ./h5w-autoloop.sh --resume --full                                   # resume FULL session
+> ./h5w-autoloop.sh --resume --unchained                              # resume UNCHAINED session
+> ./h5w-autoloop.sh --resume --unchained --brainstorm                 # resume UNCHAINED + BRAINSTORM
+> ./h5w-autoloop.sh --resume --unchained --build                      # resume UNCHAINED + BUILD-LOOP
+> ./h5w-autoloop.sh --resume --unchained --brainstorm --build         # resume deep build
 > ```
 > The wrapper auto-sends "continue" to Claude Code when it stops,
 > keeping the loop running until a runway limit is hit. Activation
 > gates (Risk Acknowledgment + typed confirmation) are enforced at the
-> script level for FULL, UNCHAINED, and BRAINSTORM — see §AUTO for details.
+> script level for FULL, UNCHAINED, BRAINSTORM, and BUILD — see §AUTO for details.
 
 ---
 
@@ -1836,14 +1847,59 @@ laws) still apply. Genuine walls (auth, captcha, paid-account) still
 get flagged honestly. BRAINSTORM raises the bar for what counts as a
 wall — it does not pretend impossibilities are tractable.
 
-**The four-mode escalation summary:**
+### §BUILD-LOOP — primary-loop modifier (build features, not audit)
 
-| Mode | Activation | T3 actions | Iron Laws 6/7/9 | §META edits skill files? | MAX_LOOPS | STUCK behavior |
-|------|------------|------------|-----------------|--------------------------|-----------|----------------|
-| GUIDED | default; autonomous-sounding phrase | queue | enforced | proposals only | 30 | log + queue |
-| FULL | `run H5W full autonomous mode` + `proceed` | queue | enforced | proposals only | 30 | log + queue |
-| UNCHAINED | `run H5W unchained autonomous mode` + `i accept full responsibility` | execute (logged) | advisories | direct edits + mirror | 60 | log + queue |
-| UNCHAINED + BRAINSTORM | UNCHAINED prompt + `:brainstorm` flag + `this is my sandbox` | execute (logged) | advisories | direct edits + mirror | 200 | route to §SIM.8 pivot |
+For sessions where the goal is **shipping features**, not auditing
+existing code. Append `:build` to the UNCHAINED prompt; at the BUILD
+secondary gate type **`ship features`**.
+
+**The problem this solves:** the standard autoloop terminates when the
+audit queue empties or after 3 scope-expansion cycles. Multi-day
+features get classified as "scope walls" and the session ends without
+implementing them. §BUILD-LOOP changes the autoloop's primary work
+source from `H5W-QUEUE.md` (audit findings) to `H5W-BUILD.md` (build
+tasks). Empty audit queue does NOT terminate; only empty build queue
+does.
+
+**Activation:** `:build` flag on UNCHAINED + `ship features` confirmation.
+Independent of `:brainstorm` — they can be combined for "deep build."
+
+**Termination signals (BUILD-LOOP):** `H5W-BUILD.md` TODO/IN-PROGRESS
+count = 0, OR genuine wall, OR `MAX_LOOPS` exhausted, OR explicit
+`BUILD-COMPLETE` marker. **NOT termination signals:** empty audit
+queue, "cycle 3 reached", "no new actionable findings", "scope walls
+identified", "diminishing yield."
+
+**Queue convention** (`H5W-BUILD.md`): table with columns ID, Feature,
+Phase, Status, Notes. Status values TODO → IN-PROGRESS → DONE (after
+build + verify + commit) or BLOCKED. See
+`templates/H5W-BUILD.md.template` for the full format.
+
+**Phase discipline:** each B-NNN entry is broken into 2-5 phases. A
+phase is DONE only when the code compiles clean, the new functionality
+is exercised at least once, and the change is committed per
+`.h5w/git-policy`. "I wrote the code" alone is IN-PROGRESS until
+verified.
+
+**Bootstrap:** if `H5W-BUILD.md` doesn't exist when §BUILD-LOOP
+activates, the autoloop's first iteration creates it from the user's
+prompt — translating the stated goal into 2-5 phased build tasks.
+
+**The five-mode escalation summary:**
+
+| Mode | Activation | Primary loop | Empty audit queue | MAX_LOOPS | STUCK |
+|------|------------|--------------|-------------------|-----------|-------|
+| GUIDED | default | audit | terminates | 30 | log + queue |
+| FULL | `run H5W full autonomous mode` + `proceed` | audit | terminates | 30 | log + queue |
+| UNCHAINED | `+ i accept full responsibility` | audit | terminates | 60 | log + queue |
+| UNCHAINED + BRAINSTORM | `:brainstorm` + `this is my sandbox` | audit | terminates | 200 | route to §SIM.8 pivot |
+| **UNCHAINED + BUILD** | `:build` + `ship features` | **build** | **does NOT terminate** | 60 | log + queue |
+| **UNCHAINED + BRAINSTORM + BUILD** | `:brainstorm :build` + both confirms | **build** | **does NOT terminate** | 200 | **route to §SIM.8 pivot on build obstacles** |
+
+The bottom row is the deepest configuration: UNCHAINED's relaxations +
+BRAINSTORM's raised effort caps + BUILD-LOOP's queue pivot. This is
+"deep build" — the configuration for actually shipping multi-day
+features the audit-loop would refuse to start.
 
 ---
 
