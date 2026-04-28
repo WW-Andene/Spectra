@@ -37,7 +37,7 @@ class ResultsFragment : Fragment() {
         // changing — particularly when phase flips from DEVICE_UNKNOWN to
         // READY after the brute force finishes from this screen.
         viewLifecycleOwner.lifecycleScope.launch {
-            combine(vm.activeDevice, vm.orchestrator.phase) { device, phase -> device to phase }
+            combine(vm.activeDevice, vm.orchestratorPhase) { device, phase -> device to phase }
                 .collect { (device, phase) ->
                 if (device == null) return@collect
 

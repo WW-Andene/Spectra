@@ -15,10 +15,17 @@ import kotlinx.coroutines.launch
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val app = application as SpectraApp
-    val orchestrator: SpectraOrchestrator = app.orchestrator
+    private val orchestrator: SpectraOrchestrator = app.orchestrator
     private val repository: DeviceRepository = app.repository
     val codeDatabase = app.codeDatabase
     private val macroRepository = app.macroRepository
+
+    // Narrow facades so fragments don't reach into orchestrator internals.
+    val orchestratorPhase: StateFlow<SpectraOrchestrator.Phase> = orchestrator.phase
+    val captureState: StateFlow<com.andene.spectra.modules.ir.IrCameraCapture.CaptureState> =
+        orchestrator.irCapture.captureState
+
+    fun buildIrCameraAnalyzer() = orchestrator.irCapture.buildAnalyzer()
 
     // UI state
     private val _screen = MutableStateFlow(Screen.HOME)

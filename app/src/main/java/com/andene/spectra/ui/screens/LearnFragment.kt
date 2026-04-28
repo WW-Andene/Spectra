@@ -96,7 +96,7 @@ class LearnFragment : Fragment() {
 
         // Camera capture state
         viewLifecycleOwner.lifecycleScope.launch {
-            vm.orchestrator.irCapture.captureState.collect { state ->
+            vm.captureState.collect { state ->
                 captureStatus.text = when (state) {
                     IrCameraCapture.CaptureState.IDLE -> "Ready"
                     IrCameraCapture.CaptureState.CAPTURING -> "Recording..."
@@ -313,7 +313,7 @@ class LearnFragment : Fragment() {
                 it.surfaceProvider = previewView.surfaceProvider
             }
 
-            val analyzer = vm.orchestrator.irCapture.buildAnalyzer()
+            val analyzer = vm.buildIrCameraAnalyzer()
 
             try {
                 cameraProvider.unbindAll()
