@@ -81,8 +81,12 @@ class SpectraWidgetConfigActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val app = applicationContext as SpectraApp
             val devices = withContext(Dispatchers.IO) {
+                // Phase 3: relax the POWER-only filter — any device with
+                // at least one command is now eligible because the
+                // command picker downstream lets the user pick whatever
+                // command they want for this specific widget instance.
                 app.repository.loadAll().filter {
-                    it.irProfile?.commands?.containsKey(IrControl.Commands.POWER) == true
+                    it.irProfile?.commands?.isNotEmpty() == true
                 }
             }
 
@@ -99,18 +103,49 @@ class SpectraWidgetConfigActivity : AppCompatActivity() {
                 devices.map { it.name ?: getString(R.string.device_default_label) },
             )
             list.setOnItemClickListener { _, _, position, _ ->
-                completeConfiguration(devices[position])
+                pickCommandFor(devices[position])
             }
         }
     }
 
-    private fun completeConfiguration(device: DeviceProfile) {
+    /**
+     * Phase 3: after a device is picked, surface its command list so the
+     * user can pin a command other than POWER. Single-command devices
+     * skip this step and complete with the only available command.
+     */
+    private fun pickCommandFor(device: DeviceProfile) {
+        val commands = device.irProfile?.commands?.keys?.toList()?.sorted().orEmpty()
+        if (commands.isEmpty()) {
+            // Shouldn't reach here because the device list pre-filters
+            // to "has POWER", but handle for completeness.
+            completeConfiguration(device, IrControl.Commands.POWER)
+            return
+        }
+        if (commands.size == 1) {
+            completeConfiguration(device, commands[0])
+            return
+        }
+        // Default selection: POWER if present (matches phase 2's
+        // hardcoded default), else the first command alphabetically.
+        val defaultIndex = commands.indexOf(IrControl.Commands.POWER).coerceAtLeast(0)
+        var picked = defaultIndex
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(R.string.widget_config_pick_command)
+            .setSingleChoiceItems(commands.toTypedArray(), defaultIndex) { _, which -> picked = which }
+            .setPositiveButton(R.string.action_save_button) { _, _ ->
+                completeConfiguration(device, commands[picked])
+            }
+            .setNegativeButton(R.string.action_cancel_dialog, null)
+            .show()
+    }
+
+    private fun completeConfiguration(device: DeviceProfile, commandName: String) {
         WidgetConfigStore.set(
             this,
             appWidgetId,
             WidgetConfigStore.Binding(
                 deviceId = device.id,
-                commandName = IrControl.Commands.POWER,
+                commandName = commandName,
             ),
         )
 

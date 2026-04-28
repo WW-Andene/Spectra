@@ -56,7 +56,8 @@
     <string name="widget_open_app">Open Spectra</string>
     <string name="widget_config_title">Pick a device</string>
     <string name="widget_config_subtitle">The widget will fire POWER on this device when tapped.</string>
-    <string name="widget_config_no_devices">No saved devices with a POWER command. Save one in Spectra first, then return.</string>
+    <string name="widget_config_no_devices">No saved devices with commands yet. Save one in Spectra first, then return.</string>
+    <string name="widget_config_pick_command">Pick a command</string>
 
     <!-- Quick Settings tile (B-003) -->
     <string name="qs_tile_label">Spectra Power</string>
