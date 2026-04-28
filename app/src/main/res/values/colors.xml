@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Spectra palette — dark theme, signal-inspired -->
+    <color name="bg_primary">#FF0D0D12</color>
+    <color name="bg_surface">#FF16161E</color>
+    <color name="bg_card">#FF1E1E2A</color>
+    <color name="bg_card_elevated">#FF262636</color>
+
+    <color name="accent_primary">#FF6C5CE7</color>     <!-- Purple — main accent -->
+    <color name="accent_secondary">#FF00D2FF</color>    <!-- Cyan — signals/waves -->
+    <color name="accent_success">#FF00E676</color>      <!-- Green — confirmed/found -->
+    <color name="accent_warning">#FFFFAB40</color>      <!-- Orange — brute force -->
+    <color name="accent_error">#FFFF5252</color>        <!-- Red — error/stop -->
+
+    <color name="text_primary">#FFF0F0F5</color>
+    <color name="text_secondary">#FF9090A8</color>
+    <color name="text_tertiary">#FF5A5A72</color>
+
+    <color name="divider">#FF2A2A3A</color>
+
+    <!-- Module-specific colors -->
+    <color name="module_ir">#FFFF6B6B</color>           <!-- IR — warm red -->
+    <color name="module_acoustic">#FF4ECDC4</color>     <!-- Acoustic — teal -->
+    <color name="module_rf">#FF45B7D1</color>           <!-- RF — blue -->
+    <color name="module_em">#FFAB6CFF</color>           <!-- EM — violet -->
+
+    <!-- Remote button colors -->
+    <color name="btn_remote_bg">#FF2A2A3A</color>
+    <color name="btn_remote_pressed">#FF3A3A4E</color>
+    <color name="btn_power">#FFFF5252</color>
+    <color name="btn_dpad_bg">#FF1E1E2A</color>
+</resources>

@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_primary"
+    android:padding="20dp">
+
+    <!-- Device header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="20dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/deviceName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Device"
+                android:textColor="@color/text_primary"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/deviceInfo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Protocol: NEC"
+                android:textColor="@color/text_tertiary"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnLearnMore"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="+ LEARN"
+            android:textSize="12sp"
+            android:backgroundTint="@color/bg_card_elevated"
+            android:textColor="@color/accent_secondary" />
+    </LinearLayout>
+
+    <!-- Power row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="20dp">
+
+        <Button
+            android:id="@+id/btnPower"
+            style="@style/RemoteButton.Power"
+            android:layout_width="80dp"
+            android:layout_height="56dp"
+            android:text="POWER"
+            android:layout_marginEnd="16dp" />
+
+        <Button
+            android:id="@+id/btnInput"
+            style="@style/RemoteButton"
+            android:layout_width="80dp"
+            android:layout_height="56dp"
+            android:text="INPUT" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <Button
+            android:id="@+id/btnMute"
+            style="@style/RemoteButton"
+            android:layout_width="80dp"
+            android:layout_height="56dp"
+            android:text="MUTE" />
+    </LinearLayout>
+
+    <!-- Volume + Channel columns with D-Pad center -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="16dp">
+
+        <!-- Volume column -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <Button
+                android:id="@+id/btnVolUp"
+                style="@style/RemoteButton"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:text="VOL\n+"
+                android:layout_marginBottom="4dp" />
+
+            <Button
+                android:id="@+id/btnVolDown"
+                style="@style/RemoteButton"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:text="VOL\n−" />
+        </LinearLayout>
+
+        <!-- D-Pad -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp">
+
+            <Button
+                android:id="@+id/btnUp"
+                style="@style/RemoteButton.DPad"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:text="▲"
+                android:layout_marginBottom="4dp" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btnLeft"
+                    style="@style/RemoteButton.DPad"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:text="◄"
+                    android:layout_marginEnd="4dp" />
+
+                <Button
+                    android:id="@+id/btnOk"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:text="OK"
+                    android:textStyle="bold"
+                    android:textSize="14sp"
+                    android:backgroundTint="@color/accent_primary"
+                    android:textColor="@color/text_primary" />
+
+                <Button
+                    android:id="@+id/btnRight"
+                    style="@style/RemoteButton.DPad"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:text="►"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btnDown"
+                style="@style/RemoteButton.DPad"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:text="▼"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+
+        <!-- Channel column -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <Button
+                android:id="@+id/btnChUp"
+                style="@style/RemoteButton"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:text="CH\n+"
+                android:layout_marginBottom="4dp" />
+
+            <Button
+                android:id="@+id/btnChDown"
+                style="@style/RemoteButton"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:text="CH\n−" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Navigation row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="16dp">
+
+        <Button
+            android:id="@+id/btnBack"
+            style="@style/RemoteButton"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="BACK"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btnHome"
+            style="@style/RemoteButton"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="HOME"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btnMenu"
+            style="@style/RemoteButton"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="MENU"
+            android:layout_marginStart="4dp" />
+    </LinearLayout>
+
+    <!-- Media row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="16dp">
+
+        <Button
+            android:id="@+id/btnPlay"
+            style="@style/RemoteButton"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="▶"
+            android:textSize="18sp"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btnPause"
+            style="@style/RemoteButton"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="⏸"
+            android:textSize="18sp"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btnStop"
+            style="@style/RemoteButton"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="⏹"
+            android:textSize="18sp"
+            android:layout_marginStart="4dp" />
+    </LinearLayout>
+
+    <!-- Number pad -->
+    <GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:columnCount="3"
+        android:rowCount="4"
+        android:useDefaultMargins="true"
+        android:alignmentMode="alignBounds">
+
+        <Button android:id="@+id/btn1" style="@style/RemoteButton" android:layout_width="0dp" android:layout_height="48dp" android:layout_columnWeight="1" android:text="1" />
+        <Button android:id="@+id/btn2" style="@style/RemoteButton" android:layout_width="0dp" android:layout_height="48dp" android:layout_columnWeight="1" android:text="2" />
+        <Button android:id="@+id/btn3" style="@style/RemoteButton" android:layout_width="0dp" android:layout_height="48dp" android:layout_columnWeight="1" android:text="3" />
+        <Button android:id="@+id/btn4" style="@style/RemoteButton" android:layout_width="0dp" android:layout_height="48dp" android:layout_columnWeight="1" android:text="4" />
+        <Button android:id="@+id/btn5" style="@style/RemoteButton" android:layout_width="0dp" android:layout_height="48dp" android:layout_columnWeight="1" android:text="5" />
+        <Button android:id="@+id/btn6" style="@style/RemoteButton" android:layout_width="0dp" android:layout_height="48dp" android:layout_columnWeight="1" android:text="6" />
+        <Button android:id="@+id/btn7" style="@style/RemoteButton" android:layout_width="0dp" android:layout_height="48dp" android:layout_columnWeight="1" android:text="7" />
+        <Button android:id="@+id/btn8" style="@style/RemoteButton" android:layout_width="0dp" android:layout_height="48dp" android:layout_columnWeight="1" android:text="8" />
+        <Button android:id="@+id/btn9" style="@style/RemoteButton" android:layout_width="0dp" android:layout_height="48dp" android:layout_columnWeight="1" android:text="9" />
+        <View android:layout_width="0dp" android:layout_height="48dp" android:layout_columnWeight="1" />
+        <Button android:id="@+id/btn0" style="@style/RemoteButton" android:layout_width="0dp" android:layout_height="48dp" android:layout_columnWeight="1" android:text="0" />
+        <View android:layout_width="0dp" android:layout_height="48dp" android:layout_columnWeight="1" />
+    </GridLayout>
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <!-- Bottom -->
+    <Button
+        android:id="@+id/btnBackToHome"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:text="DEVICES"
+        android:backgroundTint="@color/bg_card_elevated"
+        android:textColor="@color/text_secondary"
+        android:layout_marginTop="8dp" />
+
+</LinearLayout>

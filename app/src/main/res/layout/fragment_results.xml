@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_primary"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Scan Complete"
+        android:textColor="@color/accent_success"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Device info card -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/bg_card"
+        android:padding="16dp"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:id="@+id/deviceStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="New device detected"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:id="@+id/detailAcoustic"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/module_acoustic"
+            android:textSize="12sp"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/detailRf"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/module_rf"
+            android:textSize="12sp"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/detailEm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/module_em"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- Name input -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/inputDeviceName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Name this device"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_tertiary" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Action buttons -->
+    <Button
+        android:id="@+id/btnLearnCamera"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="LEARN FROM REMOTE (Camera)"
+        android:textSize="14sp"
+        android:backgroundTint="@color/module_ir"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/btnBruteForce"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="DISCOVER PROTOCOL (No Remote)"
+        android:textSize="14sp"
+        android:backgroundTint="@color/accent_warning"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/btnSaveDevice"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="SAVE DEVICE"
+        android:textSize="14sp"
+        android:backgroundTint="@color/accent_primary"
+        android:layout_marginBottom="8dp" />
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <Button
+        android:id="@+id/btnBack"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="BACK"
+        android:backgroundTint="@color/bg_card_elevated"
+        android:textColor="@color/text_secondary" />
+
+</LinearLayout>

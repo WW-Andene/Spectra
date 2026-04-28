@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_primary"
+    android:padding="20dp">
+
+    <TextView
+        android:id="@+id/learnTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Learn Commands"
+        android:textColor="@color/text_primary"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Camera capture section -->
+    <LinearLayout
+        android:id="@+id/cameraSection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/bg_card"
+        android:padding="16dp"
+        android:layout_marginBottom="12dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Camera Capture"
+            android:textColor="@color/module_ir"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Point remote at front camera, then press and hold a button."
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Camera preview -->
+        <androidx.camera.view.PreviewView
+            android:id="@+id/cameraPreview"
+            android:layout_width="match_parent"
+            android:layout_height="160dp"
+            android:background="@color/bg_surface"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Command name input -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/inputCommandName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Button name (e.g. power, vol_up)"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_tertiary"
+                android:textSize="14sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnStartCapture"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:text="START"
+                android:backgroundTint="@color/accent_success"
+                android:layout_marginEnd="4dp" />
+
+            <Button
+                android:id="@+id/btnStopCapture"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:text="STOP"
+                android:backgroundTint="@color/accent_error"
+                android:enabled="false"
+                android:layout_marginStart="4dp" />
+        </LinearLayout>
+
+        <!-- Capture status -->
+        <TextView
+            android:id="@+id/captureStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_tertiary"
+            android:textSize="12sp"
+            android:layout_marginTop="8dp" />
+    </LinearLayout>
+
+    <!-- Brute force section -->
+    <LinearLayout
+        android:id="@+id/bruteForceSection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/bg_card"
+        android:padding="16dp"
+        android:layout_marginBottom="12dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Brute Force Discovery"
+            android:textColor="@color/accent_warning"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/bruteForceStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sweeps through all known IR protocols until device responds."
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Brute force prompt (visible during sweep) -->
+        <LinearLayout
+            android:id="@+id/bruteForcePrompt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:id="@+id/promptText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Did the device react?"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btnYes"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="YES!"
+                    android:backgroundTint="@color/accent_success"
+                    android:layout_marginEnd="4dp" />
+
+                <Button
+                    android:id="@+id/btnNo"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="NO"
+                    android:backgroundTint="@color/bg_card_elevated"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnStartBrute"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:text="START SWEEP"
+                android:backgroundTint="@color/accent_warning"
+                android:layout_marginEnd="4dp" />
+
+            <Button
+                android:id="@+id/btnStopBrute"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:text="STOP"
+                android:backgroundTint="@color/accent_error"
+                android:enabled="false"
+                android:layout_marginStart="4dp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Learned commands list -->
+    <TextView
+        android:id="@+id/learnedLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Learned Commands"
+        android:textColor="@color/text_secondary"
+        android:textSize="13sp"
+        android:textAllCaps="true"
+        android:letterSpacing="0.1"
+        android:layout_marginBottom="8dp" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <TextView
+            android:id="@+id/learnedCommands"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp"
+            android:fontFamily="monospace" />
+    </ScrollView>
+
+    <!-- Bottom nav -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp">
+
+        <Button
+            android:id="@+id/btnBackLearn"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="BACK"
+            android:backgroundTint="@color/bg_card_elevated"
+            android:textColor="@color/text_secondary"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btnOpenRemote"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="OPEN REMOTE"
+            android:backgroundTint="@color/accent_primary"
+            android:layout_marginStart="4dp" />
+    </LinearLayout>
+
+</LinearLayout>

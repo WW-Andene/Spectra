@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_primary"
+    android:padding="20dp">
+
+    <!-- Header -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Spectra"
+        android:textColor="@color/text_primary"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="4dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Universal device control"
+        android:textColor="@color/text_tertiary"
+        android:textSize="14sp"
+        android:layout_marginBottom="24dp" />
+
+    <!-- Hardware status -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="20dp">
+
+        <TextView
+            android:id="@+id/statusIr"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="IR ●"
+            android:textColor="@color/module_ir"
+            android:textSize="12sp"
+            android:layout_marginEnd="16dp" />
+
+        <TextView
+            android:id="@+id/statusMic"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="MIC ●"
+            android:textColor="@color/module_acoustic"
+            android:textSize="12sp"
+            android:layout_marginEnd="16dp" />
+
+        <TextView
+            android:id="@+id/statusRf"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="RF ●"
+            android:textColor="@color/module_rf"
+            android:textSize="12sp"
+            android:layout_marginEnd="16dp" />
+
+        <TextView
+            android:id="@+id/statusEm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="EM ●"
+            android:textColor="@color/module_em"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- Scan button -->
+    <Button
+        android:id="@+id/btnScan"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:text="SCAN NEARBY DEVICE"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:backgroundTint="@color/accent_primary"
+        android:layout_marginBottom="24dp" />
+
+    <!-- Saved devices label -->
+    <TextView
+        android:id="@+id/labelSaved"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Saved Devices"
+        android:textColor="@color/text_secondary"
+        android:textSize="13sp"
+        android:textAllCaps="true"
+        android:letterSpacing="0.1"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Device list -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/deviceList"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingBottom="16dp" />
+
+    <!-- Empty state -->
+    <TextView
+        android:id="@+id/emptyState"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="No devices learned yet.\nHold your phone near a device and tap Scan."
+        android:textColor="@color/text_tertiary"
+        android:textSize="14sp"
+        android:lineSpacingExtra="4dp"
+        android:visibility="visible" />
+
+</LinearLayout>
