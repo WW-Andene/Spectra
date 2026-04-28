@@ -186,12 +186,24 @@ class SpectraOrchestrator(private val context: Context) {
     fun stopCameraLearn() {
         irCapture.stopCapture()
         val command = irCapture.capturedCommand.value
-        if (command != null) {
+        val device = _discoveredDevice.value
+        if (command != null && device != null) {
             appendLog("Captured IR command: ${command.rawTimings.size} pulses, protocol: ${command.protocol}")
-            val device = _discoveredDevice.value ?: return
             control.addCommand(device.id, command)
+            // Capture succeeded — device now has at least one command,
+            // so READY is the right phase.
+            _phase.value = Phase.READY
         } else {
             appendLog("No IR signal detected")
+            // Capture failed — fall back to whatever the discovery state
+            // was before we entered LEARNING_CAMERA. If we have a device
+            // with no commands, it's still UNKNOWN; with commands, READY.
+            val hasCommands = device?.irProfile?.commands?.isNotEmpty() == true
+            _phase.value = when {
+                device == null -> Phase.IDLE
+                hasCommands -> Phase.READY
+                else -> Phase.DEVICE_UNKNOWN
+            }
         }
     }
 
@@ -262,6 +274,16 @@ class SpectraOrchestrator(private val context: Context) {
             _phase.value = Phase.READY
         } else {
             appendLog("No protocol matched — device may not use standard IR")
+            // Restore the pre-brute-force phase so the UI doesn't get
+            // stuck on LEARNING_BRUTE forever. Same logic as
+            // stopCameraLearn miss path.
+            val device = _discoveredDevice.value
+            val hasCommands = device?.irProfile?.commands?.isNotEmpty() == true
+            _phase.value = when {
+                device == null -> Phase.IDLE
+                hasCommands -> Phase.READY
+                else -> Phase.DEVICE_UNKNOWN
+            }
         }
     }
 
