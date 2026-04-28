@@ -167,7 +167,7 @@ class HomeFragment : Fragment() {
         if (macros.isEmpty()) {
             val empty = TextView(requireContext()).apply {
                 text = getString(R.string.empty_macros)
-                setTextColor(resources.getColor(R.color.text_tertiary, null))
+                setTextColor(ContextCompat.getColor(requireContext(), R.color.text_tertiary))
                 textSize = 12f
                 setPadding(0, 0, 0, 0)
             }
@@ -175,13 +175,23 @@ class HomeFragment : Fragment() {
             return
         }
         val pad = (12 * resources.displayMetrics.density).toInt()
+        val chipBg = ContextCompat.getColor(requireContext(), R.color.bg_card_elevated)
+        val chipText = ContextCompat.getColor(requireContext(), R.color.text_primary)
         for (macro in macros) {
             val chip = TextView(requireContext()).apply {
                 text = macro.name
-                setTextColor(resources.getColor(R.color.text_primary, null))
+                setTextColor(chipText)
                 textSize = 13f
                 setPadding(pad, pad / 2, pad, pad / 2)
-                setBackgroundResource(android.R.drawable.list_selector_background)
+                // Solid card-elevated colour for the chip with built-in press
+                // feedback. selectableItemBackground gets the platform ripple
+                // overlaid on top of the colour.
+                setBackgroundColor(chipBg)
+                val outValue = android.util.TypedValue()
+                requireContext().theme.resolveAttribute(
+                    android.R.attr.selectableItemBackground, outValue, true
+                )
+                foreground = ContextCompat.getDrawable(requireContext(), outValue.resourceId)
                 isClickable = true
                 isFocusable = true
                 val lp = LinearLayout.LayoutParams(
@@ -193,14 +203,18 @@ class HomeFragment : Fragment() {
                 setOnLongClickListener {
                     AlertDialog.Builder(requireContext())
                         .setTitle(macro.name)
-                        .setItems(arrayOf("Run", "Edit", "Delete")) { _, which ->
+                        .setItems(arrayOf(
+                            getString(R.string.action_run),
+                            getString(R.string.action_edit),
+                            getString(R.string.action_delete),
+                        )) { _, which ->
                             when (which) {
                                 0 -> vm.runMacro(macro.id)
                                 1 -> vm.openMacroEditor(macro)
                                 2 -> AlertDialog.Builder(requireContext())
-                                    .setMessage("Delete macro '${macro.name}'?")
-                                    .setPositiveButton("Delete") { _, _ -> vm.deleteMacro(macro.id) }
-                                    .setNegativeButton("Cancel", null)
+                                    .setMessage(getString(R.string.confirm_delete_macro, macro.name))
+                                    .setPositiveButton(R.string.action_delete) { _, _ -> vm.deleteMacro(macro.id) }
+                                    .setNegativeButton(R.string.action_cancel_dialog, null)
                                     .show()
                             }
                         }
@@ -208,8 +222,6 @@ class HomeFragment : Fragment() {
                     true
                 }
             }
-            // Wrap chip in a card-style background
-            chip.setBackgroundColor(resources.getColor(R.color.bg_card_elevated, null))
             container.addView(chip)
         }
     }

@@ -193,7 +193,7 @@ class LearnFragment : Fragment() {
         if (commands.isNullOrEmpty()) {
             val empty = TextView(requireContext()).apply {
                 text = "No commands learned yet"
-                setTextColor(resources.getColor(R.color.text_tertiary, null))
+                setTextColor(ContextCompat.getColor(requireContext(), R.color.text_tertiary))
                 textSize = 12f
             }
             container.addView(empty)
@@ -204,7 +204,7 @@ class LearnFragment : Fragment() {
         for ((name, cmd) in commands.entries.sortedBy { it.key }) {
             val row = TextView(requireContext()).apply {
                 text = "$name  ·  ${cmd.protocol} (${cmd.rawTimings.size} pulses)"
-                setTextColor(resources.getColor(R.color.text_primary, null))
+                setTextColor(ContextCompat.getColor(requireContext(), R.color.text_primary))
                 textSize = 13f
                 setPadding(padding, padding, padding, padding)
                 isClickable = true

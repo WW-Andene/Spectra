@@ -85,7 +85,7 @@ class MacroEditFragment : Fragment() {
         if (workingSteps.isEmpty()) {
             val empty = TextView(requireContext()).apply {
                 text = getString(R.string.empty_steps)
-                setTextColor(resources.getColor(R.color.text_tertiary, null))
+                setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.text_tertiary))
                 setPadding(16, 16, 16, 16)
             }
             container.addView(empty)
@@ -96,7 +96,7 @@ class MacroEditFragment : Fragment() {
             val row = TextView(requireContext()).apply {
                 text = "${index + 1}. ${step.deviceName} → ${step.commandName}" +
                     if (step.delayBeforeMs > 0) "  (wait ${step.delayBeforeMs}ms)" else ""
-                setTextColor(resources.getColor(R.color.text_primary, null))
+                setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.text_primary))
                 textSize = 13f
                 setPadding(pad, pad, pad, pad)
                 isClickable = true

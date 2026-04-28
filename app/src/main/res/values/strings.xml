@@ -12,7 +12,8 @@
     <string name="action_import_clipboard">IMPORT DEVICE FROM CLIPBOARD</string>
     <string name="label_macros">Macros</string>
     <string name="label_saved_devices">Saved Devices</string>
-    <string name="action_new_macro">+ NEW</string>
+    <string name="action_new_macro">+ NEW MACRO</string>
+    <string name="confirm_delete_macro">Delete macro \'%1$s\'?</string>
     <string name="empty_devices">No devices learned yet.\nHold your phone near a device and tap Scan.</string>
     <string name="empty_macros">No macros yet.</string>
     <string name="clipboard_not_json">Clipboard doesn\'t look like a Spectra profile (expected JSON).</string>
