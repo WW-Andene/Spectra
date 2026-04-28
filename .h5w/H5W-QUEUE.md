@@ -58,6 +58,24 @@ entire delivery-infrastructure dimension.
 | - | F-038 | Configure CI/CD pipeline? | **Defer** — requires choice of provider (GitHub Actions, GitLab, etc.) and a working secret store for signing. Out of scope without user infrastructure decisions. | Infrastructure / external account |
 | - | F-039 | Configure release signing? | **Defer** — requires user keystore + a secret-management plan. Cannot generate a real signing key autonomously without leaking it. | Cryptographic key material |
 
+### T2 enhancements deferred from cycle 3 (no current victims, infra-level)
+
+| # | ID | Sev | Source | Rationale |
+|---|----|-----|--------|-----------|
+| - | F-050 | low | §SIM.6 L3.Q29 | Repository JSON round-trip tests — needs Robolectric or a Context-mock framework. Repo conversions exercised at runtime; failure modes would surface immediately on first save. |
+| - | F-051 | low | §SIM.6 L5.Q43 | Tests for SpectraOrchestrator.matchKnownDevice / inferIdentity — same Robolectric requirement. The pure subset is testable but requires a refactor that's not minimum-footprint. |
+| - | F-052 | low | §SIM.6 L1.Q6 | fragment_remote.xml D-pad row exceeds 320dp width. No real device under 360dp ships modern Android. Cosmetic. |
+| - | F-053 | low | §SIM.6 L2.Q15 | Long BLE/passive scans should ideally run in a foreground service for Android 14+ background reliability. Current scans ≤6s and bound to UI session; refactor would touch lifecycle architecture. |
+
+### Cycle 3 fixes applied (19)
+
+F-030 BF-skip-surfaced · F-031 codeDB preload · F-032 save-feedback toast ·
+F-033 R8/ProGuard · F-034 undo Snackbar · F-035 README · F-036 recovery copy ·
+F-037 build instructions (closed by F-035) · F-040 dup import · F-041 module ERROR
+surfaced · F-042 loadAll skip count · F-043 clipboard hint · F-044 ~30 Kotlin
+literals → strings · F-045 forceDarkAllowed · F-046 maxLength · F-047 magic
+numbers · F-048 dead public functions · F-049 dead sweepJob field
+
 ### Cycle 2 (2026-04-28, post-CLAUDE.md autonomy)
 
 All previously-deferred enhancements resolved and pushed:

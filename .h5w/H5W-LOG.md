@@ -100,4 +100,71 @@ T3-blocked with the original recommendation; CLAUDE.md authorises future
 sessions to proceed under same autonomy when the queue refills.
 ──────────────────────────────────────────────
 
+## Session: 2026-04-28 (cycle 3) — Mode: §AUTO Full + §SIM.6 Anti-Exhaustion
+
+User pulled the upgraded h5w-unified skill (4,401-line SKILL.md, +§SIM.6,
++§AUTO compaction, +§OBSTACLE, +§META, +§DELIVER). Re-running with
+anti-exhaustion 55Q to hunt for findings the prior cycles missed. They
+existed.
+
+### Phase 1+4 (cycle 3): 55Q sweep + execute
+
+- §SIM.6 Layer 1 → F-030 (BF transmit silent skip), F-032 (save failure silent)
+- §SIM.6 Layer 2 → F-019 already fixed in cycle 2; storage-full path covered by F-032
+- §SIM.6 Layer 3 → F-031 (main-thread DB load), F-033 (no R8), F-040 (dup import)
+- §SIM.6 Layer 4 → F-034 (no undo), F-035 (no README), F-036 (recovery copy)
+- §SIM.6 Layer 5 → F-044 (more Kotlin literals), F-045 (forceDarkAllowed),
+  F-046 (maxLength), F-047 (magic numbers), F-048/049 (dead code)
+- §SIM.6 Layer 6 → F-035 README (also closes F-037), T3-defer F-038/039
+
+### Phase 4 fixes (in order applied)
+
+- [ts] F-040 FIXED T0 [RemoteFragment.kt] — duplicate kotlinx.coroutines import — Verified: yes
+- [ts] F-030 FIXED T1 [IrBruteForce.kt + SpectraOrchestrator.kt] — onSkip callback surfaces transmit fails — Verified: yes
+- [ts] F-032 FIXED T1 [DeviceRepository.kt + MacroRepository.kt + MainViewModel.kt + HomeFragment.kt] — Bool returns + viewmodel toast SharedFlow — Verified: yes
+- [ts] F-031 FIXED T2 [IrCodeDatabase.kt + SpectraApp.kt] — preload() suspend on appScope — Verified: yes
+- [ts] F-033 FIXED T2 [build.gradle.kts + proguard-rules.pro (new)] — R8 minify + log-strip + serialization keep rules — Verified: yes
+- [ts] F-034 FIXED T1 [MainViewModel.kt + HomeFragment.kt + strings.xml] — UndoAction sealed + Snackbar UNDO — Verified: yes
+- [ts] F-035 FIXED T1 [README.md (new)] — capabilities, build, project layout, hardware caveats — Verified: yes
+- [ts] F-037 FIXED T2 — closed by F-035
+- [ts] F-036 FIXED T1 [MainViewModel.kt] — recovery hint copy in scanLog — Verified: yes
+- [ts] F-041 FIXED T1 [SpectraOrchestrator.kt] — module ERROR-state surfaced in scanLog — Verified: yes
+- [ts] F-042 FIXED T1 [DeviceRepository.kt + MainViewModel.kt] — lastLoadSkipCount + toast — Verified: yes
+- [ts] F-043 FIXED T1 [strings.xml] — actionable clipboard hint — Verified: yes
+- [ts] F-044 FIXED T1 [LearnFragment + MacroEditFragment + RemoteFragment + ResultsFragment + HomeFragment + DeviceAdapter + strings.xml] — ~30 user-facing literals migrated — Verified: yes
+- [ts] F-045 FIXED T1 [themes.xml] — android:forceDarkAllowed=false — Verified: yes
+- [ts] F-046 FIXED T1 [fragment_results.xml + fragment_learn.xml + fragment_macro_edit.xml] — maxLength bounds — Verified: yes
+- [ts] F-047 FIXED T0 [RemoteFragment.kt] — magic numbers → companion constants — Verified: yes
+- [ts] F-048 FIXED T1 [RfFingerprint.kt + IrBruteForce.kt + IrControl.kt + EmFingerprint.kt] — dead public functions removed — Verified: yes
+- [ts] F-049 FIXED T0 [IrBruteForce.kt] — dead sweepJob field + no-op cancel — Verified: yes
+
+### Phase 5: Verify + Expansion (cycle 3)
+
+- Micro-H5W F-030 → no new findings (other transmit-fail paths already covered by lastTransmitResult)
+- Micro-H5W F-032 → F-042 (loadAll skips silent) + F-041 (module ERROR silent) — fixed in expansion 1
+- Micro-H5W F-035 → F-037 (build instructions) closed by README
+- Micro-H5W F-044 → no further string-literal cluster
+- Micro-H5W F-048 → F-049 (sweepJob dead-and-misleading) found and fixed
+- Anti-exhaustion second pass → F-045/046/047 found
+- Anti-exhaustion third pass → F-048/049 found (dead public APIs)
+- Anti-exhaustion fourth pass → considered F-050 (repo serialization round-trip
+  tests) and F-051 (matcher/inference tests). Defer T2 — adding Robolectric
+  is broader infra than minimum-footprint allows for this cycle.
+
+### Phase 6: Evolve (cycle 3)
+
+──── AUTO CHECKPOINT 5 (CYCLE 3 TERMINATION) ────
+Cycle: 5 | Total cycle-3 fixes: 19 (F-030–F-049 inclusive of F-031/F-033/F-035/F-037/F-040 etc. — see table)
+Total session fixes: 27 (cycle 1+2) + 19 (cycle 3) = 46
+Queue remaining:
+  - T3-blocked: F-004 (BF mid-flow persistence), F-038 (CI/CD), F-039 (release signing)
+  - T2 deferred: F-050 (repo round-trip tests), F-051 (matcher tests), F-052
+    (320dp viewport edge), F-053 (foreground service for long scans)
+Context health: heavy but ok
+Decision: terminating cycle 3. Anti-exhaustion sweeps yielded no further
+T0/T1 actionable items; remaining T2 enhancements all require either
+test-framework setup (Robolectric) or infrastructure decisions (CI provider,
+keystore, foreground-service scope). All pushed to origin.
+──────────────────────────────────────────────────
+
 ### Handoff Log

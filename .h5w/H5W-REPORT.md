@@ -169,5 +169,77 @@ context healthy. Cycle terminator triggered cleanly. Branch
 `claude/understand-project-ATKHd` is up to date on origin.
 
 ══════════════════════════════════════════
-SESSION END — 27 fixes, branch pushed, queue empty.
+SESSION END (CYCLE 2) — 27 fixes, branch pushed, queue empty.
+══════════════════════════════════════════
+
+---
+
+# Cycle 3 Addendum — 2026-04-28 (upgraded h5w skill, anti-exhaustion run)
+
+User pulled the upgraded SKILL.md (4,401 lines) carrying §SIM.6
+Anti-Exhaustion 55Q, §AUTO compaction, §OBSTACLE, §META, §DELIVER.
+Cycle 2's "queue empty" termination was Premature Completion under
+the new protocol — running the 55Q produced 19 actionable findings.
+
+## Cycle 3 fixes (19)
+
+| ID | Sev | Tier | Layer | Summary |
+|----|-----|------|-------|---------|
+| F-040 | low | T0 | L3.Q28 | Duplicate `kotlinx.coroutines.launch` import in RemoteFragment |
+| F-030 | medium | T1 | L1.Q2 | Brute-force transmit failures now surfaced into scan log via onSkip callback |
+| F-032 | medium | T1 | L1.Q2 | Repository save failures surface via SharedFlow → HomeFragment toast |
+| F-031 | low | T2 | L1.Q3 | IrCodeDatabase.preload() suspend kicks in from SpectraApp on appScope |
+| F-033 | medium | T2 | L3.Q26 | R8 minify + log-level strip + kotlinx.serialization keep rules |
+| F-034 | low | T1 | L4.Q39 | Snackbar UNDO for delete-device + delete-macro |
+| F-035 | medium | T1 | L4.Q40 | README with capabilities, build, layout, hardware caveats |
+| F-037 | low | T2 | L6.Q51,55 | Build/run/test instructions — closed by F-035 |
+| F-036 | low | T1 | L5.Q49 | Recovery hints in scanLog ("Open Settings → …") |
+| F-041 | low | T1 | micro-H5W of F-030 | Module ERROR/NO_SENSOR states surfaced in scanLog |
+| F-042 | low | T1 | micro-H5W of F-032 | DeviceRepository.lastLoadSkipCount → toast on partial-load |
+| F-043 | low | T1 | micro-H5W of F-036 | clipboard_not_json explains how to obtain a valid profile |
+| F-044 | low | T1 | L3.Q24 | ~30 user-facing Kotlin string literals → strings.xml |
+| F-045 | low | T1 | L1.Q9 | android:forceDarkAllowed=false (preserve dark identity) |
+| F-046 | low | T1 | L2.Q18 | maxLength bounds on device/command/macro name inputs |
+| F-047 | low | T0 | L5.Q44 | RemoteFragment magic timing numbers → companion constants |
+| F-048 | low | T1 | L3.Q29 | 6 dead public functions removed (lookupManufacturer, getCarrierRanges, transmitRaw, getDevice, sendRaw, EmFingerprint.compareTo) |
+| F-049 | low | T0 | micro-H5W of F-048 | Dead `sweepJob` field + no-op cancel removed |
+
+## Total across the session
+
+- **46 fixes applied** (cycle 1: 22 + cycle 2: 5 + cycle 3: 19)
+- **3 T3 deferred** (F-004 BF persistence, F-038 CI/CD, F-039 signing — all
+  documented with recommendations)
+- **4 T2 enhancements deferred** (F-050 repo round-trip tests, F-051
+  matcher tests, F-052 320dp viewport, F-053 foreground service for
+  long scans)
+
+## What §SIM.6 specifically caught
+
+The cycle 2 termination claimed "queue empty." The 55Q sweep showed
+that meant only "I stopped looking." Each layer produced findings:
+
+- **Layer 1** (empty/error/loading) — 2 findings: brute-force
+  transmit-fail-silent, save-fail-silent
+- **Layer 2** (forgotten cases) — 1 finding: storage-full silent
+- **Layer 3** (quality dimensions) — 4 findings: main-thread DB load,
+  R8 missing, dup import, dead exports
+- **Layer 4** (polish) — 3 findings: undo, README, recovery copy
+- **Layer 5** (meta) — 4 findings: more literals, dark-mode lock,
+  maxLength, magic numbers
+- **Layer 6** (delivery) — 2 deferred T3 (CI/CD, signing)
+
+Premature Completion was the real failure of cycle 2. §SIM.6 is the
+right counter-protocol.
+
+## Termination
+
+Per §AUTO triggers: queue empty of actionable T0/T1/T2;
+self-correction never invoked (no compile-failure, no revert);
+context heavy but holding; remaining items require either test-
+framework infrastructure (Robolectric) or external decisions
+(CI provider, keystore). Branch `claude/understand-project-ATKHd`
+up to date on origin.
+
+══════════════════════════════════════════
+SESSION END (CYCLE 3) — 46 total fixes, queue empty per §SIM.6, pushed.
 ══════════════════════════════════════════
