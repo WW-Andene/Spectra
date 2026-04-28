@@ -76,6 +76,31 @@
             android:exported="false"
             android:foregroundServiceType="connectedDevice" />
 
+        <!-- Home-screen widget (B-002): a 1×1 tile that fires POWER on
+             the primary saved device. AppWidgetProvider receives
+             onUpdate; WidgetCommandReceiver receives the per-tap fire
+             intent and re-hydrates the device into IrControl before
+             transmitting (covers cold-process taps). -->
+        <receiver
+            android:name=".widget.SpectraQuickWidget"
+            android:label="@string/widget_label"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_quick" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.WidgetCommandReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.andene.spectra.widget.action.FIRE_COMMAND" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>

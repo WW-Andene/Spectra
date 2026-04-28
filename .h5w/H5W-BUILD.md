@@ -29,12 +29,8 @@ camera capture, RF discovery currently dead-ending in the matcher).
 
 | ID | Feature | Phase | Status | Notes |
 |----|---------|-------|--------|-------|
-| B-001 | Library backup / restore | 1 — repository + viewmodel | IN-PROGRESS | data continuity, T1 user value |
-| B-001 | Library backup / restore | 2 — UI + SAF launchers | TODO | depends on phase 1 |
-| B-001 | Library backup / restore | 3 — confirm dialogs + summary toast | TODO | UX polish, depends on phase 2 |
-| B-002 | Home screen widget | 1 — AppWidgetProvider scaffold | TODO | RemoteViews, periodic update |
-| B-002 | Home screen widget | 2 — device-grid layout | TODO | tap → spectra://device deep link |
-| B-002 | Home screen widget | 3 — macro chips | TODO | macro IDs ride the same intent |
+| B-002 | Home screen widget | 2 — config activity (pick device + command) | TODO | per-widget instance config |
+| B-002 | Home screen widget | 3 — macro chips on multi-cell widget | TODO | requires phase 2 first |
 | B-003 | Quick Settings tile | 1 — TileService scaffold | TODO | API 24+ |
 | B-003 | Quick Settings tile | 2 — top-macro picker | TODO | persist user pick in DataStore |
 | B-004 | Smart-home control over RF | 1 — BLE write to discovered devices | TODO | leverages existing RfFingerprint |
@@ -55,7 +51,10 @@ camera capture, RF discovery currently dead-ending in the matcher).
 
 ## Completed
 
-*(will populate as phases ship)*
+| ID | Feature | Phases shipped | Commits |
+|----|---------|----------------|---------|
+| B-001 | Library backup / restore | 1 (repo + viewmodel) + 2+3 (UI + SAF + dialog/toast) | `74ee4df`, `3712eff` |
+| B-002 | Home screen widget | 1 — 1×1 power tile | (this commit) |
 
 ---
 

@@ -49,6 +49,12 @@
     <string name="restore_summary_with_skips_format">Restored %1$d device(s) and %2$d macro(s). %3$d entry(ies) skipped.</string>
     <string name="restore_nothing_imported">Backup parsed, but nothing was imported.</string>
 
+    <!-- Home-screen widget (B-002) -->
+    <string name="widget_label">Spectra Quick Power</string>
+    <string name="widget_description">Tap to fire POWER on your most-recent device. No app open required.</string>
+    <string name="widget_no_device">No device</string>
+    <string name="widget_open_app">Open Spectra</string>
+
     <!-- Runtime-formatted strings — moved out of Kotlin code -->
     <string name="device_default_label">Device</string>
     <string name="device_unnamed_label">Unnamed Device</string>

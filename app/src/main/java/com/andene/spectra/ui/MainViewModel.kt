@@ -239,6 +239,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 skips > 0 -> emitToast("$skips saved profile(s) couldn't be loaded — files may be corrupted")
                 skips < 0 -> emitToast("Couldn't read saved devices folder")
             }
+            // Tell any pinned widgets the library changed so the primary
+            // device label (and target) is refreshed. Cheap broadcast —
+            // fans out to onUpdate which short-circuits when no widgets
+            // are pinned.
+            com.andene.spectra.widget.SpectraQuickWidget.requestRefresh(getApplication())
         }
     }
 
