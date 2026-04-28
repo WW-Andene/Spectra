@@ -18,6 +18,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val orchestrator: SpectraOrchestrator = app.orchestrator
     private val repository: DeviceRepository = app.repository
     val codeDatabase = app.codeDatabase
+    private val macroRepository = app.macroRepository
 
     // UI state
     private val _screen = MutableStateFlow(Screen.HOME)
@@ -59,12 +60,84 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         DEVICE_EDIT // Edit device name/category
     }
 
+    // ── Macros ────────────────────────────────────────────────
+
+    private val _macros = MutableStateFlow<List<Macro>>(emptyList())
+    val macros: StateFlow<List<Macro>> = _macros
+
+    /** Currently-running macro progress, or null when idle. */
+    private val _runningMacro = MutableStateFlow<RunningMacro?>(null)
+    val runningMacro: StateFlow<RunningMacro?> = _runningMacro
+
+    private var macroJob: kotlinx.coroutines.Job? = null
+
+    data class RunningMacro(
+        val macroId: String,
+        val name: String,
+        val totalSteps: Int,
+        val currentStep: Int,
+        val currentLabel: String,
+    )
+
     init {
         loadSavedDevices()
+        loadMacros()
         // Mirror orchestrator log
         viewModelScope.launch {
             orchestrator.log.collect { _scanLog.value = it }
         }
+    }
+
+    private fun loadMacros() {
+        viewModelScope.launch { _macros.value = macroRepository.loadAll() }
+    }
+
+    fun saveMacro(macro: Macro) {
+        val updated = _macros.value.toMutableList().apply {
+            val existing = indexOfFirst { it.id == macro.id }
+            if (existing >= 0) set(existing, macro) else add(macro)
+        }
+        _macros.value = updated
+        viewModelScope.launch { macroRepository.saveAll(updated) }
+    }
+
+    fun deleteMacro(id: String) {
+        val updated = _macros.value.filterNot { it.id == id }
+        _macros.value = updated
+        viewModelScope.launch { macroRepository.saveAll(updated) }
+    }
+
+    /**
+     * Walk a macro's steps, sending each command via IrControl with the
+     * configured delay before each step. Cancellable; cancelling stops at
+     * the next step boundary (we don't kill an in-flight transmit).
+     */
+    fun runMacro(id: String) {
+        val macro = _macros.value.firstOrNull { it.id == id } ?: return
+        macroJob?.cancel()
+        macroJob = viewModelScope.launch {
+            try {
+                for ((index, step) in macro.steps.withIndex()) {
+                    if (step.delayBeforeMs > 0) kotlinx.coroutines.delay(step.delayBeforeMs.toLong())
+                    _runningMacro.value = RunningMacro(
+                        macroId = macro.id,
+                        name = macro.name,
+                        totalSteps = macro.steps.size,
+                        currentStep = index + 1,
+                        currentLabel = "${step.deviceName} → ${step.commandName}",
+                    )
+                    orchestrator.control.sendCommand(step.deviceId, step.commandName)
+                }
+            } finally {
+                _runningMacro.value = null
+            }
+        }
+    }
+
+    fun cancelRunningMacro() {
+        macroJob?.cancel()
+        macroJob = null
+        _runningMacro.value = null
     }
 
     // ── Navigation ────────────────────────────────────────────

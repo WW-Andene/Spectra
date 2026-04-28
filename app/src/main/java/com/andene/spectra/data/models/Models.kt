@@ -121,3 +121,29 @@ data class BruteForceState(
     val foundProtocol: IrProtocol? = null,
     val foundCode: Long? = null
 )
+
+/**
+ * A sequence of IR commands across one or more devices, e.g. "Movie night":
+ *   1. Power on TV
+ *   2. wait 1500ms
+ *   3. Switch TV to HDMI 2
+ *   4. Power on AVR
+ *   5. Set AVR to AUX
+ *
+ * A step's deviceName is captured at creation time so a deleted/renamed
+ * device still reads sensibly in the macro list — execution checks the
+ * id, but the UI shows the snapshot.
+ */
+data class Macro(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val name: String,
+    val steps: List<MacroStep> = emptyList(),
+    val createdAt: Long = System.currentTimeMillis(),
+)
+
+data class MacroStep(
+    val deviceId: String,
+    val deviceName: String,
+    val commandName: String,
+    val delayBeforeMs: Int = 0,
+)
