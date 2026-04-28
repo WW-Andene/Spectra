@@ -1,8 +1,11 @@
 package com.andene.spectra.core
 
+import com.andene.spectra.data.models.AcousticSignature
 import com.andene.spectra.data.models.DeviceCategory
 import com.andene.spectra.data.models.DeviceProfile
+import com.andene.spectra.data.models.EmSignature
 import com.andene.spectra.data.models.RfSignature
+import kotlin.math.abs
 
 /**
  * Pure-Kotlin device-matching helpers split out of SpectraOrchestrator so
@@ -13,6 +16,54 @@ import com.andene.spectra.data.models.RfSignature
  * (acoustic/EM are too unstable cross-session). All three functions here
  * are deterministic on their inputs alone — no side effects, no Context.
  */
+
+/**
+ * Score 0–1 that two acoustic signatures describe the same device
+ * (B-208). Acoustic is too unstable as a primary identifier across
+ * sessions — coil whine drifts, ambient noise floor changes,
+ * spectral centroid shifts with state — but it's good enough as a
+ * tie-breaker between RF candidates that share a BSSID.
+ *
+ * Strategy: take the top 5 dominant peaks from each, count peaks
+ * that match within ±5% frequency tolerance. Ratio of matches over
+ * the smaller peak count is the score.
+ */
+internal fun compareAcoustic(a: AcousticSignature?, b: AcousticSignature?): Float {
+    if (a == null || b == null) return 0f
+    val aPeaks = a.dominantFrequencies.take(5).map { it.frequencyHz }
+    val bPeaks = b.dominantFrequencies.take(5).map { it.frequencyHz }
+    if (aPeaks.isEmpty() || bPeaks.isEmpty()) return 0f
+    var matches = 0
+    for (af in aPeaks) {
+        if (bPeaks.any { abs(af - it) / af < 0.05f }) matches++
+    }
+    return matches.toFloat() / minOf(aPeaks.size, bPeaks.size)
+}
+
+/**
+ * Score 0–1 that two EM signatures describe the same device (B-208).
+ * Combines steady-field-strength ratio with EMI peak overlap. Same
+ * tie-breaker semantics as compareAcoustic — never used as a sole
+ * identifier because magnetometer drift cross-session is significant.
+ */
+internal fun compareEm(a: EmSignature?, b: EmSignature?): Float {
+    if (a == null || b == null) return 0f
+
+    val fieldScore = if (a.fieldStrength > 0 && b.fieldStrength > 0) {
+        val small = minOf(a.fieldStrength, b.fieldStrength)
+        val big = maxOf(a.fieldStrength, b.fieldStrength)
+        small / big
+    } else 0f
+
+    val emiScore = if (a.emiAudioFrequencies.isNotEmpty() && b.emiAudioFrequencies.isNotEmpty()) {
+        val matches = a.emiAudioFrequencies.take(5).count { af ->
+            b.emiAudioFrequencies.any { abs(af.frequencyHz - it.frequencyHz) / af.frequencyHz < 0.05f }
+        }
+        matches.toFloat() / minOf(a.emiAudioFrequencies.size, b.emiAudioFrequencies.size)
+    } else 0f
+
+    return (fieldScore + emiScore) / 2f
+}
 
 /** Score 0–1 that two RF signatures describe the same device.
  *  - 1.0  exact BSSID hit (WiFi MAC; locally-administered/randomized addresses
@@ -121,8 +172,25 @@ internal fun matchTopN(
     val candidateRf = candidate.rfSignature ?: return emptyList()
     return known
         .mapNotNull { k ->
-            val score = k.rfSignature?.let { compareRf(candidateRf, it) } ?: return@mapNotNull null
-            if (score < threshold) null else k.copy(confidence = score)
+            val rfScore = k.rfSignature?.let { compareRf(candidateRf, it) } ?: return@mapNotNull null
+            if (rfScore < threshold) return@mapNotNull null
+
+            // B-208: acoustic + EM tie-breakers. Multi-device-in-the-
+            // same-room cases (two TVs sharing the family-room WiFi
+            // BSSID, etc.) score 1.0 on RF for ALL of them. Without a
+            // tiebreak the matcher picks whichever is first in the
+            // saved list. Acoustic + EM signatures aren't reliable
+            // enough cross-session to be primary identifiers, but they
+            // ARE good enough to nudge the right device to the top of
+            // the alternates list when RF is tied.
+            //
+            // Bonus weight intentionally small (max 0.1 each) so RF
+            // remains decisive when its scores actually differ. Only
+            // matters when two RF scores are within 0.1 of each other.
+            val acousticBonus = compareAcoustic(candidate.acousticSignature, k.acousticSignature) * 0.1f
+            val emBonus = compareEm(candidate.emSignature, k.emSignature) * 0.1f
+            val combined = rfScore + acousticBonus + emBonus
+            k.copy(confidence = combined.coerceAtMost(1f))
         }
         .sortedByDescending { it.confidence }
         .take(n)
