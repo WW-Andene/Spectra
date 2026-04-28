@@ -52,19 +52,27 @@ class SpectraQuickWidget : AppWidgetProvider() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
-        // Async load + render. onUpdate is allowed to return before all
-        // widgets are populated; the manager picks up the latest views
-        // when we call updateAppWidget below.
+        // goAsync keeps the broadcast pending until pendingResult.finish() —
+        // without it, a fresh-process widget update launches the IO coroutine
+        // but the system can kill the process the moment onReceive (which
+        // dispatches to onUpdate) returns. The repository.loadAll() suspend
+        // would never complete and the widget would render with the default
+        // initialLayout's placeholder text.
+        val pending = goAsync()
         scope.launch {
-            val app = context.applicationContext as? SpectraApp ?: return@launch
-            val devices = app.repository.loadAll()
-            // QuickPowerKit centralises the "primary device" definition so
-            // the widget label and the QS tile target the same device.
-            val primary = QuickPowerKit.selectPrimary(devices) ?: devices.firstOrNull()
+            try {
+                val app = context.applicationContext as? SpectraApp ?: return@launch
+                val devices = app.repository.loadAll()
+                // QuickPowerKit centralises the "primary device" definition so
+                // the widget label and the QS tile target the same device.
+                val primary = QuickPowerKit.selectPrimary(devices) ?: devices.firstOrNull()
 
-            for (id in appWidgetIds) {
-                val views = buildViews(context, primary)
-                appWidgetManager.updateAppWidget(id, views)
+                for (id in appWidgetIds) {
+                    val views = buildViews(context, primary)
+                    appWidgetManager.updateAppWidget(id, views)
+                }
+            } finally {
+                pending.finish()
             }
         }
     }
