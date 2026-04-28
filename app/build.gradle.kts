@@ -20,6 +20,18 @@ android {
         viewBinding = true
     }
 
+    lint {
+        // Spectra ships en-only by design (CLAUDE.md + README declare it).
+        // Suppress MissingTranslation so CI doesn't fail on a deliberate
+        // single-locale stance. Re-enable if/when locales are added.
+        disable.add("MissingTranslation")
+        // Treat all other lint issues as build-breaking — we're already
+        // running lintDebug in CI so anything that escapes here is a
+        // regression we want to know about immediately.
+        warningsAsErrors = true
+        abortOnError = true
+    }
+
     buildTypes {
         getByName("release") {
             // R8 minification + resource shrinking. Strips Log.d/Log.v

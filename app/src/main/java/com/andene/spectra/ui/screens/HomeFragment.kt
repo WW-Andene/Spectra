@@ -143,8 +143,13 @@ class HomeFragment : Fragment() {
             vm.openMacroEditor(null)
         }
 
+        // Re-render chips whenever macros OR savedDevices change, so the
+        // stale-step-count badge stays accurate after a device delete.
         viewLifecycleOwner.lifecycleScope.launch {
-            vm.macros.collect { macros -> renderMacroChips(macroChips, macros) }
+            kotlinx.coroutines.flow.combine(vm.macros, vm.savedDevices) { m, d -> m to d }
+                .collect { (macros, devices) ->
+                    renderMacroChips(macroChips, macros, devices.map { it.id }.toSet())
+                }
         }
         viewLifecycleOwner.lifecycleScope.launch {
             vm.runningMacro.collect { running ->
@@ -219,7 +224,11 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun renderMacroChips(container: LinearLayout, macros: List<Macro>) {
+    private fun renderMacroChips(
+        container: LinearLayout,
+        macros: List<Macro>,
+        knownDeviceIds: Set<String>,
+    ) {
         container.removeAllViews()
         if (macros.isEmpty()) {
             val empty = TextView(requireContext()).apply {
@@ -234,10 +243,16 @@ class HomeFragment : Fragment() {
         val pad = (12 * resources.displayMetrics.density).toInt()
         val chipBg = ContextCompat.getColor(requireContext(), R.color.bg_card_elevated)
         val chipText = ContextCompat.getColor(requireContext(), R.color.text_primary)
+        val warnText = ContextCompat.getColor(requireContext(), R.color.accent_warning)
         for (macro in macros) {
+            val staleCount = macro.steps.count { it.deviceId !in knownDeviceIds }
             val chip = TextView(requireContext()).apply {
-                text = macro.name
-                setTextColor(chipText)
+                // Append a "(N stale)" suffix in the warning colour so the
+                // user notices that some steps point to deleted devices
+                // before they tap the chip and get a half-running macro.
+                text = if (staleCount == 0) macro.name
+                       else "${macro.name} ⚠"
+                if (staleCount > 0) setTextColor(warnText) else setTextColor(chipText)
                 textSize = 13f
                 setPadding(pad, pad / 2, pad, pad / 2)
                 // Solid card-elevated colour for the chip with built-in press

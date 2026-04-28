@@ -306,9 +306,21 @@ class SpectraOrchestrator(private val context: Context) {
 
     // ── Utilities ─────────────────────────────────────────────
 
+    /**
+     * Append to the user-visible scan log. Synchronized because the
+     * read-modify-write of `_log.value = _log.value + message` races when
+     * several callers append concurrently — the brute-force onSkip
+     * callback runs on whatever thread the IR transmit error path uses,
+     * the per-module scans run on Dispatchers.IO via async, and the
+     * orchestrator's own scanPassive coroutine runs on yet another thread.
+     * Without the lock, two concurrent appends can lose a message.
+     */
+    private val logLock = Any()
     private fun appendLog(message: String) {
         Log.d(TAG, message)
-        _log.value = _log.value + message
+        synchronized(logLock) {
+            _log.value = _log.value + message
+        }
     }
 
     fun clearLog() {

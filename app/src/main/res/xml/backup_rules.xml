@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Auto Backup rules for Spectra. Saved device profiles + macros are
+  small and useful to carry between devices, so they're included.
+  RF fingerprints inside profiles contain BSSIDs of WiFi APs near the
+  user's home — we keep them in the backup because the recognise-known-
+  device feature breaks without them, but they should not be shared
+  with third parties from this surface (Auto Backup is encrypted to
+  the user's Google account).
+
+  Note: targetSdk=34, so this file applies via android:fullBackupContent
+  in the manifest.
+-->
+<full-backup-content>
+    <include domain="file" path="devices/" />
+    <include domain="file" path="macros.json" />
+</full-backup-content>

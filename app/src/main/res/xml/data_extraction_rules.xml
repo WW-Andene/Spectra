@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+ data extraction rules. Same content as backup_rules.xml
+  for consistency: cloud + device-to-device transfers carry user-saved
+  profiles + macros, nothing else.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <include domain="file" path="devices/" />
+        <include domain="file" path="macros.json" />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="file" path="devices/" />
+        <include domain="file" path="macros.json" />
+    </device-transfer>
+</data-extraction-rules>
