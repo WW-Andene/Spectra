@@ -51,8 +51,9 @@ internal object PulseDistance {
 
     /**
      * Decode an alternating mark/space timings array into address +
-     * command. Returns null if the header doesn't match, the bit count
-     * is wrong, or the inverted-byte checksum fails.
+     * command using the NEC-family 32-bit + inverted-byte-checksum
+     * layout. Wraps [decodeRaw] with the checksum validation that
+     * NEC, Samsung, and LG share.
      *
      * The first array element must be a mark.
      */
@@ -62,31 +63,10 @@ internal object PulseDistance {
         bit: BitTiming = BitTiming(),
         repeat: RepeatShape? = null,
     ): Decoded? {
-        if (timings.size < 4) return null
-        if (!within(timings[0], header.mark, header.markTol)) return null
+        val raw = decodeRaw(timings, header, bit, totalBits = 32, repeat = repeat) ?: return null
+        if (raw.isRepeat) return Decoded(address = 0, command = 0, isRepeat = true)
 
-        // Distinguish data frame from repeat (if the protocol has one).
-        if (repeat != null && within(timings[1], repeat.space, repeat.spaceTol)) {
-            return if (timings.size >= 3 && within(timings[2], bit.mark, bit.markTol)) {
-                Decoded(address = 0, command = 0, isRepeat = true)
-            } else null
-        }
-        if (!within(timings[1], header.space, header.spaceTol)) return null
-
-        // 32 bits = 64 entries, plus header (2) + closing mark (1) = 67.
-        if (timings.size < 2 + 64 + 1) return null
-
-        var packed = 0
-        for (b in 0 until 32) {
-            val markIdx = 2 + b * 2
-            val spaceIdx = markIdx + 1
-            if (!within(timings[markIdx], bit.mark, bit.markTol)) return null
-            // Discriminate by midpoint instead of two windows so we don't
-            // reject borderline-jittery cases that are clearly closer to
-            // one nominal than the other.
-            if (timings[spaceIdx] > bit.zeroOneBoundary) packed = packed or (1 shl b)
-        }
-
+        val packed = raw.packed.toInt()
         val address = packed and 0xFF
         val addressInv = (packed ushr 8) and 0xFF
         val command = (packed ushr 16) and 0xFF
@@ -97,9 +77,53 @@ internal object PulseDistance {
         return Decoded(address = address, command = command, isRepeat = false)
     }
 
+    /** [decodeRaw]'s output: the raw [totalBits] LSB-first as a Long
+     *  plus the repeat flag. Used by codecs whose data layout isn't
+     *  the NEC-family 8+8+8+8 inverted shape (Panasonic 48-bit, etc.). */
+    data class Raw(val packed: Long, val isRepeat: Boolean)
+
+    /**
+     * Decode [totalBits] of pulse-distance data without imposing any
+     * particular address / command layout or checksum. Returns the
+     * raw LSB-first packed value as a Long (≤64 bits supported).
+     * Caller is responsible for byte unpacking + protocol-specific
+     * checksum validation.
+     */
+    fun decodeRaw(
+        timings: IntArray,
+        header: Header,
+        bit: BitTiming = BitTiming(),
+        totalBits: Int = 32,
+        repeat: RepeatShape? = null,
+        requireClosingMark: Boolean = true,
+    ): Raw? {
+        if (timings.size < 4) return null
+        if (!within(timings[0], header.mark, header.markTol)) return null
+
+        if (repeat != null && within(timings[1], repeat.space, repeat.spaceTol)) {
+            return if (timings.size >= 3 && within(timings[2], bit.mark, bit.markTol)) {
+                Raw(packed = 0L, isRepeat = true)
+            } else null
+        }
+        if (!within(timings[1], header.space, header.spaceTol)) return null
+
+        val needed = 2 + totalBits * 2 + (if (requireClosingMark) 1 else 0)
+        if (timings.size < needed) return null
+
+        var packed = 0L
+        for (b in 0 until totalBits) {
+            val markIdx = 2 + b * 2
+            val spaceIdx = markIdx + 1
+            if (!within(timings[markIdx], bit.mark, bit.markTol)) return null
+            if (timings[spaceIdx] > bit.zeroOneBoundary) packed = packed or (1L shl b)
+        }
+        return Raw(packed = packed, isRepeat = false)
+    }
+
     /**
      * Build an alternating mark/space timings array from address +
-     * command. Output length: 2 (header) + 64 (32 bits) + 1 (closing
+     * command using the NEC-family 32-bit + inverted-byte-checksum
+     * layout. Output length: 2 (header) + 64 (32 bits) + 1 (closing
      * mark) = 67 entries.
      */
     fun encode(
@@ -108,22 +132,34 @@ internal object PulseDistance {
         header: Header,
         bit: BitTiming = BitTiming(),
     ): IntArray {
-        val out = IntArray(2 + 32 * 2 + 1)
+        val packed = (address.toLong() and 0xFF) or
+            ((address.inv().toLong() and 0xFF) shl 8) or
+            ((command.toLong() and 0xFF) shl 16) or
+            ((command.inv().toLong() and 0xFF) shl 24)
+        return encodeRaw(packed, totalBits = 32, header = header, bit = bit)
+    }
+
+    /**
+     * Build an alternating mark/space timings array from a raw packed
+     * Long (LSB-first) of [totalBits] bits. Used by codecs that don't
+     * fit the NEC-family inverted-byte layout (Panasonic 48-bit, etc.).
+     */
+    fun encodeRaw(
+        packed: Long,
+        totalBits: Int,
+        header: Header,
+        bit: BitTiming = BitTiming(),
+        includeClosingMark: Boolean = true,
+    ): IntArray {
+        val out = IntArray(2 + totalBits * 2 + (if (includeClosingMark) 1 else 0))
         out[0] = header.mark
         out[1] = header.space
         var i = 2
-        for (b in intArrayOf(
-            address and 0xFF,
-            address.inv() and 0xFF,
-            command and 0xFF,
-            command.inv() and 0xFF,
-        )) {
-            for (k in 0 until 8) {
-                out[i++] = bit.mark
-                out[i++] = if ((b ushr k) and 1 == 1) bit.oneSpace else bit.zeroSpace
-            }
+        for (b in 0 until totalBits) {
+            out[i++] = bit.mark
+            out[i++] = if ((packed ushr b) and 1L == 1L) bit.oneSpace else bit.zeroSpace
         }
-        out[i] = bit.mark  // closing mark
+        if (includeClosingMark) out[i] = bit.mark
         return out
     }
 

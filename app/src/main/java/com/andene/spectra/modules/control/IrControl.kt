@@ -357,6 +357,8 @@ class IrControl(private val context: Context) {
                     return com.andene.spectra.modules.ir.protocols.LgCodec.encodeFromPacked(code)
                 IrProtocol.SIRC_12 ->
                     return com.andene.spectra.modules.ir.protocols.SonyCodec.encodeFromPacked(code)
+                IrProtocol.PANASONIC ->
+                    return com.andene.spectra.modules.ir.protocols.PanasonicCodec.encode(code)
                 else -> Unit
             }
         }
@@ -374,6 +376,7 @@ class IrControl(private val context: Context) {
      */
     private fun protocolCarrier(command: IrCommand): Int? = when (command.protocol) {
         IrProtocol.SIRC_12, IrProtocol.SIRC_15, IrProtocol.SIRC_20 -> 40000
+        IrProtocol.PANASONIC -> 36700  // Kaseikyo / Panasonic standard
         else -> null
     }
 

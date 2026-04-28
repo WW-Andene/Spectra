@@ -402,6 +402,11 @@ class IrCameraCapture(private val context: Context) {
             com.andene.spectra.modules.ir.protocols.SamsungCodec.decode(timings)?.packed()
         IrProtocol.LG ->
             com.andene.spectra.modules.ir.protocols.LgCodec.decode(timings)?.packed()
+        IrProtocol.PANASONIC ->
+            // Store the full 48-bit packed payload — vendor code matters
+            // because a Panasonic TV won't react to a Sharp-vendor frame
+            // on the same wire.
+            com.andene.spectra.modules.ir.protocols.PanasonicCodec.decode(timings)?.packed
         IrProtocol.SIRC_12, IrProtocol.SIRC_15, IrProtocol.SIRC_20 ->
             com.andene.spectra.modules.ir.protocols.SonyCodec.decode(timings)?.let { decoded ->
                 // Only round-trip via packed-code for SIRC-12 — the
@@ -436,6 +441,7 @@ class IrCameraCapture(private val context: Context) {
         if (headerMark in 8800..10000 && headerSpace in 4300..5000) return IrProtocol.NEC
         if (headerMark in 4000..5000 && headerSpace in 4000..5000) return IrProtocol.SAMSUNG
         if (headerMark in 7500..8800 && headerSpace in 3800..4500) return IrProtocol.LG
+        if (headerMark in 3000..4000 && headerSpace in 1500..2000) return IrProtocol.PANASONIC
         if (headerMark in 2200..2600 && headerSpace in 400..800) return IrProtocol.SIRC_12
         if (headerMark in 200..450) return IrProtocol.SHARP
 
