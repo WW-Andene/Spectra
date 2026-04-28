@@ -30,7 +30,10 @@ class RemoteFragment : Fragment() {
         val deviceName = view.findViewById<TextView>(R.id.deviceName)
         val deviceInfo = view.findViewById<TextView>(R.id.deviceInfo)
         val btnLearnMore = view.findViewById<Button>(R.id.btnLearnMore)
+        val btnShareDevice = view.findViewById<Button>(R.id.btnShareDevice)
         val btnBackToHome = view.findViewById<Button>(R.id.btnBackToHome)
+
+        btnShareDevice.setOnClickListener { shareActiveDevice() }
 
         // Device info
         viewLifecycleOwner.lifecycleScope.launch {
@@ -122,5 +125,16 @@ class RemoteFragment : Fragment() {
     override fun onDestroyView() {
         repeatJob?.cancel()
         super.onDestroyView()
+    }
+
+    private fun shareActiveDevice() {
+        val json = vm.exportActiveDeviceJson() ?: return
+        val deviceName = vm.activeDevice.value?.name ?: "Spectra device"
+        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+            type = "application/json"
+            putExtra(android.content.Intent.EXTRA_SUBJECT, "Spectra: $deviceName")
+            putExtra(android.content.Intent.EXTRA_TEXT, json)
+        }
+        startActivity(android.content.Intent.createChooser(intent, "Share device profile"))
     }
 }

@@ -68,6 +68,10 @@ class HomeFragment : Fragment() {
             vm.startPassiveScan()
         }
 
+        view.findViewById<Button>(R.id.btnImportClipboard).setOnClickListener {
+            importFromClipboard()
+        }
+
         // ── Macros ────────────────────────────────────────────
         val macroChips = view.findViewById<LinearLayout>(R.id.macroChips)
         val macroRunning = view.findViewById<TextView>(R.id.macroRunning)
@@ -87,6 +91,31 @@ class HomeFragment : Fragment() {
                     macroRunning.visibility = View.GONE
                 }
             }
+        }
+    }
+
+    private fun importFromClipboard() {
+        val cm = requireContext().getSystemService(android.content.Context.CLIPBOARD_SERVICE)
+            as android.content.ClipboardManager
+        val text = cm.primaryClip
+            ?.takeIf { it.itemCount > 0 }
+            ?.getItemAt(0)
+            ?.coerceToText(requireContext())
+            ?.toString()
+            ?.trim()
+        if (text.isNullOrEmpty() || !text.startsWith("{")) {
+            android.widget.Toast.makeText(
+                requireContext(),
+                "Clipboard doesn't look like a Spectra profile (expected JSON).",
+                android.widget.Toast.LENGTH_LONG,
+            ).show()
+            return
+        }
+        vm.importDeviceFromJson(text) { imported ->
+            val msg = if (imported != null) {
+                "Imported ${imported.name ?: "device"} with ${imported.irProfile?.commands?.size ?: 0} commands"
+            } else "Could not parse clipboard contents"
+            android.widget.Toast.makeText(requireContext(), msg, android.widget.Toast.LENGTH_LONG).show()
         }
     }
 

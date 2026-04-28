@@ -91,6 +91,31 @@ class DeviceRepository(private val context: Context) {
         File(devicesDir, "$deviceId.json").delete()
     }
 
+    // ── Export / import ───────────────────────────────────────
+
+    /**
+     * Serialize a profile to a portable JSON string. Same wire format as
+     * the on-disk file, just held in memory so the caller can hand it to
+     * Intent.ACTION_SEND or write to a user-chosen file.
+     */
+    fun exportProfile(profile: DeviceProfile): String =
+        json.encodeToString(profile.toSerializable())
+
+    /**
+     * Inverse of [exportProfile]. Returns null on parse failure (so the
+     * caller can show a friendly error rather than a stack trace).
+     * The caller is responsible for persisting the returned profile.
+     */
+    fun importProfile(jsonText: String): DeviceProfile? = try {
+        // Generate a fresh id so importing twice doesn't collide with an
+        // already-saved profile from the same source.
+        val parsed = json.decodeFromString<SerializableDeviceProfile>(jsonText).toModel()
+        parsed.copy(id = java.util.UUID.randomUUID().toString())
+    } catch (e: Exception) {
+        Log.w(TAG, "Failed to import profile", e)
+        null
+    }
+
     // ── Serializable DTOs ─────────────────────────────────────
     // DeviceProfile uses FloatArray/IntArray which need explicit serialization
 

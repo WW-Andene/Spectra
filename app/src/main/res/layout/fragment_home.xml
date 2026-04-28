@@ -76,7 +76,17 @@
         android:textSize="16sp"
         android:textStyle="bold"
         android:backgroundTint="@color/accent_primary"
-        android:layout_marginBottom="24dp" />
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/btnImportClipboard"
+        android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:text="IMPORT DEVICE FROM CLIPBOARD"
+        android:textSize="11sp"
+        android:backgroundTint="@color/bg_card_elevated"
+        android:textColor="@color/text_secondary"
+        android:layout_marginBottom="20dp" />
 
     <!-- Macros section -->
     <LinearLayout

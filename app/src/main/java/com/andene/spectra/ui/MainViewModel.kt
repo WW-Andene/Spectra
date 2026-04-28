@@ -388,6 +388,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // ── Export / import ──────────────────────────────────────
+
+    /** JSON for the active device, or null when there is none. */
+    fun exportActiveDeviceJson(): String? {
+        val device = _activeDevice.value ?: return null
+        return repository.exportProfile(device)
+    }
+
+    /**
+     * Parse JSON, give it a fresh id, persist, and load into the active
+     * device + matcher. Returns the loaded device on success.
+     */
+    fun importDeviceFromJson(jsonText: String, onResult: (DeviceProfile?) -> Unit) {
+        viewModelScope.launch {
+            val imported = repository.importProfile(jsonText)
+            if (imported != null) {
+                orchestrator.registerKnownDevice(imported)
+                repository.save(imported)
+                _activeDevice.value = imported
+                loadSavedDevices()
+            }
+            onResult(imported)
+        }
+    }
+
     // ── Hardware checks ───────────────────────────────────────
 
     fun hasIrBlaster(): Boolean = orchestrator.bruteForce.isAvailable()
