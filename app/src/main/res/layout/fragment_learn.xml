@@ -16,6 +16,42 @@
         android:textStyle="bold"
         android:layout_marginBottom="16dp" />
 
+    <!-- Database pick section — fastest path for known brands -->
+    <LinearLayout
+        android:id="@+id/databaseSection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/bg_card"
+        android:padding="16dp"
+        android:layout_marginBottom="12dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pick from Database"
+            android:textColor="@color/accent_secondary"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Install a complete remote in one tap. Brands matching the detected device are listed first."
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
+            android:layout_marginBottom="12dp" />
+
+        <Button
+            android:id="@+id/btnPickFromDb"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="BROWSE BUNDLED REMOTES"
+            android:backgroundTint="@color/accent_secondary"
+            android:textColor="@color/bg_primary" />
+    </LinearLayout>
+
     <!-- Camera capture section -->
     <LinearLayout
         android:id="@+id/cameraSection"

@@ -17,6 +17,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val app = application as SpectraApp
     val orchestrator: SpectraOrchestrator = app.orchestrator
     private val repository: DeviceRepository = app.repository
+    val codeDatabase = app.codeDatabase
 
     // UI state
     private val _screen = MutableStateFlow(Screen.HOME)
@@ -238,6 +239,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _activeDevice.value = named
         viewModelScope.launch {
             repository.save(named)
+            loadSavedDevices()
+        }
+    }
+
+    // ── Code database install ────────────────────────────────
+
+    /**
+     * Apply a complete remote layout from the bundled DB to the active
+     * device. Replaces any existing IR commands and persists immediately.
+     */
+    fun installRemoteFromDatabase(entry: com.andene.spectra.data.codedb.IrCodeDatabase.RemoteEntry) {
+        val device = _activeDevice.value ?: return
+        val updated = device.copy(
+            manufacturer = device.manufacturer ?: entry.brand,
+            category = if (device.category == DeviceCategory.UNKNOWN) entry.deviceType else device.category,
+            irProfile = entry.asIrProfile(),
+        )
+        _activeDevice.value = updated
+        orchestrator.registerKnownDevice(updated)
+        viewModelScope.launch {
+            repository.save(updated)
             loadSavedDevices()
         }
     }

@@ -189,9 +189,17 @@ class SpectraOrchestrator(private val context: Context) {
         onAttempt: suspend (protocol: IrProtocol, manufacturer: String, attemptNum: Int) -> Boolean
     ) {
         _phase.value = Phase.LEARNING_BRUTE
-        appendLog("Module 5: Starting brute force sweep...")
+        // If we already inferred the brand from RF, use it to put matching
+        // codes at the front of the sweep — most users will get a hit in
+        // the first 3–5 tries instead of grinding through 30+.
+        val brandHint = _discoveredDevice.value?.manufacturer
+        if (brandHint != null) {
+            appendLog("Module 5: Starting brute force sweep (brand hint: $brandHint)")
+        } else {
+            appendLog("Module 5: Starting brute force sweep...")
+        }
 
-        bruteForce.startSweep { protocol, manufacturer, attempt ->
+        bruteForce.startSweep(brandFilter = brandHint) { protocol, manufacturer, attempt ->
             appendLog("  Trying $manufacturer ($protocol) — attempt #$attempt")
             onAttempt(protocol, manufacturer, attempt)
         }

@@ -1,6 +1,7 @@
 package com.andene.spectra.ui.screens
 
 import android.Manifest
+import android.app.AlertDialog
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -50,6 +51,11 @@ class LearnFragment : Fragment() {
 
         val deviceName = vm.activeDevice.value?.name ?: "Device"
         learnTitle.text = "Learn: $deviceName"
+
+        // Database picker — fastest path
+        view.findViewById<Button>(R.id.btnPickFromDb).setOnClickListener {
+            showBrandPicker()
+        }
 
         // Setup camera
         setupCamera(cameraPreview)
@@ -123,6 +129,57 @@ class LearnFragment : Fragment() {
 
         // Initial learned list
         updateLearnedList(learnedCommands)
+    }
+
+    private fun showBrandPicker() {
+        val db = vm.codeDatabase
+        val detected = vm.activeDevice.value?.manufacturer?.lowercase()
+        val brands = db.brands().sortedByDescending { brand ->
+            // Brands matching the detected manufacturer float to the top.
+            detected != null && (brand.lowercase().contains(detected) || detected.contains(brand.lowercase()))
+        }
+        if (brands.isEmpty()) {
+            AlertDialog.Builder(requireContext())
+                .setTitle("No remotes available")
+                .setMessage("The bundled IR database is empty.")
+                .setPositiveButton("OK", null)
+                .show()
+            return
+        }
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Pick a brand")
+            .setItems(brands.toTypedArray()) { _, which ->
+                showRemotePicker(brands[which])
+            }
+            .show()
+    }
+
+    private fun showRemotePicker(brand: String) {
+        val entries = vm.codeDatabase.lookup(brand)
+        if (entries.isEmpty()) {
+            AlertDialog.Builder(requireContext())
+                .setTitle(brand)
+                .setMessage("No remotes available for this brand.")
+                .setPositiveButton("OK", null)
+                .show()
+            return
+        }
+        val labels = entries.map { "${it.model} · ${it.commands.size} cmds" }.toTypedArray()
+        AlertDialog.Builder(requireContext())
+            .setTitle("$brand — pick a layout")
+            .setItems(labels) { _, which ->
+                vm.installRemoteFromDatabase(entries[which])
+                AlertDialog.Builder(requireContext())
+                    .setTitle("Installed")
+                    .setMessage("${entries[which].model} loaded with ${entries[which].commands.size} commands.")
+                    .setPositiveButton("Open Remote") { _, _ ->
+                        vm.navigate(com.andene.spectra.ui.MainViewModel.Screen.REMOTE)
+                    }
+                    .setNegativeButton("Stay", null)
+                    .show()
+            }
+            .show()
     }
 
     private fun updateLearnedList(textView: TextView) {

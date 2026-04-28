@@ -207,7 +207,8 @@ class IrBruteForce(private val context: Context) {
      * Calls [onAttempt] after each transmission so UI can ask user for confirmation.
      */
     suspend fun startSweep(
-        onAttempt: suspend (protocol: IrProtocol, manufacturer: String, attemptNum: Int) -> Boolean
+        brandFilter: String? = null,
+        onAttempt: suspend (protocol: IrProtocol, manufacturer: String, attemptNum: Int) -> Boolean,
     ) {
         if (irManager == null || !irManager.hasIrEmitter()) {
             Log.e(TAG, "No IR emitter available")
@@ -219,7 +220,28 @@ class IrBruteForce(private val context: Context) {
         lastFoundManufacturer = null
         var totalAttempts = 0
 
-        for ((protocol, codes) in POWER_CODES) {
+        // When the caller already knows the brand (e.g. inferred from RF),
+        // try those entries first before falling back to the full sweep.
+        val brand = brandFilter?.trim()?.lowercase()?.takeIf { it.isNotEmpty() }
+        val codeOrder: List<Pair<IrProtocol, List<Pair<String, IntArray>>>> = if (brand != null) {
+            val (prefer, rest) = POWER_CODES.entries.map { it.toPair() }.partition { (_, codes) ->
+                codes.any { (manufacturer, _) ->
+                    manufacturer.lowercase().contains(brand) || brand.contains(manufacturer.lowercase().substringBefore(' '))
+                }
+            }
+            // Within preferred protocols, also reorder so brand-matching entries fire first.
+            val reorderedPrefer = prefer.map { (proto, codes) ->
+                val (matching, others) = codes.partition { (manufacturer, _) ->
+                    manufacturer.lowercase().contains(brand) || brand.contains(manufacturer.lowercase().substringBefore(' '))
+                }
+                proto to (matching + others)
+            }
+            reorderedPrefer + rest
+        } else {
+            POWER_CODES.entries.map { it.toPair() }
+        }
+
+        for ((protocol, codes) in codeOrder) {
             for ((manufacturer, timings) in codes) {
                 totalAttempts++
                 _state.value = _state.value.copy(
