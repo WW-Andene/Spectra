@@ -23,6 +23,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: DeviceRepository = app.repository
     val codeDatabase = app.codeDatabase
     private val macroRepository = app.macroRepository
+    private val bfCheckpointRepository = app.bfCheckpointRepository
+
+    /** Checkpoint of an in-flight brute-force the user was running before
+     *  process death / app close. If non-null on launch, the UI offers
+     *  to resume from where the user left off. Cleared on success +
+     *  explicit cancel. */
+    private val _resumableBruteForce = MutableStateFlow<com.andene.spectra.data.models.BruteForceCheckpoint?>(null)
+    val resumableBruteForce: StateFlow<com.andene.spectra.data.models.BruteForceCheckpoint?> = _resumableBruteForce
 
     /** Transient one-shot toasts (e.g. "Save failed"). Replay=0 so a
      *  subscribed fragment doesn't see stale events on rebind. */
@@ -127,6 +135,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         // Mirror orchestrator log
         viewModelScope.launch {
             orchestrator.log.collect { _scanLog.value = it }
+        }
+        // Surface any persisted brute-force checkpoint on launch; the UI
+        // collector decides whether to prompt the user to resume.
+        viewModelScope.launch {
+            _resumableBruteForce.value = bfCheckpointRepository.load()
         }
     }
 
@@ -366,17 +379,35 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var pendingBruteForceResponse: CompletableDeferred<Boolean>? = null
     private var bruteForceJob: kotlinx.coroutines.Job? = null
 
-    fun startBruteForce() {
+    fun startBruteForce(startAttempt: Int = 0) {
         // Re-entry guard: if a sweep is already running, ignore. Otherwise
         // two coroutines race on the orchestrator's BruteForceState and the
         // pendingBruteForceResponse field, producing inconsistent prompts.
         if (bruteForceJob?.isActive == true) return
+        // Resume support: clear the staged checkpoint state from previous
+        // launches so the resume banner doesn't reappear after we've
+        // started running.
+        _resumableBruteForce.value = null
         bruteForceJob = viewModelScope.launch {
             _screen.value = Screen.LEARN
-            orchestrator.startBruteForce { protocol, manufacturer, attempt ->
+            val device = _activeDevice.value
+            orchestrator.startBruteForce(startAttempt = startAttempt) { protocol, manufacturer, attempt ->
                 val response = CompletableDeferred<Boolean>()
                 pendingBruteForceResponse = response
                 _bruteForcePrompt.value = BruteForcePrompt(protocol, manufacturer, attempt)
+                // Persist a checkpoint BEFORE awaiting — if the process
+                // dies between display and user response, on resume we
+                // pick up at the next attempt (we already showed this one).
+                if (device != null) {
+                    bfCheckpointRepository.save(
+                        com.andene.spectra.data.models.BruteForceCheckpoint(
+                            deviceId = device.id,
+                            deviceName = device.name ?: "Device",
+                            brandFilter = device.manufacturer,
+                            nextAttemptIndex = attempt,
+                        )
+                    )
+                }
                 try {
                     response.await()
                 } finally {
@@ -387,18 +418,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
             val state = orchestrator.bruteForce.state.value
             if (state.foundProtocol != null) {
-                // The orchestrator may have updated the discovered device
-                // with the captured power pattern + manufacturer; pull that
-                // back into the viewmodel so it survives navigation.
-                val device = orchestrator.discoveredDevice.value ?: _activeDevice.value
-                if (device != null) {
-                    _activeDevice.value = device
-                    orchestrator.registerKnownDevice(device)
-                    saveDeviceWithFeedback(device)
+                val finalDevice = orchestrator.discoveredDevice.value ?: _activeDevice.value
+                if (finalDevice != null) {
+                    _activeDevice.value = finalDevice
+                    orchestrator.registerKnownDevice(finalDevice)
+                    saveDeviceWithFeedback(finalDevice)
                     loadSavedDevices()
                 }
                 _screen.value = Screen.REMOTE
             }
+            // Clear checkpoint on any clean exit (success, full sweep
+            // complete with no hit, or coroutine cancellation): the
+            // user is no longer mid-flow.
+            bfCheckpointRepository.clear()
         }
     }
 
@@ -414,6 +446,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         orchestrator.bruteForce.stop()
         // Unblock any in-flight prompt so the sweep coroutine returns promptly.
         pendingBruteForceResponse?.complete(false)
+        // Explicit user cancel — drop the checkpoint so we don't offer
+        // resume next launch.
+        viewModelScope.launch { bfCheckpointRepository.clear() }
+    }
+
+    /** Drop the persisted checkpoint without resuming. UI offers this
+     *  when the user dismisses the resume banner. */
+    fun discardResumableBruteForce() {
+        _resumableBruteForce.value = null
+        viewModelScope.launch { bfCheckpointRepository.clear() }
+    }
+
+    /** Resume the previously-persisted brute force from the recorded
+     *  attempt index. Selects the device the checkpoint was for. */
+    fun resumeBruteForce() {
+        val cp = _resumableBruteForce.value ?: return
+        val device = _savedDevices.value.firstOrNull { it.id == cp.deviceId }
+        if (device == null) {
+            // Source device deleted while we were away — nothing to resume.
+            emitToast("Can't resume — device \"${cp.deviceName}\" no longer exists")
+            discardResumableBruteForce()
+            return
+        }
+        _activeDevice.value = device
+        startBruteForce(startAttempt = cp.nextAttemptIndex)
     }
 
     // ── IR Control ────────────────────────────────────────────

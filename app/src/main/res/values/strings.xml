@@ -79,6 +79,9 @@
     <string name="action_discard">Discard</string>
     <string name="action_keep_editing">Keep editing</string>
     <string name="results_discard_message">Discard the typed device name and go back?</string>
+    <string name="action_resume">RESUME</string>
+    <string name="action_dismiss">DISMISS</string>
+    <string name="resume_brute_force_format">Resume brute force for %1$s? (%2$d attempts done)</string>
     <string name="camera_bind_failed">Camera couldn\'t start. Try going back and reopening Learn, or reboot the phone if the issue persists.</string>
 
     <!-- Scanning -->

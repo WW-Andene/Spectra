@@ -14,3 +14,9 @@ captures/
 
 .DS_Store
 Thumbs.db
+
+# Release signing — these contain private key material and must never
+# be committed. Each developer / CI environment supplies its own copy.
+keystore.properties
+*.jks
+*.keystore

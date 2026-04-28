@@ -59,9 +59,28 @@ JVM — no emulator required.
 ### Release build
 
 `./gradlew :app:assembleRelease` produces a minified APK with R8 +
-resource shrinking. Release signing is **not configured** — fork and
-add your own keystore via Gradle's `signingConfigs` block before
-distributing.
+resource shrinking.
+
+**Signing.** The release build picks up signing material from
+`keystore.properties` at the repo root if present; otherwise it falls
+back to debug signing so the command still produces a runnable APK
+without ceremony. To configure proper release signing:
+
+1. Generate a release keystore (one-time, store outside the repo):
+   ```
+   keytool -genkeypair -v \
+     -keystore spectra-release.jks \
+     -alias spectra \
+     -keyalg RSA -keysize 2048 -validity 10000
+   ```
+2. Copy `keystore.properties.example` → `keystore.properties` and fill
+   in the four values (`storeFile`, `storePassword`, `keyAlias`,
+   `keyPassword`).
+3. Run `./gradlew :app:assembleRelease`. The APK will be signed.
+
+`keystore.properties` and `*.jks` are in `.gitignore` — never commit
+them. For CI, supply the four values as secrets and write the
+properties file in the workflow before invoking Gradle.
 
 ---
 

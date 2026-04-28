@@ -88,6 +88,52 @@
         android:textColor="@color/text_secondary"
         android:layout_marginBottom="20dp" />
 
+    <!-- Resumable brute-force banner — visibility toggled at runtime -->
+    <LinearLayout
+        android:id="@+id/resumeBanner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/bg_card_elevated"
+        android:padding="12dp"
+        android:layout_marginBottom="16dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/resumeBannerText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/accent_warning"
+            android:textSize="13sp"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnResumeBruteForce"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:text="@string/action_resume"
+                android:backgroundTint="@color/accent_secondary"
+                android:textColor="@color/bg_primary"
+                android:layout_marginEnd="4dp" />
+
+            <Button
+                android:id="@+id/btnDismissResume"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:text="@string/action_dismiss"
+                android:backgroundTint="@color/bg_card"
+                android:textColor="@color/text_secondary"
+                android:layout_marginStart="4dp" />
+        </LinearLayout>
+    </LinearLayout>
+
     <!-- Macros section -->
     <LinearLayout
         android:layout_width="match_parent"

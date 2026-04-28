@@ -1,7 +1,18 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.serialization")
+}
+
+// Read release-signing config from `keystore.properties` at the repo root
+// if present. Gitignored — see keystore.properties.example for the schema.
+// Without this file the release build falls back to debug signing so
+// `assembleRelease` still produces an APK locally without ceremony.
+val keystoreProps = Properties().apply {
+    val f = rootProject.file("keystore.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
 }
 
 android {
@@ -32,6 +43,21 @@ android {
         abortOnError = true
     }
 
+    signingConfigs {
+        // 'release' is created only when the keystore.properties file is
+        // present + complete. Otherwise we leave it absent and the
+        // release buildType falls through to debug signing — assembleRelease
+        // still produces a runnable APK locally without secrets.
+        if (keystoreProps.getProperty("storeFile")?.isNotBlank() == true) {
+            create("release") {
+                storeFile = file(keystoreProps.getProperty("storeFile"))
+                storePassword = keystoreProps.getProperty("storePassword")
+                keyAlias = keystoreProps.getProperty("keyAlias")
+                keyPassword = keystoreProps.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         getByName("release") {
             // R8 minification + resource shrinking. Strips Log.d/Log.v
@@ -44,6 +70,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            // Use the release signing config when available; fall back to
+            // debug signing so assembleRelease keeps working in dev.
+            signingConfig = signingConfigs.findByName("release")
+                ?: signingConfigs.getByName("debug")
         }
         getByName("debug") {
             isMinifyEnabled = false

@@ -216,7 +216,8 @@ class SpectraOrchestrator(private val context: Context) {
      * No existing remote needed.
      */
     suspend fun startBruteForce(
-        onAttempt: suspend (protocol: IrProtocol, manufacturer: String, attemptNum: Int) -> Boolean
+        startAttempt: Int = 0,
+        onAttempt: suspend (protocol: IrProtocol, manufacturer: String, attemptNum: Int) -> Boolean,
     ) {
         _phase.value = Phase.LEARNING_BRUTE
         // If we already inferred the brand from RF, use it to put matching
@@ -231,6 +232,7 @@ class SpectraOrchestrator(private val context: Context) {
 
         bruteForce.startSweep(
             brandFilter = brandHint,
+            startAttempt = startAttempt,
             onSkip = { protocol, manufacturer, reason ->
                 // Surface transmit-time skips into the user-visible scan log
                 // — silent skips were hiding hardware-reject failures.

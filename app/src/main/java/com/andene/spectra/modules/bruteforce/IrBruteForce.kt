@@ -242,6 +242,7 @@ class IrBruteForce(private val context: Context) {
      */
     suspend fun startSweep(
         brandFilter: String? = null,
+        startAttempt: Int = 0,
         onSkip: ((protocol: IrProtocol, manufacturer: String, reason: String) -> Unit)? = null,
         onAttempt: suspend (protocol: IrProtocol, manufacturer: String, attemptNum: Int) -> Boolean,
     ) {
@@ -291,6 +292,10 @@ class IrBruteForce(private val context: Context) {
             for ((manufacturer, timings) in codes) {
                 val carrier = carriersToTry.firstOrNull() ?: CARRIER_FREQ
                 totalAttempts++
+                // Resume support: skip until we reach the saved attempt index.
+                // We still increment totalAttempts so the UI's attempt# shown
+                // to the user matches the original sweep numbering.
+                if (totalAttempts <= startAttempt) continue
                 _state.value = _state.value.copy(
                     currentProtocol = protocol,
                     totalAttempts = totalAttempts

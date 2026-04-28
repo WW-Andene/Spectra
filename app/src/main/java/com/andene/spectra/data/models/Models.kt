@@ -123,6 +123,26 @@ data class BruteForceState(
 )
 
 /**
+ * Mid-flow brute-force checkpoint. Written to disk after every confirmed
+ * "no" response so the user can resume from the same attempt index after
+ * a process kill, low-memory reclaim, or accidental dismissal. Cleared
+ * on successful hit or explicit cancel.
+ *
+ * Schema-stable: never break compatibility silently — old checkpoints
+ * should still parse so a user who upgraded between versions doesn't
+ * lose mid-flow state.
+ */
+data class BruteForceCheckpoint(
+    val deviceId: String,
+    val deviceName: String,
+    val brandFilter: String? = null,
+    /** Number of attempts already completed; the resume continues from
+     *  attempt index = nextAttemptIndex. */
+    val nextAttemptIndex: Int = 0,
+    val startedAt: Long = System.currentTimeMillis(),
+)
+
+/**
  * A sequence of IR commands across one or more devices, e.g. "Movie night":
  *   1. Power on TV
  *   2. wait 1500ms

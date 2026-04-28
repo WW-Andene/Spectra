@@ -106,6 +106,32 @@ class HomeFragment : Fragment() {
             importFromClipboard()
         }
 
+        // Resumable brute-force banner: shows when a previous sweep was
+        // interrupted. Resume picks up from the saved attempt index;
+        // Dismiss drops the checkpoint without acting.
+        val resumeBanner = view.findViewById<LinearLayout>(R.id.resumeBanner)
+        val resumeBannerText = view.findViewById<TextView>(R.id.resumeBannerText)
+        view.findViewById<Button>(R.id.btnResumeBruteForce).setOnClickListener {
+            vm.resumeBruteForce()
+        }
+        view.findViewById<Button>(R.id.btnDismissResume).setOnClickListener {
+            vm.discardResumableBruteForce()
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            vm.resumableBruteForce.collect { checkpoint ->
+                if (checkpoint != null) {
+                    resumeBanner.visibility = View.VISIBLE
+                    resumeBannerText.text = getString(
+                        R.string.resume_brute_force_format,
+                        checkpoint.deviceName,
+                        checkpoint.nextAttemptIndex,
+                    )
+                } else {
+                    resumeBanner.visibility = View.GONE
+                }
+            }
+        }
+
         // Surface viewmodel-emitted toasts (save failures, etc.). Home is
         // always the surviving root destination so collecting here gives us
         // user feedback for every persistence error regardless of which
