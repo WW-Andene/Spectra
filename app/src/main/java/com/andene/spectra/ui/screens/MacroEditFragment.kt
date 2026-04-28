@@ -29,8 +29,33 @@ class MacroEditFragment : Fragment() {
     private val workingSteps = mutableListOf<MacroStep>()
     private var editingId: String? = null
 
+    companion object {
+        private const val KEY_EDITING_ID = "macroEdit.editingId"
+        private const val KEY_NAME = "macroEdit.name"
+        private const val KEY_STEPS = "macroEdit.steps"
+        // Field separator inside a serialized step. Picked because it's not
+        // valid in any of the four fields (device name, command name) the
+        // user can populate via UI.
+        private const val STEP_SEP = '\u001F'
+    }
+
     override fun onCreateView(inflater: LayoutInflater, c: ViewGroup?, s: Bundle?): View =
         inflater.inflate(R.layout.fragment_macro_edit, c, false)
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        // Preserve in-progress edit across rotation + process death. A user
+        // halfway through building 'Movie Night' shouldn't lose their
+        // 5-step list to an OS-level kill.
+        outState.putString(KEY_EDITING_ID, editingId)
+        view?.findViewById<TextInputEditText>(R.id.inputMacroName)?.text?.toString()?.let {
+            outState.putString(KEY_NAME, it)
+        }
+        outState.putStringArray(
+            KEY_STEPS,
+            workingSteps.map { encodeStep(it) }.toTypedArray(),
+        )
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val title = view.findViewById<TextView>(R.id.macroEditTitle)
@@ -40,14 +65,19 @@ class MacroEditFragment : Fragment() {
         val btnCancel = view.findViewById<Button>(R.id.btnCancelMacro)
         val btnSave = view.findViewById<Button>(R.id.btnSaveMacro)
 
-        // Seed from the macro being edited (null => creating)
-        val existing = vm.editingMacro.value
-        if (existing != null) {
-            title.text = getString(R.string.macro_edit_title)
-            nameInput.setText(existing.name)
-            workingSteps.clear()
-            workingSteps.addAll(existing.steps)
-            editingId = existing.id
+        // Saved-state restore takes precedence — that's the user's most
+        // recent typing. Falling through, fall back to vm.editingMacro
+        // (the macro being edited or null for new).
+        val restoredFromSaved = savedInstanceState?.let { restoreFromSaved(it, nameInput, title) } == true
+        if (!restoredFromSaved) {
+            val existing = vm.editingMacro.value
+            if (existing != null) {
+                title.text = getString(R.string.macro_edit_title)
+                nameInput.setText(existing.name)
+                workingSteps.clear()
+                workingSteps.addAll(existing.steps)
+                editingId = existing.id
+            }
         }
         renderSteps(stepList)
 
@@ -78,6 +108,37 @@ class MacroEditFragment : Fragment() {
             vm.saveMacro(macro)
             vm.navigate(MainViewModel.Screen.HOME)
         }
+    }
+
+    private fun restoreFromSaved(
+        saved: Bundle,
+        nameInput: TextInputEditText,
+        title: TextView,
+    ): Boolean {
+        editingId = saved.getString(KEY_EDITING_ID)
+        // editingId presence indicates an edit (vs. create); use the matching
+        // title so the screen still reflects the right mode after restore.
+        if (editingId != null) title.text = getString(R.string.macro_edit_title)
+        saved.getString(KEY_NAME)?.let { nameInput.setText(it) }
+        val steps = saved.getStringArray(KEY_STEPS)?.mapNotNull { decodeStep(it) }.orEmpty()
+        workingSteps.clear()
+        workingSteps.addAll(steps)
+        return saved.getString(KEY_NAME) != null || steps.isNotEmpty()
+    }
+
+    private fun encodeStep(step: MacroStep): String =
+        listOf(step.deviceId, step.deviceName, step.commandName, step.delayBeforeMs.toString())
+            .joinToString(STEP_SEP.toString())
+
+    private fun decodeStep(s: String): MacroStep? {
+        val parts = s.split(STEP_SEP)
+        if (parts.size != 4) return null
+        return MacroStep(
+            deviceId = parts[0],
+            deviceName = parts[1],
+            commandName = parts[2],
+            delayBeforeMs = parts[3].toIntOrNull() ?: 0,
+        )
     }
 
     private fun renderSteps(container: LinearLayout) {
