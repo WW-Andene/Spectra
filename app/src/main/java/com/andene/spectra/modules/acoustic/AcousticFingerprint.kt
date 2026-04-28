@@ -86,16 +86,21 @@ class AcousticFingerprint {
             audioRecord?.startRecording()
             val startTime = System.currentTimeMillis()
 
-            while (System.currentTimeMillis() - startTime < CAPTURE_DURATION_MS) {
-                val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
-                if (read > 0) {
-                    allSamples.addAll(buffer.take(read).toList())
+            try {
+                while (System.currentTimeMillis() - startTime < CAPTURE_DURATION_MS) {
+                    val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
+                    if (read > 0) {
+                        allSamples.addAll(buffer.take(read).toList())
+                    }
                 }
+            } finally {
+                // Release the mic regardless of how we exit (timeout, throw,
+                // or coroutine cancellation). Without this, a cancelled scan
+                // leaves the mic locked until the OS eventually reclaims it.
+                try { audioRecord?.stop() } catch (_: Exception) {}
+                try { audioRecord?.release() } catch (_: Exception) {}
+                audioRecord = null
             }
-
-            audioRecord?.stop()
-            audioRecord?.release()
-            audioRecord = null
 
             _state.value = State.ANALYZING
             val sig = analyzeAudio(allSamples.toShortArray())

@@ -264,8 +264,14 @@ class RfFingerprint(private val context: Context) {
         }
 
         scanner.startScan(null, settings, callback)
-        delay(BLE_SCAN_DURATION_MS)
-        scanner.stopScan(callback)
+        try {
+            delay(BLE_SCAN_DURATION_MS)
+        } finally {
+            // try/finally so cancellation (e.g. user hits CANCEL on Scanning)
+            // still releases the scanner. Without this, the BLE callback
+            // stays registered until the system reaps it on app death.
+            try { scanner.stopScan(callback) } catch (_: Exception) {}
+        }
     }
 
     /**
@@ -298,12 +304,14 @@ class RfFingerprint(private val context: Context) {
             listener
         }
 
-        delay(MDNS_SCAN_DURATION_MS)
-
-        listeners.forEach { listener ->
-            try {
-                nsdManager.stopServiceDiscovery(listener)
-            } catch (_: Exception) {}
+        try {
+            delay(MDNS_SCAN_DURATION_MS)
+        } finally {
+            // Same cancellation-leak guard as BLE: stopServiceDiscovery must
+            // run on every listener regardless of how the suspend exits.
+            listeners.forEach { listener ->
+                try { nsdManager.stopServiceDiscovery(listener) } catch (_: Exception) {}
+            }
         }
     }
 

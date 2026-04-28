@@ -146,8 +146,14 @@ class EmFingerprint(private val context: Context) {
         }
 
         sensorManager.registerListener(listener, magnetometer, MAG_SENSOR_DELAY)
-        delay(MAG_SAMPLE_DURATION_MS)
-        sensorManager.unregisterListener(listener)
+        try {
+            delay(MAG_SAMPLE_DURATION_MS)
+        } finally {
+            // Unregister regardless of cancellation — a stranded sensor
+            // listener wakes the magnetometer indefinitely and drains
+            // battery.
+            try { sensorManager.unregisterListener(listener) } catch (_: Exception) {}
+        }
 
         return collected
     }
@@ -182,13 +188,16 @@ class EmFingerprint(private val context: Context) {
         recorder.startRecording()
         val startTime = System.currentTimeMillis()
 
-        while (System.currentTimeMillis() - startTime < MAG_SAMPLE_DURATION_MS) {
-            val read = recorder.read(buffer, 0, buffer.size)
-            if (read > 0) allSamples.addAll(buffer.take(read))
+        try {
+            while (System.currentTimeMillis() - startTime < MAG_SAMPLE_DURATION_MS) {
+                val read = recorder.read(buffer, 0, buffer.size)
+                if (read > 0) allSamples.addAll(buffer.take(read))
+            }
+        } finally {
+            // Same release-on-cancel guard as AcousticFingerprint.
+            try { recorder.stop() } catch (_: Exception) {}
+            try { recorder.release() } catch (_: Exception) {}
         }
-
-        recorder.stop()
-        recorder.release()
 
         return extractPeaks(allSamples.toShortArray(), AUDIO_SAMPLE_RATE)
     }
