@@ -34,4 +34,17 @@ object NecCodec {
         val command = (code and 0xFF).toInt()
         return encode(address, command)
     }
+
+    /**
+     * Build the NEC repeat frame: a compact 11 ms burst signalling
+     * "the button is still held" without re-transmitting the full
+     * 67 ms data frame. Spec layout:
+     *   9000 us mark + 2250 us space + 562 us closing mark
+     *
+     * Real NEC remotes send the full data frame once, then a repeat
+     * frame every 110 ms while the user holds the button. IrControl's
+     * press-and-hold path uses this to smooth out volume / channel /
+     * cursor presses.
+     */
+    fun encodeRepeat(): IntArray = intArrayOf(9000, 2250, 562)
 }

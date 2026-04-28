@@ -106,6 +106,19 @@ class NecCodecTest {
     }
 
     @Test
+    fun `encodeRepeat produces the canonical 9000+2250+562 frame`() {
+        val frame = NecCodec.encodeRepeat()
+        assertEquals(3, frame.size)
+        assertEquals(9000, frame[0])
+        assertEquals(2250, frame[1])
+        assertEquals(562, frame[2])
+        // And the decoder should recognise it as a repeat.
+        val decoded = NecCodec.decode(frame)
+        assertNotNull(decoded)
+        assertTrue(decoded!!.isRepeat)
+    }
+
+    @Test
     fun `encodeFromPacked is the inverse of decode packed`() {
         for (address in 0..255 step 17) {
             for (command in 0..255 step 23) {

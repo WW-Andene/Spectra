@@ -66,7 +66,8 @@ camera capture, RF discovery currently dead-ending in the matcher).
 | B-100 | IR camera capture decode upgrade | 4 — Sony SIRC codec + 40 kHz protocol carrier | `cf03b2c` |
 | B-101 | Brute-force smart ordering + auto-confirm | 1 — acoustic auto-confirm via mic delta | `f6d62c4` |
 | B-102 | Multi-device disambiguation | 1 — top-N matcher + Results picker | `884626a` |
-| B-100 | IR camera capture decode upgrade | 6 — surface multi-press agreement in Learn UI | (this commit) |
+| B-100 | IR camera capture decode upgrade | 6 — surface multi-press agreement in Learn UI | `49aec89` |
+| B-100 | IR camera capture decode upgrade | 8 — NEC press-and-hold via spec-compliant repeat frames | (this commit) |
 
 ---
 

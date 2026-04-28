@@ -128,15 +128,27 @@ class IrControl(private val context: Context) {
             ?: DEFAULT_CARRIER
 
         val timings = synthesizeOrFallback(command)
-        // Hold the mutex across the whole repeat sequence so a single
-        // press-and-hold transmits as a coherent N-burst train rather
-        // than interleaving with another caller's bursts.
+        // For NEC with a decoded code, follow the protocol's actual
+        // press-and-hold semantics: send the full data frame once,
+        // then short repeat frames every ~110 ms thereafter. Repeat
+        // frames are 11 ms vs the full frame's ~67 ms, so a held
+        // button transmits ~6× faster on the wire and behaves like a
+        // real remote — volume / channel / cursor hold is smooth
+        // instead of stuttering. Other protocols don't have a compact
+        // repeat shape so they fall back to full-frame retransmit.
+        val useNecRepeat = command.protocol == IrProtocol.NEC && command.code != null
+        val repeatTimings: IntArray? = if (useNecRepeat) {
+            com.andene.spectra.modules.ir.protocols.NecCodec.encodeRepeat()
+        } else null
+        val NEC_REPEAT_GAP_MS = 99L  // 110 ms NEC period − 11 ms repeat duration
+
         val success = txMutex.withLock {
             var ok = true
             for (i in 0 until repeatCount) {
                 try {
-                    irManager?.transmit(carrier, timings)
-                    delay(REPEAT_DELAY_MS)
+                    val burst = if (i == 0 || repeatTimings == null) timings else repeatTimings
+                    irManager?.transmit(carrier, burst)
+                    delay(if (useNecRepeat) NEC_REPEAT_GAP_MS else REPEAT_DELAY_MS)
                 } catch (e: Exception) {
                     Log.e(TAG, "Repeated transmit failed at iteration $i", e)
                     ok = false
