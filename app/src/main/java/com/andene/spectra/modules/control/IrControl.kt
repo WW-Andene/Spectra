@@ -8,6 +8,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
@@ -30,6 +32,13 @@ class IrControl(private val context: Context) {
     }
 
     private val irManager = context.getSystemService(Context.CONSUMER_IR_SERVICE) as? ConsumerIrManager
+
+    // ConsumerIrManager.transmit() isn't documented as thread-safe and on
+    // some OEM stacks concurrent calls produce garbled bursts or silently
+    // drop one. Serialize every transmit through this mutex so a rapid
+    // double-tap, a button-tap-while-macro-running, or any other overlap
+    // queues instead of racing on the IR hardware.
+    private val txMutex = Mutex()
 
     private val _devices = MutableStateFlow<Map<String, DeviceProfile>>(emptyMap())
     val devices: StateFlow<Map<String, DeviceProfile>> = _devices
@@ -116,15 +125,22 @@ class IrControl(private val context: Context) {
             ?: return@withContext false
         val carrier = device.irProfile?.carrierFrequency ?: DEFAULT_CARRIER
 
-        var success = true
-        for (i in 0 until repeatCount) {
-            try {
-                irManager?.transmit(carrier, command.rawTimings)
-                delay(REPEAT_DELAY_MS)
-            } catch (e: Exception) {
-                success = false
-                break
+        // Hold the mutex across the whole repeat sequence so a single
+        // press-and-hold transmits as a coherent N-burst train rather
+        // than interleaving with another caller's bursts.
+        val success = txMutex.withLock {
+            var ok = true
+            for (i in 0 until repeatCount) {
+                try {
+                    irManager?.transmit(carrier, command.rawTimings)
+                    delay(REPEAT_DELAY_MS)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Repeated transmit failed at iteration $i", e)
+                    ok = false
+                    break
+                }
             }
+            ok
         }
 
         _lastTransmitResult.value = TransmitResult(success, deviceId, commandName)
@@ -146,15 +162,21 @@ class IrControl(private val context: Context) {
             ?: _devices.value[deviceId]?.irProfile?.carrierFrequency
             ?: DEFAULT_CARRIER
 
-        try {
-            irManager.transmit(carrier, command.rawTimings)
-            _lastTransmitResult.value = TransmitResult(true, deviceId, commandName)
-            Log.d(TAG, "Transmitted '$commandName' to $deviceId @ ${carrier}Hz")
-            true
-        } catch (e: Exception) {
-            Log.e(TAG, "Transmit failed", e)
-            _lastTransmitResult.value = TransmitResult(false, deviceId, commandName)
-            false
+        // Serialize: ConsumerIrManager.transmit() is a blocking call on
+        // shared hardware; concurrent invocations are not safe across
+        // OEM implementations. A waiter just queues — pleasant from the
+        // caller's perspective since suspendable.
+        txMutex.withLock {
+            try {
+                irManager.transmit(carrier, command.rawTimings)
+                _lastTransmitResult.value = TransmitResult(true, deviceId, commandName)
+                Log.d(TAG, "Transmitted '$commandName' to $deviceId @ ${carrier}Hz")
+                true
+            } catch (e: Exception) {
+                Log.e(TAG, "Transmit failed", e)
+                _lastTransmitResult.value = TransmitResult(false, deviceId, commandName)
+                false
+            }
         }
     }
 
