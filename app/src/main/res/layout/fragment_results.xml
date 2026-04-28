@@ -68,6 +68,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/hint_device_name"
+            android:maxLength="64"
             android:textColor="@color/text_primary"
             android:textColorHint="@color/text_tertiary" />
     </com.google.android.material.textfield.TextInputLayout>

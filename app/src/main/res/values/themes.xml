@@ -11,6 +11,11 @@
         <item name="android:windowBackground">@color/bg_primary</item>
         <item name="android:statusBarColor">@color/bg_primary</item>
         <item name="android:navigationBarColor">@color/bg_primary</item>
+        <!-- Spectra is intentionally dark-only. forceDarkAllowed=false stops
+             Android 10+ system force-dark from inverting colours when the
+             user enables the system-level "force dark" override on a theme
+             we already designed dark. -->
+        <item name="android:forceDarkAllowed">false</item>
     </style>
 
     <!-- Remote button base -->

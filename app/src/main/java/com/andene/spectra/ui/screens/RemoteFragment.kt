@@ -18,6 +18,22 @@ import kotlinx.coroutines.*
 
 class RemoteFragment : Fragment() {
 
+    companion object {
+        /** Time the user has to keep a hold-to-repeat button down before
+         *  the auto-repeat kicks in. Tuned so a single tap stays a single
+         *  send. */
+        private const val REPEAT_INITIAL_DELAY_MS = 400L
+
+        /** Interval between auto-repeats once held longer than the initial
+         *  delay. ~150 ms maps to ~6 sends/sec, comparable to a real
+         *  remote's volume rocker. */
+        private const val REPEAT_INTERVAL_MS = 150L
+
+        /** Duration of the success/failure tint flash on a transmitted
+         *  button so the user can tell the press registered. */
+        private const val TINT_FLASH_MS = 150L
+    }
+
     private val vm: MainViewModel by activityViewModels()
     private var repeatJob: Job? = null
 
@@ -104,10 +120,10 @@ class RemoteFragment : Fragment() {
                     MotionEvent.ACTION_DOWN -> {
                         vm.sendCommand(command)
                         repeatJob = viewLifecycleOwner.lifecycleScope.launch {
-                            delay(400) // Initial delay before repeat
+                            delay(REPEAT_INITIAL_DELAY_MS)
                             while (isActive) {
                                 vm.sendCommand(command)
-                                delay(150) // Repeat interval
+                                delay(REPEAT_INTERVAL_MS)
                             }
                         }
                         true
@@ -150,7 +166,7 @@ class RemoteFragment : Fragment() {
                 val original = btn.backgroundTintList
                 btn.backgroundTintList = androidx.core.content.ContextCompat
                     .getColorStateList(requireContext(), tint)
-                btn.postDelayed({ btn.backgroundTintList = original }, 150)
+                btn.postDelayed({ btn.backgroundTintList = original }, TINT_FLASH_MS)
             }
         }
     }

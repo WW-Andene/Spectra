@@ -26,6 +26,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/hint_macro_name"
+            android:maxLength="48"
             android:textColor="@color/text_primary"
             android:textColorHint="@color/text_tertiary" />
     </com.google.android.material.textfield.TextInputLayout>
