@@ -30,7 +30,7 @@ camera capture, RF discovery currently dead-ending in the matcher).
 | ID | Feature | Phase | Status | Notes |
 |----|---------|-------|--------|-------|
 | B-207 | Brute-force whole-remote | DEFERRED | bundled-DB picker covers the same need without per-button sweep |
-| B-211 | BLE smart-bulb control | 1 | TODO | GATT write for common smart-bulb services |
+| B-211 | BLE smart-bulb control | DEFERRED | per-vendor GATT protocol — endpoint scheme `ble:` reserved; needs per-brand impls (Hue, Tuya, Yeelight) |
 | B-212 | NFC P2P profile share | DEFERRED | Android Beam removed in API 33+; NFC tag capacity (~500 bytes) too small for typical IR-with-rawTimings profile; clipboard share covers the device-to-device path |
 | B-213 | Custom remote layouts | 1 | TODO | drag-drop button arrangement, per-device JSON |
 | B-101 | Brute-force smart ordering + auto-confirm | 2 — category-hint ordering + bulk-test option | TODO | adds category metadata to POWER_CODES |
@@ -74,7 +74,8 @@ camera capture, RF discovery currently dead-ending in the matcher).
 | B-206 | RC6 mode 0 codec (Manchester) | `9926af9` |
 | B-208 | Acoustic+EM matcher tiebreakers | `08c3f48` |
 | B-209 / B-210 | Network control architecture: Roku ECP + LAN IR bridge | `216e357` |
-| B-214 + B-215 | First-launch onboarding + room labels with filter chips | (this commit) |
+| B-214 + B-215 | First-launch onboarding + room labels with filter chips | `b0a8479` |
+| INNOV-1 | SSDP Roku auto-discovery in network-endpoint dialog | (this commit) |
 
 ---
 

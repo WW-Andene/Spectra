@@ -163,6 +163,7 @@
     <string name="endpoint_hint">e.g. roku:http://192.168.1.42:8060</string>
     <string name="endpoint_help">Lets the app control this device over LAN instead of IR.\n\nFormats:\n• roku:http://&lt;ip&gt;:8060 — Roku ECP\n• bridge:http://&lt;ip&gt;:8080/ir — Spectra IR bridge\n\nLeave blank to use IR only.</string>
     <string name="endpoint_clear">Clear</string>
+    <string name="endpoint_suggestion_format">Found on your network: %1$s — tap to use</string>
 
     <!-- First-launch onboarding (B-214) -->
     <string name="onboarding_title">Welcome to Spectra</string>

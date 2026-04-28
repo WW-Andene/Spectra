@@ -625,6 +625,21 @@ class HomeFragment : Fragment() {
             android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
             android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
         ))
+
+        // Innovation: auto-discovered Roku endpoints surfaced as
+        // tap-to-fill suggestions. Avoids forcing the user to look up
+        // their TV's IP. SSDP M-SEARCH runs in the background while
+        // the dialog is open; results populate a suggestions row when
+        // they arrive.
+        val suggestionsRow = TextView(ctx).apply {
+            textSize = 12f
+            setTextColor(androidx.core.content.ContextCompat.getColor(ctx, R.color.accent_primary))
+            visibility = View.GONE
+            val pad = (8 * resources.displayMetrics.density).toInt()
+            setPadding(0, pad, 0, 0)
+        }
+        container.addView(suggestionsRow)
+
         val help = TextView(ctx).apply {
             text = getString(R.string.endpoint_help)
             textSize = 12f
@@ -633,6 +648,21 @@ class HomeFragment : Fragment() {
             setPadding(0, pad, 0, 0)
         }
         container.addView(help)
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val rokus = withContext(Dispatchers.IO) {
+                com.andene.spectra.modules.rf.SsdpDiscovery.searchRoku()
+            }
+            if (rokus.isNotEmpty() && isAdded) {
+                val suggested = "roku:" + rokus.first().baseUrl
+                suggestionsRow.text = getString(R.string.endpoint_suggestion_format, suggested)
+                suggestionsRow.visibility = View.VISIBLE
+                suggestionsRow.setOnClickListener {
+                    input.setText(suggested)
+                    input.setSelection(suggested.length)
+                }
+            }
+        }
 
         AlertDialog.Builder(ctx)
             .setTitle(R.string.endpoint_dialog_title)
