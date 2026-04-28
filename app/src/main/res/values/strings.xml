@@ -62,6 +62,20 @@
     <!-- All-off macro (B-008) -->
     <string name="action_all_off">All off</string>
 
+    <!-- Sleep timer (B-005) -->
+    <string name="action_sleep_timer">Sleep timer</string>
+    <string name="action_cancel_timer">Cancel timer</string>
+    <string name="action_next">Next</string>
+    <string name="action_schedule">Schedule</string>
+    <string name="sleep_timer_no_macros">No macros yet — build a macro first to use the sleep timer.</string>
+    <string name="sleep_timer_pick_macro_title">Pick macro to run</string>
+    <string name="sleep_timer_pick_duration_title">In how long?</string>
+    <string name="sleep_timer_minutes_format">%1$d minutes</string>
+    <string name="sleep_timer_active_title">Sleep timer active</string>
+    <string name="sleep_timer_active_format">\'%1$s\' will run in about %2$d minute(s).</string>
+    <string name="sleep_timer_cancelled">Sleep timer cancelled</string>
+    <string name="sleep_timer_scheduled_format">\'%1$s\' will run in %2$d minutes</string>
+
     <!-- NFC tag triggers (B-007) -->
     <string name="action_copy_nfc_uri">Copy NFC trigger URI</string>
     <string name="action_ok_dialog">OK</string>

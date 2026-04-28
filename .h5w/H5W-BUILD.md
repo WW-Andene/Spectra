@@ -34,8 +34,8 @@ camera capture, RF discovery currently dead-ending in the matcher).
 | B-003 | Quick Settings tile | 2 — top-macro picker | TODO | persist user pick in DataStore |
 | B-004 | Smart-home control over RF | 1 — BLE write to discovered devices | TODO | leverages existing RfFingerprint |
 | B-004 | Smart-home control over RF | 2 — mDNS HTTP control (Roku, etc.) | TODO | extends existing inferIdentity hints |
-| B-005 | Scheduled / timed commands | 1 — WorkManager wiring | TODO | survives reboot via boot receiver |
-| B-005 | Scheduled / timed commands | 2 — schedule editor UI | TODO | cron-lite picker |
+| B-005 | Scheduled / timed commands | 2 — boot-survives reschedule + countdown banner | TODO | follows phase 1 |
+| B-005 | Scheduled / timed commands | 3 — repeating schedule (time-of-day) | TODO | needs cron-lite picker |
 | B-006 | Custom remote layouts | 1 — drag-drop button arrangement | TODO | per-device layout JSON |
 | B-006 | Custom remote layouts | 2 — long-press to add/remove buttons | TODO | uses existing IrControl.Commands |
 | B-007 | NFC tag triggers | 2 — native in-app tag write (foreground dispatch) | TODO | bigger NFC code path; clipboard-copy ships in phase 1 lite |
@@ -53,7 +53,8 @@ camera capture, RF discovery currently dead-ending in the matcher).
 | B-002 | Home screen widget | 1 — 1×1 power tile | `1dc241e` |
 | B-003 | Quick Settings tile | 1 — POWER on primary device | `10a76b5` |
 | B-008 | Universal "all off" | 1+2 — sequence builder + home menu action | `0050d3d` |
-| B-007 | NFC tag triggers | 1 — read tag URI + clipboard-write affordance | (this commit) |
+| B-007 | NFC tag triggers | 1 — read tag URI + clipboard-write affordance | `57178f4` |
+| B-005 | Scheduled / timed commands | 1 — sleep-timer macro fire | (this commit) |
 
 ---
 

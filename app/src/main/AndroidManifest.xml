@@ -119,6 +119,18 @@
             </intent-filter>
         </receiver>
 
+        <!-- Scheduled fire receiver (B-005): receives AlarmManager-fired
+             intents that run a macro or one-off command at a future
+             time. Not exported — only the AlarmManager owns the
+             PendingIntent that targets it. -->
+        <receiver
+            android:name=".scheduling.ScheduledFireReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.andene.spectra.scheduling.action.FIRE_SCHEDULED" />
+            </intent-filter>
+        </receiver>
+
         <!-- Quick Settings tile (B-003): tap from the notification shade
              (or lock screen) to fire POWER on the primary device. The
              BIND_QUICK_SETTINGS_TILE permission is mandatory and must

@@ -156,11 +156,13 @@ class HomeFragment : Fragment() {
         view.findViewById<ImageButton>(R.id.btnOverflow).setOnClickListener { anchor ->
             PopupMenu(requireContext(), anchor).apply {
                 menu.add(0, MENU_ALL_OFF, 0, R.string.action_all_off)
-                menu.add(0, MENU_BACKUP, 1, R.string.action_backup_library)
-                menu.add(0, MENU_RESTORE, 2, R.string.action_restore_library)
+                menu.add(0, MENU_SLEEP_TIMER, 1, R.string.action_sleep_timer)
+                menu.add(0, MENU_BACKUP, 2, R.string.action_backup_library)
+                menu.add(0, MENU_RESTORE, 3, R.string.action_restore_library)
                 setOnMenuItemClickListener { item ->
                     when (item.itemId) {
                         MENU_ALL_OFF -> { vm.runAllOff(); true }
+                        MENU_SLEEP_TIMER -> { showSleepTimerDialog(); true }
                         MENU_BACKUP -> { startBackupExport(); true }
                         MENU_RESTORE -> { startBackupImport(); true }
                         else -> false
@@ -545,9 +547,78 @@ class HomeFragment : Fragment() {
         return count
     }
 
+    /**
+     * Sleep-timer dialog (B-005). Pick an existing macro + duration.
+     * Schedules an inexact AlarmManager fire (setAndAllowWhileIdle)
+     * that lands within a few minutes of the requested time, runs
+     * through Doze, and doesn't need SCHEDULE_EXACT_ALARM.
+     *
+     * Design decision: only persisted macros are scheduleable. A
+     * synthesized "All off at fire-time" target was considered and
+     * dropped — it would have either required permanently parking a
+     * library-internal macro on disk for the receiver to load, or a
+     * delete-after-fire dance with edge cases when the user cancelled
+     * partway. Users who want a scheduled all-off can save an All Off
+     * macro first via the regular macro editor, then pick it here.
+     */
+    private fun showSleepTimerDialog() {
+        val active = com.andene.spectra.scheduling.SleepTimer.active(requireContext())
+        if (active != null) {
+            // A timer is already pending — surface a cancel affordance
+            // first; the user can re-enter to schedule a new one.
+            val remainingMinutes = (active.remainingMs / 60_000L).toInt()
+            AlertDialog.Builder(requireContext())
+                .setTitle(R.string.sleep_timer_active_title)
+                .setMessage(getString(R.string.sleep_timer_active_format, active.label, remainingMinutes))
+                .setPositiveButton(R.string.action_cancel_timer) { _, _ ->
+                    com.andene.spectra.scheduling.SleepTimer.cancel(requireContext())
+                    toast(getString(R.string.sleep_timer_cancelled))
+                }
+                .setNegativeButton(R.string.action_keep_editing, null)
+                .show()
+            return
+        }
+
+        val macros = vm.macros.value
+        if (macros.isEmpty()) {
+            toast(getString(R.string.sleep_timer_no_macros))
+            return
+        }
+
+        val labels = macros.map { it.name }.toTypedArray()
+        var pickedIndex = 0
+
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.sleep_timer_pick_macro_title)
+            .setSingleChoiceItems(labels, 0) { _, which -> pickedIndex = which }
+            .setPositiveButton(R.string.action_next) { _, _ ->
+                pickSleepDuration(macros[pickedIndex])
+            }
+            .setNegativeButton(R.string.action_cancel_dialog, null)
+            .show()
+    }
+
+    private fun pickSleepDuration(macro: Macro) {
+        val minutes = intArrayOf(15, 30, 45, 60, 90, 120)
+        val labels = minutes.map { getString(R.string.sleep_timer_minutes_format, it) }.toTypedArray()
+        var pickedIndex = 1  // default 30 min
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.sleep_timer_pick_duration_title)
+            .setSingleChoiceItems(labels, pickedIndex) { _, which -> pickedIndex = which }
+            .setPositiveButton(R.string.action_schedule) { _, _ ->
+                com.andene.spectra.scheduling.SleepTimer.scheduleMacro(
+                    requireContext(), macro.id, macro.name, minutes[pickedIndex],
+                )
+                toast(getString(R.string.sleep_timer_scheduled_format, macro.name, minutes[pickedIndex]))
+            }
+            .setNegativeButton(R.string.action_cancel_dialog, null)
+            .show()
+    }
+
     companion object {
         private const val MENU_ALL_OFF = 1
-        private const val MENU_BACKUP = 2
-        private const val MENU_RESTORE = 3
+        private const val MENU_SLEEP_TIMER = 2
+        private const val MENU_BACKUP = 3
+        private const val MENU_RESTORE = 4
     }
 }
