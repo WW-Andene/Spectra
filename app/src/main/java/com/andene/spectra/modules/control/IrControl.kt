@@ -101,6 +101,24 @@ class IrControl(private val context: Context) {
      */
     suspend fun sendCommand(deviceId: String, commandName: String): Boolean {
         val device = _devices.value[deviceId]
+
+        // B-209: prefer the device's network control endpoint when one
+        // is configured. NetworkControl handles Roku ECP, IR bridges,
+        // etc. — it returns false on failure so we can fall back to
+        // the IR path if the network reach failed.
+        if (device != null && NetworkControl.isNetworkControlled(device)) {
+            val ok = NetworkControl.send(device, commandName)
+            if (ok) {
+                _lastTransmitResult.value = TransmitResult(true, deviceId, commandName)
+                return true
+            }
+            // Network failed (timeout, 4xx, etc.). Fall through to IR
+            // if there's also an IR profile — many Roku TVs have both
+            // an IR receiver and an ECP server, so a momentarily-
+            // unreachable LAN endpoint shouldn't kill the user's
+            // button tap if IR can still get through.
+        }
+
         val command = device?.irProfile?.commands?.get(commandName)
 
         if (command == null) {

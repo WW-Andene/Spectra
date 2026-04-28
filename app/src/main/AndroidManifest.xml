@@ -9,6 +9,12 @@
     <!-- Module 2: Acoustic Fingerprint -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
+    <!-- Network control (B-209 Roku ECP, B-210 IR bridge). Lets the
+         app reach LAN-discovered devices that expose HTTP control
+         endpoints — Roku TVs, IR-blaster bridges, smart bulbs, etc. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <!-- Module 3: RF Fingerprint -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />

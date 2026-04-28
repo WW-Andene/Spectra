@@ -156,6 +156,13 @@
     <string name="em_no_data">EM: no data</string>
     <string name="default_device_name">Device</string>
     <string name="action_open_remote_short">Open Remote</string>
+
+    <!-- Network control endpoint (B-209/B-210) -->
+    <string name="action_set_network_endpoint">Set network endpoint</string>
+    <string name="endpoint_dialog_title">Network control endpoint</string>
+    <string name="endpoint_hint">e.g. roku:http://192.168.1.42:8060</string>
+    <string name="endpoint_help">Lets the app control this device over LAN instead of IR.\n\nFormats:\n• roku:http://&lt;ip&gt;:8060 — Roku ECP\n• bridge:http://&lt;ip&gt;:8080/ir — Spectra IR bridge\n\nLeave blank to use IR only.</string>
+    <string name="endpoint_clear">Clear</string>
     <string name="macro_discard_changes_message">Discard unsaved changes to this macro?</string>
     <string name="action_discard">Discard</string>
     <string name="action_keep_editing">Keep editing</string>

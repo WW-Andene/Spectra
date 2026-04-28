@@ -174,6 +174,8 @@ class DeviceRepository(private val context: Context) {
         // with device state and ambient noise to be reliable cross-session anchors.
         val rfWifi: List<SerializableWifi> = emptyList(),
         val rfBle: List<SerializableBle> = emptyList(),
+        // B-209: non-IR control endpoint (Roku ECP HTTP, LAN IR bridge, BLE GATT)
+        val controlEndpoint: String? = null,
     )
 
     @Serializable
@@ -233,6 +235,7 @@ class DeviceRepository(private val context: Context) {
                 serviceUuids = it.serviceUuids,
             )
         } ?: emptyList(),
+        controlEndpoint = controlEndpoint,
     )
 
     private fun SerializableDeviceProfile.toModel() = DeviceProfile(
@@ -273,6 +276,7 @@ class DeviceRepository(private val context: Context) {
                 )
             },
         ),
-        discoveredAt = discoveredAt
+        discoveredAt = discoveredAt,
+        controlEndpoint = controlEndpoint,
     )
 }

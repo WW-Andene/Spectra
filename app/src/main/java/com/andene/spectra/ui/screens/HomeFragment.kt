@@ -115,11 +115,13 @@ class HomeFragment : Fragment() {
                     .setTitle(device.name ?: getString(R.string.device_default_label))
                     .setItems(arrayOf(
                         getString(R.string.action_open_remote_short),
+                        getString(R.string.action_set_network_endpoint),
                         getString(R.string.action_delete),
                     )) { _, which ->
                         when (which) {
                             0 -> vm.selectDevice(device)
-                            1 -> vm.deleteDevice(device.id)
+                            1 -> showNetworkEndpointDialog(device)
+                            2 -> vm.deleteDevice(device.id)
                         }
                     }
                     .show()
@@ -557,6 +559,49 @@ class HomeFragment : Fragment() {
                 toast(msg)
             }
         }
+    }
+
+    /**
+     * B-209: dialog for setting a device's non-IR control endpoint.
+     * Two presets (Roku ECP, IR bridge) with the right scheme prefix
+     * pre-filled, plus a free-form text field for the IP. Saves on OK,
+     * clears on the explicit clear button.
+     */
+    private fun showNetworkEndpointDialog(device: com.andene.spectra.data.models.DeviceProfile) {
+        val ctx = requireContext()
+        val container = android.widget.LinearLayout(ctx).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            val pad = (16 * resources.displayMetrics.density).toInt()
+            setPadding(pad, pad, pad, 0)
+        }
+        val input = com.google.android.material.textfield.TextInputEditText(ctx).apply {
+            hint = getString(R.string.endpoint_hint)
+            setText(device.controlEndpoint ?: "")
+        }
+        container.addView(input, android.widget.LinearLayout.LayoutParams(
+            android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+            android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+        ))
+        val help = TextView(ctx).apply {
+            text = getString(R.string.endpoint_help)
+            textSize = 12f
+            setTextColor(androidx.core.content.ContextCompat.getColor(ctx, R.color.text_tertiary))
+            val pad = (8 * resources.displayMetrics.density).toInt()
+            setPadding(0, pad, 0, 0)
+        }
+        container.addView(help)
+
+        AlertDialog.Builder(ctx)
+            .setTitle(R.string.endpoint_dialog_title)
+            .setView(container)
+            .setPositiveButton(R.string.action_save_button) { _, _ ->
+                vm.setControlEndpoint(device.id, input.text?.toString())
+            }
+            .setNeutralButton(R.string.endpoint_clear) { _, _ ->
+                vm.setControlEndpoint(device.id, null)
+            }
+            .setNegativeButton(R.string.action_cancel_dialog, null)
+            .show()
     }
 
     private fun toast(msg: String) {

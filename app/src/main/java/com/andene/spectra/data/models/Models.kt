@@ -15,6 +15,14 @@ data class DeviceProfile(
     val rfSignature: RfSignature? = null,
     val emSignature: EmSignature? = null,
     val irProfile: IrProfile? = null,
+    /** Optional non-IR control endpoint (B-209 / B-210 / B-211). When
+     *  present, IrControl.sendCommand prefers this over IR. Format:
+     *    "roku:http://192.168.1.42:8060"          — Roku ECP
+     *    "bridge:http://192.168.1.42:8080/ir"     — LAN IR-blaster bridge
+     *    "ble:AA:BB:CC:DD:EE:FF/uuid"             — BLE GATT write target
+     *  Free-form so future protocols can be added without a model
+     *  schema migration. The control facade parses the prefix. */
+    val controlEndpoint: String? = null,
     val confidence: Float = 0f, // 0.0 - 1.0 combined confidence
     val discoveredAt: Long = System.currentTimeMillis()
 )

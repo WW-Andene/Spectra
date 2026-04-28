@@ -328,6 +328,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch { saveDeviceWithFeedback(updated) }
     }
 
+    /** B-209/B-210: set or clear the device's non-IR control endpoint.
+     *  Pass null to clear and revert to IR-only. */
+    fun setControlEndpoint(deviceId: String, endpoint: String?) {
+        val device = _savedDevices.value.firstOrNull { it.id == deviceId } ?: return
+        val updated = device.copy(controlEndpoint = endpoint?.takeIf { it.isNotBlank() })
+        orchestrator.control.saveDevice(updated)
+        viewModelScope.launch {
+            saveDeviceWithFeedback(updated)
+            loadSavedDevices()
+        }
+    }
+
     fun deleteDevice(deviceId: String) {
         // Snapshot the profile before deletion so an undo emit can restore
         // it byte-for-byte. JSON is the canonical form so we round-trip

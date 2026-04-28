@@ -30,8 +30,6 @@ camera capture, RF discovery currently dead-ending in the matcher).
 | ID | Feature | Phase | Status | Notes |
 |----|---------|-------|--------|-------|
 | B-207 | Brute-force whole-remote | 1 | TODO | after POWER hit, sweep VOL/CH/etc. on same protocol |
-| B-209 | Roku ECP control over mDNS | 1 | TODO | discovered Roku → HTTP ECP keypress |
-| B-210 | HTTP IR-blaster bridge | 1 | TODO | blaster-less phones hand off to network bridge |
 | B-211 | BLE smart-bulb control | 1 | TODO | GATT write for common smart-bulb services |
 | B-212 | NFC P2P profile share | 1 | TODO | tap two phones to exchange device profiles |
 | B-213 | Custom remote layouts | 1 | TODO | drag-drop button arrangement, per-device JSON |
@@ -76,7 +74,8 @@ camera capture, RF discovery currently dead-ending in the matcher).
 | B-200 | Carrier auto-tune retry + B-201 atomic device save + B-202 hold-to-repeat + B-203 anonymised export | small-fix bundle | `c78ef24` |
 | B-205 | Panasonic codec (Kaseikyo, 48-bit, vendor-aware) | `2c6c218` |
 | B-206 | RC6 mode 0 codec (Manchester) | `9926af9` |
-| B-208 | Acoustic+EM matcher tiebreakers | (this commit) |
+| B-208 | Acoustic+EM matcher tiebreakers | `08c3f48` |
+| B-209 / B-210 | Network control architecture: Roku ECP + LAN IR bridge | (this commit) |
 
 ---
 
