@@ -159,9 +159,12 @@ class IrCameraCapture(private val context: Context) {
             .build()
             .also { analysis ->
                 analysis.setAnalyzer(cameraExecutor) { imageProxy ->
-                    if (_captureState.value == CaptureState.CAPTURING) {
-                        analyzeFrame(imageProxy)
-                    }
+                    // Read state and append-or-skip atomically wrt stopCapture's
+                    // PROCESSING transition: analyzeFrame's synchronized block
+                    // already gates the list, but the state check has to live
+                    // inside it too, otherwise a frame can land in the list
+                    // after processTimeline has snapshotted it.
+                    analyzeFrame(imageProxy)
                     imageProxy.close()
                 }
             }
@@ -218,6 +221,10 @@ class IrCameraCapture(private val context: Context) {
         }
 
         synchronized(frames) {
+            // The state check belongs inside the lock so a frame can never
+            // land in the list after stopCapture has flipped state to
+            // PROCESSING and processTimeline has begun snapshotting.
+            if (_captureState.value != CaptureState.CAPTURING) return
             // Hard cap. A stuck capture can't grow without bound — at the
             // limit we stop appending and let processTimeline run on what
             // we have. The user still sees CAPTURING state; pressing stop
