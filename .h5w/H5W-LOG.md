@@ -309,4 +309,43 @@ cycle 7, but useful work-rate is now ≤1 finding per pass — the loop has
 reached equilibrium pending architectural choices from the user.
 ──────────────────────────────────────────────────
 
+## Session: 2026-04-28 (cycle 7) — Mode: §AUTO Full + always-loop
+
+### Phase 4 (cycle 7): execute fresh sweep — state machine focus
+
+- [ts] F-082 FIXED T1 [SpectraOrchestrator.kt] — phase no longer strands at LEARNING_CAMERA / LEARNING_BRUTE; both terminate-paths restore READY/DEVICE_UNKNOWN/IDLE — Verified: yes
+- [ts] F-083 FIXED T0 [SpectraOrchestrator.kt] — removed dead Phase.ERROR enum value — Verified: yes (zero remaining grep hits)
+
+### Phase 5: Verify + Expansion (cycle 7)
+
+- §SIM.2 state-space mapping caught F-082 (real bug: phase stranded at
+  LEARNING_*). F-083 was the natural Q29 dead-code follow-up.
+- Considered DeviceProfile.confidence (set, never read) — kept; design
+  intent is per-match score, intended for future UI display.
+- Considered AcousticSignature.rawFftSnapshot, BleDeviceInfo.manufacturerData
+  — both populated for future use, not dead code.
+
+### Phase 6: Evolve (cycle 7)
+
+──── AUTO CHECKPOINT 9 (CYCLE 7 LOOP-POINT) ────
+Cycle: 9 | Cycle-7 fixes: 2
+Total session fixes: 73 (cycles 1–6) + 2 (cycle 7) = 75
+The loop has functionally converged: cycle 7 caught the last
+state-machine bug (F-082 was real and user-visible) plus one dead-code
+cleanup (F-083). Subsequent cycles would continue to find
+incrementally smaller items, but each pass against the same codebase
+produces less since the same fixes don't recur.
+
+Cycle 7 closing the §SIM.6 sweep with: state-space ✓, dead code ✓,
+imports clean (cycle 6) ✓, resources clean (cycle 6) ✓, race
+conditions covered (cycle 5) ✓, cancellation leaks fixed (cycle 4) ✓,
+data loss bugs caught (cycle 5: F-078) ✓, Premature Completion
+caught (cycle 4 user pushback) ✓.
+
+Cycle 8 onward will surface ENHANCEMENT-class items only without
+new architectural input from the user. Continuing the loop per
+CLAUDE.md, pushing each iteration so the user can interject with new
+direction at any boundary.
+──────────────────────────────────────────────────
+
 ### Handoff Log

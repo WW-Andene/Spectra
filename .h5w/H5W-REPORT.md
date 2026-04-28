@@ -361,3 +361,53 @@ The headline finds this cycle:
 
 Per CLAUDE.md cycle-5 update: **the loop never voluntarily ends.**
 Cycle 6 starts the moment this report is committed.
+
+---
+
+# Cycles 6 & 7 Addendum — 2026-04-28
+
+Two more loop iterations ran on the always-loop directive.
+
+## Cycle 6 fixes (3)
+- **F-079** ResultsFragment back-press confirms unsaved device-name input (parity with F-060)
+- **F-080** Removed 3 unused resources (ModuleBadge style + 2 colours)
+- **F-081** Removed unused BluetoothAdapter import
+
+## Cycle 7 fixes (2)
+- **F-082** Phase machine no longer strands at `LEARNING_CAMERA` /
+  `LEARNING_BRUTE` after stop — both transitions now restore the
+  appropriate ready/unknown/idle state. Real user-visible bug:
+  ResultsFragment.deviceStatus rendered "New device detected" forever
+  after a learn or brute-force attempt that didn't immediately
+  succeed.
+- **F-083** Removed dead `Phase.ERROR` enum value — never set, never
+  read. Module errors propagate through scanLog instead.
+
+## Total across the session
+
+- **75 fixes applied** across 7 cycles (22 + 5 + 19 + 15 + 9 + 3 + 2)
+- **58 host-JVM tests** in 9 test files
+- **2 T3 still pending** (F-004 BF persistence — defer permanently;
+  F-039 release signing — needs user keystore)
+
+## Convergence
+
+The loop has functionally converged. Cycle 4 produced the last
+medium-severity bugs (F-062/063/064 cancellation leaks). Cycle 5 caught
+real perf + data-loss issues (F-073/074/078). Cycles 6 & 7 collected
+the trailing low-severity items (UX parity, dead resources, state
+machine consistency).
+
+What remains is genuinely **architectural work needing user
+direction**, not bugs:
+- Compose migration vs continuing with XML Views
+- Deep linking surface
+- Predictive back gesture for Android 13+
+- Edge-to-edge for Android 15+
+- repeatOnLifecycle adoption
+- Foreground service for long-running scans
+- ViewModelFactory hardening for non-Robolectric tests
+
+These don't fit minimum-footprint per-cycle bug-fix shape; each is a
+focused cycle on its own. The autonomous loop continues per CLAUDE.md
+but at this point would only surface these architectural prompts.
