@@ -17,9 +17,9 @@ description: >
 > **Does NOT produce findings** — produces design artifacts for implementation.
 
 
-> **In §AUTO mode:** All `AskUserQuestion` calls and user-approval gates in this
+> **In §AUTO FULL or UNCHAINED:** All `AskUserQuestion` calls and user-approval gates in this
 > module become auto-decisions logged with `[AUTO-DECIDED]` tag in H5W-LOG.md.
-> Chief Guide §AUTO overrides any instruction below to stop and ask the user.
+> the §AUTO protocol (references/auto-mode.md) overrides any instruction below to stop and ask the user.
 ---
 
 # Art Direction Engine

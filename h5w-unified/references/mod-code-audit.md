@@ -20,9 +20,9 @@ description: >
 > **After every fix from this module:** Chief Guide runs micro-H5W (§SIM.4).
 
 
-> **In §AUTO mode:** All `AskUserQuestion` calls and user-approval gates in this
+> **In §AUTO FULL or UNCHAINED:** All `AskUserQuestion` calls and user-approval gates in this
 > module become auto-decisions logged with `[AUTO-DECIDED]` tag in H5W-LOG.md.
-> Chief Guide §AUTO overrides any instruction below to stop and ask the user.
+> the §AUTO protocol (references/auto-mode.md) overrides any instruction below to stop and ask the user.
 ---
 
 # MOD-CODE — Code Quality Dimensions
@@ -50,31 +50,33 @@ description: >
 
 ---
 
-## §LAWS — IRON LAWS OF CODE AUDITING
+## §DOMAIN — CODE-AUDIT DOMAIN PRINCIPLES
 
-### Law 1 — Specificity
-Every finding names the exact function, variable, line, file. "Improve naming" is not a finding. "`const d = new Date()` at `utils.js:47` — `d` is non-descriptive; rename to `createdDate` or `expirationDate` based on intent" is a finding.
+> **Inherits Chief Guide §LAW (the 12 Iron Laws) verbatim.** This section
+> does NOT redefine specificity, bugs-before-refactors, source integrity,
+> minimum footprint, or compound-chain priority — those are Chief §LAW 1,
+> 5, 4, 8 and the Compound Finding Chains rule. They apply here unchanged.
+>
+> The principles below are **additions** that only make sense at the
+> code-audit layer. They supplement Chief §LAW; they never override it.
 
-### Law 2 — Bugs Before Style
-A function with a logic bug AND bad naming: fix the bug first. Style improvements are separate, lower-priority findings.
+### D1 — Stack Awareness (code-specific)
+Apply JS/React checks to JS/React code. Apply Kotlin/Android checks to Kotlin code.
+Never flag React patterns in Kotlin or vice versa. The stack determines which
+sub-dimensions in this module are even meaningful.
 
-### Law 3 — Detect, Don't Assume
-Every finding must cite code evidence. `[CODE: file:line]` for confirmed. `[LIKELY]` for strong inference. `[THEORETICAL]` for architectural risk. Never fabricate line numbers.
+### D2 — Cross-Dimensional Awareness (code-specific)
+A finding in one of the 8 code dimensions must trigger investigation of
+related dimensions. Missing null check (MOD-CODE §D5) → check error handling
+(§D7) → check state management (§D6) for the same code path. This is what
+makes code audits compound rather than additive.
 
-### Law 4 — Stack Awareness
-Apply JS/React checks to JS/React code. Apply Kotlin/Android checks to Kotlin code. Never flag React patterns in Kotlin or vice versa.
-
-### Law 5 — Minimum Footprint
-Recommend the smallest safe change. A 2-line fix beats a refactor that happens to fix the problem. Scope creep in fixes creates regressions.
-
-### Law 6 — Cross-Dimensional Awareness
-A finding in one dimension must trigger investigation of related dimensions. Missing null check (§D5) → check error handling (§D7) → check state management (§D6) for the same code path.
-
-### Law 7 — Convention Respect
-If the codebase has an established pattern (even if non-standard), recommend consistency with that pattern unless it causes bugs. Switching naming conventions mid-codebase is worse than a slightly non-standard convention applied consistently.
-
-### Law 8 — Compound Chain Priority
-Findings that form cross-dimensional chains (§CROSS) are escalated above their individual severity. A LOW validation gap that chains into a HIGH display error is HIGH.
+### D3 — Convention Respect (code-specific)
+If the codebase has an established pattern (even if non-standard), recommend
+consistency with that pattern unless it causes bugs. Switching naming
+conventions mid-codebase is worse than a slightly non-standard convention
+applied consistently. (Chief §LAW 7 Identity Preservation covers this for
+visual identity; this principle extends it to code conventions.)
 
 ---
 

@@ -19,9 +19,9 @@ description: >
 > **After every fix from this module:** Chief Guide runs micro-H5W (§SIM.4).
 
 
-> **In §AUTO mode:** All `AskUserQuestion` calls and user-approval gates in this
+> **In §AUTO FULL or UNCHAINED:** All `AskUserQuestion` calls and user-approval gates in this
 > module become auto-decisions logged with `[AUTO-DECIDED]` tag in H5W-LOG.md.
-> Chief Guide §AUTO overrides any instruction below to stop and ask the user.
+> the §AUTO protocol (references/auto-mode.md) overrides any instruction below to stop and ask the user.
 ---
 
 # MOD-DESG — Design Aesthetic Analysis
@@ -1804,7 +1804,7 @@ NEVER:
   - Describe a named source's visual language from training memory alone
   - Say "inspired by [X]" without having actually looked at [X]
   - Use generic category descriptors as if they were source-specific
-    ("fantasy game UI" is not "Wuthering Waves UI")
+    ("fantasy game UI" is not "<specific-game> UI")
   - Produce a color palette "in the style of [X]" without having sampled
     actual colors from verified reference imagery
   - Treat the name as a mood word — treat it as a research target

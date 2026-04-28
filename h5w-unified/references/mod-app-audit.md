@@ -20,9 +20,9 @@ description: >
 > **After every fix from this module:** Chief Guide runs micro-H5W (§SIM.4).
 
 
-> **In §AUTO mode:** All `AskUserQuestion` calls and user-approval gates in this
+> **In §AUTO FULL or UNCHAINED:** All `AskUserQuestion` calls and user-approval gates in this
 > module become auto-decisions logged with `[AUTO-DECIDED]` tag in H5W-LOG.md.
-> Chief Guide §AUTO overrides any instruction below to stop and ask the user.
+> the §AUTO protocol (references/auto-mode.md) overrides any instruction below to stop and ask the user.
 ---
 
 # MOD-APP — App Audit Dimensions
@@ -2469,7 +2469,7 @@ APP COMPREHENSION RECORD:
 
   Core Purpose:
     # One sentence. Not "it's a React app that..." but "it helps [who] do [what] when [context]"
-    # e.g. "It helps Wuthering Waves players decide when to pull by showing their pity status"
+    # e.g. "It helps <game> players decide when to pull by showing their pity status"
 
   User Mental Model:
     # How does the user think about this app? What's its "shape" to them?
@@ -2556,10 +2556,10 @@ UNIFIED VISION — {App Name}:
   # A paragraph describing the app as it should be. What it feels like to use.
   # How it flows. What its personality is. What makes it coherent.
   #
-  # e.g. "Whispering Wishes feels like a single, confident tool built by someone
-  # who plays daily. Every screen speaks the same visual language. The user never
-  # thinks about where things are — navigation mirrors how players think about
-  # gacha (banners → history → pity → probability). Every interaction gives
+  # e.g. "<your-app> feels like a single, confident tool built by someone
+  # who uses it daily. Every screen speaks the same visual language. The user never
+  # thinks about where things are — navigation mirrors how the audience thinks about
+  # the domain. Every interaction gives
   # immediate feedback. The import flow matches the dashboard's quality. A new
   # user understands it in 30 seconds. A power user never hits a wall."
 ```

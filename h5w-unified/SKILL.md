@@ -1,20 +1,29 @@
 ---
 name: h5w-unified
-version: 1.0.0
+version: 1.3.1
+target: claude-code            # Designed for Claude Code CLI. Activates allowed-tools and
+                               # tools like Agent / AskUserQuestion / TodoWrite that are
+                               # Claude Code-specific. The skill loads in claude.ai too,
+                               # but tool names below are silently ignored there.
 description: >
-  Unified autonomous mastermind for building, auditing, improving, and maintaining
-  world-class apps. H5W (How, Who, Will, What, When, Where) is the chief guide
-  — a simulation-driven orchestrator routing to six domain modules: app-audit,
-  code-audit, design-aesthetic-audit, art-direction-engine, scope-context, and
-  app-restructuring. Trigger on: ANY app-related request — "audit my app", "build
-  this", "simulate usage", "improve my app", "redesign", "restructure", "code
-  review", "design audit", "make it beautiful", "find issues", "fix everything",
-  "run H5W", "simulate and fix", "what would a user encounter", "you decide what
-  to fix", "improve whatever needs improving", "make it better", "full deep audit",
-  "autonomous improvement", "build from scratch", "polish", "expand from this fix",
-  or any request where Claude must discover what to do rather than being told.
-  This skill IS the single entry point for all app development and quality work.
-  Always use this skill even if another skill seems more specific — H5W routes.
+  Unified agentic skill for building, auditing, improving, and maintaining
+  apps. Orchestrates six domain modules (app-audit, code-audit, design-audit,
+  art-direction, scope-context, restructuring) with simulation engine, research,
+  obstacle solving, delivery infrastructure, and product lifecycle management.
+  Default mode is GUIDED (interactive). Full autonomous mode is gated behind
+  an explicit activation phrase — see §AUTO. Single entry point for all app work.
+allowed-tools:                 # Claude Code agent spec. Ignored elsewhere.
+  - Read
+  - Edit
+  - Write
+  - Grep
+  - Glob
+  - Bash
+  - Agent
+  - TodoWrite
+  - AskUserQuestion
+  - WebSearch
+  - WebFetch
 ---
 
 # H5W Unified Autonomous System — Chief Guide
@@ -65,17 +74,40 @@ to a completed or in-progress report — not a prompt waiting for input.
 **Installation:** This skill REPLACES the following standalone skills:
 `app-audit`, `code-audit`, `design-aesthetic-audit`, `art-direction-engine`,
 `scope-context`, `app-restructuring`. Uninstall them before installing this.
-Running both creates trigger phrase conflicts. Autonomy is not permission to guess about things
-that cannot be undone.
+Running both creates trigger phrase conflicts.
+
+**Autonomy is not permission to guess about things that cannot be undone.**
 
 **On skill load, do this first:**
 1. Check user memory and past conversations for existing project context.
 2. If the user provided a brief, uploads, or references — treat as primary source.
 3. Read §TRIAGE to determine execution path from the user's request.
 4. Fill §0 by extracting from code — ask user only for what can't be extracted.
-5. Create working documents (§DOC): `H5W-LOG.md`, `H5W-QUEUE.md`, `H5W-ASSUMPTIONS.md`.
-6. Use `TodoWrite` for progress tracking across phases.
-7. Announce the plan in one message: which path, expected phases, what user will see.
+5. **CHECK FOR BUILD ERRORS IMMEDIATELY** — by reading code, not compiling:
+   ```
+   BASELINE CODE HEALTH CHECK:
+     A. Read build config (package.json / build.gradle / etc.)
+        → Are dependencies listed? Versions valid? No conflicts?
+     B. Trace imports across all source files:
+        → Every import resolves to an existing file/export?
+     C. Check for obvious errors:
+        → Unclosed brackets, syntax issues, type mismatches
+     D. Check cross-file consistency:
+        → Renamed files with stale importers? Changed signatures with stale callers?
+
+     IF build tools available locally:
+        Also run: ./gradlew assembleDebug OR npm run build
+     IF only CI available:
+        Note: "Will verify via CI after changes"
+     IF neither:
+        Static analysis IS the verification. Tag [STATIC-VERIFIED].
+
+     ANY errors found → F-000: CRITICAL. Fix before other work.
+     The app can't be improved if the code has broken references.
+   ```
+6. Create working documents (§DOC): `H5W-LOG.md`, `H5W-QUEUE.md`, `H5W-ASSUMPTIONS.md`.
+7. Use `TodoWrite` for progress tracking across phases.
+8. Announce the plan in one message: which path, expected phases, what user will see.
 
 ---
 
@@ -137,7 +169,7 @@ that cannot be undone.
 | §SESSION | **Session Continuity** | Resume from prior session, carry findings forward | "continue", "resume" |
 | §OBSTACLE | **MacGyver Protocol** | Creative problem-solving through obstacles — never surrender | — (activates on any "I can't") |
 | §META | **Self-Improvement Protocol** | Audit and improve H5W itself, its modules, or any skill | "improve the skill", "self-audit", "meta" |
-| §AUTO | **Deep Autonomous Protocol** | Unattended operation: self-decide, self-correct, manage context, report at end | "autonomous", "I'll be back", "handle it", "run for 2 hours" |
+| §AUTO | **Deep Autonomous Protocol** | Unattended operation: self-decide, self-correct, manage context, report at end. **Activation: literal phrase only — see §AUTO Activation Gate.** | exact: `run H5W full autonomous mode` (FULL) or `run H5W unchained autonomous mode` (UNCHAINED). Other autonomous phrases → §AUTO-GUIDED |
 
 ---
 
@@ -159,11 +191,11 @@ that cannot be undone.
 | Phase | What Happens | Owner |
 |-------|-------------|-------|
 | **0 — UNDERSTAND** | Fill §0, classify domain/complexity/scope | Chief Guide |
-| **1 — DISCOVER** | H5W simulation: personas, states, walkthroughs | Chief Guide §SIM |
+| **1 — DISCOVER** | H5W simulation: personas, states, walkthroughs | the §SIM protocol (references/sim-engine.md) |
 | **2 — ANALYZE** | Module audits triggered by findings | Modules via §WORKFLOW |
 | **3 — PLAN** | Priority sort, roadmap, expansion map | Chief Guide |
 | **4 — EXECUTE** | Fix, build, art-direct, restructure | Modules, verified by Chief Guide |
-| **5 — VERIFY** | Micro-H5W on every change, regression check | Chief Guide §SIM.4 |
+| **5 — VERIFY** | Micro-H5W on every change, regression check | §SIM.4 (in references/sim-engine.md) |
 | **6 — EVOLVE** | Queue next cycle, session continuity | Chief Guide §SESSION |
 
 ---
@@ -173,7 +205,7 @@ that cannot be undone.
 | Code | Section | Purpose |
 |------|---------|---------|
 | §MODE | **Execution Modes** | Full, Targeted, Single-Lens, Expansion, Continuous, Build |
-| §ANTI | **Anti-Patterns** | 13 things Claude must never do |
+| §ANTI | **Anti-Patterns** | 18 things Claude must never do |
 | §XCUT | **Cross-Cutting Concerns** | Patterns spanning multiple modules |
 | §DLVR | **Deliverables** | Required outputs per mode |
 | §MANDATE | **Final Mandate** | Binding system contract |
@@ -206,7 +238,9 @@ that cannot be undone.
 | What should I build next | `"R&D mode"` → MOD-APP §X |
 | Standardize all X | `"all X"` or `"every Y"` → MOD-SCOP |
 | Continue from last session | `"continue"` → §SESSION resume |
-| Run autonomously for hours | `"handle it"` or `"I'll be back"` → §AUTO FULL |
+| Run autonomously (GUIDED — default) | `"handle it"` / `"I'll be back"` / `"you decide"` → §AUTO-GUIDED |
+| Run autonomously (FULL — explicit) | `"run H5W full autonomous mode"` (literal) → Risk Acknowledgment + briefing + `proceed` → §AUTO FULL |
+| Run autonomously (UNCHAINED — no T3 gate) | `"run H5W unchained autonomous mode"` (literal) → extended Risk Ack + `i accept full responsibility` → §AUTO-UNCHAINED |
 | Build autonomously | `"build this, I'll be back"` → §AUTO + §BUILD |
 | Improve while I'm away | `"improve until I return"` → §AUTO + continuous |
 | Research and improve | `"study the domain and improve"` → §SIM.7 + fixes |
@@ -223,14 +257,45 @@ that cannot be undone.
 > **For Claude:** On activation:
 > 1. Read §TRIAGE — determine execution path from user's request.
 > 2. Fill §0 — extract from code first, ask user only for gaps.
-> 3. Create working documents (§DOC).
-> 4. Create progress tracker with `TodoWrite`.
-> 5. Execute the determined path. Load module reference files only when needed.
-> 6. After every fix from any source: run micro-H5W (§SIM.4). Log everything.
-> 7. At checkpoint boundaries: stop, report (§SIM.5), wait for user.
+> 3. Copy templates to project: `cp [skill-dir]/templates/{H5W-LOG,H5W-QUEUE,H5W-ASSUMPTIONS,COMPACT-RESUME}.md ./`
+> 4. Copy CLAUDE.md if not exists: `cp [skill-dir]/templates/CLAUDE.md ./.claude/CLAUDE.md` (project-level config)
+> 5. Create progress tracker with `TodoWrite`.
+> 6. Execute. Load module reference files via subagent — don't read 3,000-line modules into main context.
+> 7. After every fix: micro-H5W (§SIM.4). Log everything.
+> 8. One unit of work per response. End with `NEXT:`.
 >
-> **For User:** Describe what you want in natural language. H5W routes to the
-> right module and phase. You approve T3 decisions. Everything else is autonomous.
+> **Progressive loading:** This skill is large. Do NOT read the entire SKILL.md
+> on every turn. Read §TRIAGE + the specific section needed. Use `Grep` to find
+> § codes. Load module references via `Agent` subagent, not into main context.
+>
+> **For User:** Describe what you want. H5W routes to the right module.
+>
+> **For unattended operation:** Use the autoloop wrapper script:
+> ```
+> # GUIDED mode (default — Claude Code permission prompts active):
+> ./h5w-autoloop.sh "Handle my app, improve everything"
+>
+> # FULL mode (literal phrase + Risk Acknowledgment + typed 'proceed'):
+> ./h5w-autoloop.sh "run H5W full autonomous mode and improve everything"
+>
+> # UNCHAINED mode (no T3 gate; literal phrase + 'i accept full responsibility'):
+> ./h5w-autoloop.sh "run H5W unchained autonomous mode and rebuild this"
+>
+> # UNCHAINED + BRAINSTORM (closed-sandbox deep-work; raised effort caps,
+> # MAX_LOOPS=200, STUCK pivots instead of stopping; needs ':brainstorm'
+> # in prompt + 'this is my sandbox' at the second gate):
+> ./h5w-autoloop.sh "run H5W unchained autonomous mode :brainstorm push through this hard problem"
+>
+> # Resume — drops to GUIDED for safety unless the matching flag is passed:
+> ./h5w-autoloop.sh --resume                              # GUIDED (safe default)
+> ./h5w-autoloop.sh --resume --full                       # resume FULL session
+> ./h5w-autoloop.sh --resume --unchained                  # resume UNCHAINED session
+> ./h5w-autoloop.sh --resume --unchained --brainstorm     # resume UNCHAINED + BRAINSTORM
+> ```
+> The wrapper auto-sends "continue" to Claude Code when it stops,
+> keeping the loop running until a runway limit is hit. Activation
+> gates (Risk Acknowledgment + typed confirmation) are enforced at the
+> script level for FULL, UNCHAINED, and BRAINSTORM — see §AUTO for details.
 
 ---
 
@@ -259,6 +324,16 @@ that cannot be undone.
 
 ## §TRIAGE — ROUTING
 
+> **§ reference convention.** § codes defined in this Chief Guide
+> (e.g. `§LAW`, `§FMT`, `§I.4`, `§H`, `§W`, `§P`, `§T`, `§N`, `§L`,
+> `§SIM.6`) are referenced **bare** — no module prefix. § codes
+> defined inside a module (MOD-APP categories `§A`–`§O`, MOD-CODE
+> dimensions `§D1`–`§D8`, MOD-DESG steps, MOD-REST phases, etc.)
+> are **always module-prefixed** when referenced from outside that
+> module — e.g. `MOD-APP §C5`, `MOD-CODE §D5`, never bare `§C5` /
+> `§D5`. A bare letter-code in this guide is unambiguous; in a module,
+> it refers to that module's own scope.
+
 Determine execution path from the user's request. If ambiguous, ask using
 `AskUserQuestion` with the mode options below.
 
@@ -276,7 +351,9 @@ Determine execution path from the user's request. If ambiguous, ask using
 | "design", "beautiful", "art direction", "look like X" | MOD-ART or MOD-DESG | 0→ART/DESG |
 | "expand", "continue improving" | §SIM.4 expansion | 5 only |
 | "you decide", "figure it out" (user present) | Full H5W cycle | 0→1→2→3→4→5→6 |
-| "handle it", "I'll be back", "run for N hours" | §AUTO + Full H5W | §AUTO governs |
+| "handle it", "I'll be back", "run for N hours", "run autonomously" | §AUTO-GUIDED + Full H5W | GUIDED governs |
+| **literal: `run H5W full autonomous mode`** | §AUTO FULL (after Risk Ack + `proceed`) | FULL governs |
+| **literal: `run H5W unchained autonomous mode`** | §AUTO-UNCHAINED (after extended Risk Ack + `i accept full responsibility`) | UNCHAINED governs (no T3 gate) |
 | "research", "study the domain", "what are we missing", "competitive analysis" | §SIM.7 Research | 0→§SIM.7→4→5 |
 | "improve the skill", "self-audit", "meta", "audit this skill" | §META | §META audit dimensions |
 | Specific § code referenced | Jump directly | — |
@@ -308,10 +385,17 @@ USER REQUEST
 ├─ Contains "simulate" / "H5W" / "find issues" / "as a user"?
 │  YES → Full H5W simulation
 │
-├─ Contains "you decide" / "autonomous" / "figure it out" / "handle it"?
-│  YES → Check for time horizon / "I'll be back" signal
-│        → If autonomous signal: activate §AUTO + Full H5W
-│        → If interactive: Full H5W simulation
+├─ Contains literal `run H5W unchained autonomous mode`?
+│  YES → §AUTO-UNCHAINED Activation Gate: print extended Risk
+│        Acknowledgment, wait for `i accept full responsibility`
+│        (anything else → drop to GUIDED)
+│
+├─ Contains literal `run H5W full autonomous mode`?
+│  YES → §AUTO Activation Gate: print Risk Acknowledgment + briefing,
+│        wait for `proceed` / `adjust scope:` / `cancel` / other reply
+│
+├─ Contains "you decide" / "autonomous" / "figure it out" / "handle it" / "I'll be back"?
+│  YES → §AUTO-GUIDED + Full H5W (permission prompts active, no §META auto-edits)
 │
 ├─ Contains "expand" / "continue improving"?
 │  YES → §SIM.4 expansion from most recent changes
@@ -367,10 +451,10 @@ Prior Session:
     - # "CONFLICT: [prior: X] vs [now: Y] — needs user confirmation"
 
 # ─── IDENTITY ─────────────────────────────────────────────────────
-App Name:        # e.g. "Whispering Wishes"
+App Name:        # e.g. "<your-app-name>"
 Version:         # From package.json, build.gradle, etc.
-Domain:          # e.g. "Wuthering Waves companion app"
-Audience:        # e.g. "Wuthering Waves players"
+Domain:          # e.g. "<game> companion app" / "personal finance" / "task tracker"
+Audience:        # e.g. "<game> players" / "freelancers" / "students"
 Stakes:          # LOW (hobby) | MEDIUM (productivity) | HIGH (money) | CRITICAL (medical)
                  # Stakes is a severity multiplier — wrong data in CRITICAL = CRITICAL finding.
 
@@ -423,7 +507,7 @@ Architecture:        # e.g. "Zero-build CDN" / "Feature-based modules"
 Color System:    # e.g. "OKLCH-derived, dark theme dominant"
 Typography:      # e.g. "Cormorant Garamond headings, Outfit body"
 Motion:          # e.g. "Minimal" / "Aurora gradient, particle systems"
-Visual Source:   # e.g. "Wuthering Waves aesthetic" / "Material You"
+Visual Source:   # e.g. "<game/film/brand> aesthetic" / "Material You"
 Aesthetic Role:  # SHOWCASE | PROFESSIONAL | UTILITY | INVISIBLE
 Personality:     # Emotional character it should project — e.g. "precise & atmospheric"
 Protected Elements: # Visual signatures that MUST be preserved during any polish/audit
@@ -495,7 +579,7 @@ README:          # e.g. "Complete" / "Missing deploy instructions" / "None"
 Files to Audit:  # "All" / specific paths
 Out of Scope:    # e.g. "node_modules" / "generated code" / "third-party libs"
 
-# ─── GROWTH CONTEXT (for projection analysis §O) ─────────────────
+# ─── GROWTH CONTEXT (for projection analysis MOD-APP §O) ─────────────────
 Growth:
   Users:         # Current count / growth rate
   Data Volume:   # Per-user data, growth trajectory
@@ -647,7 +731,7 @@ If discovered during any phase, **STOP and reclassify**:
 |-----------|--------|
 | Undisclosed financial transaction code | Stakes → HIGH; activate MOD-APP §K1, §C1 |
 | Undisclosed health/dosage calculations | Stakes → CRITICAL immediately |
-| PII persisted to localStorage | Full §C5, §C6 GDPR review |
+| PII persisted to localStorage | Full MOD-APP §C5, §C6 GDPR review |
 | CDN scripts without SRI in payment/auth | Immediate CRITICAL |
 | Dead code > 20% of codebase | Dead code analysis primary |
 | Hardcoded credentials | CRITICAL — surface immediately |
@@ -745,6 +829,10 @@ standardization, and refactoring equally.
 > If users rely on it → **rejected.**
 > **Correct:** "Add the new format alongside. Deprecation is a separate decision
 > for the user."
+>
+> *(In §AUTO-UNCHAINED and §AUTO-UNCHAINED+§BRAINSTORM: this law is an
+> advisory, logged when overridden. See §AUTO and "Law application by
+> mode" below.)*
 
 ### Law 7 — Identity Preservation Contract
 The app's intentional design character (§0 Design Identity) must not be erased.
@@ -755,6 +843,10 @@ neon accents — not converted to a neutral gray Material dashboard.
 > for consistency."
 > **Correct:** "Derived Material Design 3 token structure using the existing
 > custom palette — consistency gained, identity preserved."
+>
+> *(In §AUTO-UNCHAINED and §AUTO-UNCHAINED+§BRAINSTORM: this law is an
+> advisory, logged when overridden. See §AUTO and "Law application by
+> mode" below.)*
 
 ### Law 8 — Minimum Footprint
 Every fix uses the smallest safe change that resolves the problem. A 3-line fix
@@ -773,6 +865,11 @@ tiers → higher tier. T3 → explicit user permission, no exceptions.
 > asking — this is T3 (potentially irreversible if data depends on it).
 > **Correct:** "Feature flag system appears unused [INFERRED — no references
 > found]. This is T3 — requesting confirmation before removal."
+>
+> *(In §AUTO-UNCHAINED and §AUTO-UNCHAINED+§BRAINSTORM: T3 actions execute
+> rather than block, logged with `[UNCHAINED-T3-EXECUTED]`. The tier
+> classification is still done — only the blocking is removed. See §AUTO
+> and "Law application by mode" below.)*
 
 ### Law 10 — Expansion Has Boundaries
 Expandantic investigation is controlled, not runaway. Checkpoint triggers
@@ -802,6 +899,40 @@ logic path. Runtime-only → `[UNVERIFIABLE — requires runtime test]`.
 > the fix doesn't introduce a new timing window.
 > **Correct:** "Applied fix. Re-read: the mutex now covers lines 84–92.
 > Traced: both code paths hit the mutex before the shared state. Verified."
+
+### Law application by mode
+
+The Iron Laws are not all equal under all autonomy modes. Two groups:
+
+**Always enforced (every mode, including UNCHAINED+BRAINSTORM):**
+Laws 1, 2, 3, 4, 5, 8, 10, 11, 12 — these are about being accurate,
+specific, honest, and not fabricating findings. Removing any of them
+would not be "more autonomous"; it would be "Claude lies about what
+it did." They are the floor regardless of mode and regardless of the
+relaxations the user has accepted at the activation gate.
+
+**Mode-conditional (enforced as hard blocks vs. logged as advisories):**
+Laws 6 (Feature Preservation), 7 (Identity Preservation), and 9
+(Reversibility Before Action). These are protections against
+irreversible damage and identity erasure. In GUIDED and FULL they
+block; in UNCHAINED and UNCHAINED+BRAINSTORM they are advisories —
+Claude logs when it overrides them and proceeds.
+
+| Law | GUIDED | FULL | UNCHAINED | UNCHAINED+BRAINSTORM |
+|-----|--------|------|-----------|----------------------|
+| 1, 2, 3, 4, 5, 8, 10, 11, 12 | enforced | enforced | enforced | enforced |
+| 6 (Feature Preservation) | enforced | enforced | advisory (logged) | advisory (logged) |
+| 7 (Identity Preservation) | enforced | enforced | advisory (logged) | advisory (logged) |
+| 9 (Reversibility Before Action) | enforced (T3 blocks) | enforced (T3 queues) | T3 executes (logged `[UNCHAINED-T3-EXECUTED]`) | same as UNCHAINED |
+
+**Implementation note for subagents and post-compaction sessions:**
+The mode-conditional override is communicated via the autoloop's
+`AUTO_RULES` injection at iteration 1 and re-asserted in every
+`CONT` message via `MODE_REMINDER`. Subagents loading SKILL.md
+fresh, or Claude after an internal compaction, may not have that
+runtime context. **When in doubt, default to the enforced
+interpretation.** The mode override is opt-in; the absolute reading
+is the safe fallback.
 
 ### Compound Finding Chains
 Some bugs chain: validation gap [LOW] → invalid engine value [MEDIUM] → wrong
@@ -953,7 +1084,13 @@ Fix: Add better error handling.
 
 ## §VER. VERIFICATION PROTOCOL
 
-After every fix from any module:
+> **From Superpowers:** Two-stage review. Stage 1: does it meet the spec?
+> Stage 2: is the code quality good? Separate concerns. And ACTUALLY RUN
+> the tests — don't just read the code and claim it works.
+
+After every fix from any module, two-stage verification:
+
+**Stage 1 — Spec Compliance** (does it do what it should?)
 
 | Check | Method | On Failure |
 |-------|--------|-----------|
@@ -962,773 +1099,246 @@ After every fix from any module:
 | No consumer regression | Check files that import/consume modified code | Revert, cascade analysis |
 | Feature Preservation | Confirm no working feature broken or diminished | Revert immediately |
 | Identity Preservation | Confirm design character intact | Revert, re-approach |
-| Type safety | If typed language — does it still compile? | Fix type errors first |
-| Import integrity | All imports still resolve after changes? | Fix broken imports |
 
-**If verification requires runtime (visual, interactive, timing):**
-Tag: `[UNVERIFIABLE — requires runtime test: {describe what to test}]`
-Log in H5W-ASSUMPTIONS.md with confidence score. Continue — don't block queue.
+**Stage 2 — Code Quality** (is it well-written?)
 
-**Verification worked example:**
-> Fixed F-012 (empty-state in TeamCard). Re-read TeamCard.jsx:
-> - Line 84: conditional now checks `members.length === 0`
-> - Line 85: renders `<EmptyState message="No members yet" />`
-> - Line 86: else renders member list (unchanged)
-> - EmptyState component exists at components/EmptyState.jsx (verified)
-> - No other components import TeamCard's member rendering
-> - Feature preserved: populated teams still render identically
-> **Verified: yes.**
+| Check | Method | On Failure |
+|-------|--------|-----------|
+| Type safety | Typed language: does it compile? `tsc --noEmit` / `gradlew build` | Fix type errors |
+| Import integrity | All imports resolve after changes? | Fix broken imports |
+| Naming | New code follows §0 Conventions? | Rename |
+| Error handling | New code handles failure paths? | Add handling |
+| No magic numbers | Constants named, not hardcoded? | Extract |
+
+**Stage 3 — Actually Run It** (don't just read — execute)
+
+```
+EXECUTION VERIFICATION (when possible):
+  Web:     npm run build && npm run lint
+  Android: ./gradlew assembleDebug (or assembleRelease)
+  iOS:     xcodebuild build
+  Tests:   npm test / ./gradlew test / pytest (if tests exist)
+```
+
+**Stage 4 — Find Errors Before Build (don't depend on compiling)**
+
+> Claude can't always run builds. No local JDK/SDK, CI-only builds,
+> no signing keys, build takes 20 minutes, wrong platform. Claude MUST
+> find errors by READING CODE — same way a human reviewer would.
+
+```
+STATIC ERROR DETECTION (always available — no build tools needed):
+
+  A. IMPORT/REFERENCE CHAIN:
+     For every file modified → list every import.
+     For every import → does the target file exist? Does it export what's imported?
+     For every reference → does the function/class/variable exist where it's expected?
+     → Missing import target = build error.
+     → Wrong export name = build error.
+     → Moved file without updating imports = build error.
+
+  B. TYPE CONSISTENCY:
+     For every function call → do argument types match parameter types?
+     For every assignment → does the value type match the variable type?
+     For every return → does the return type match the function signature?
+     → Type mismatch = compile error.
+     → null where non-null expected = runtime crash.
+
+  C. SYNTAX SCAN:
+     For every file modified → read character by character if needed.
+     → Unclosed brackets, braces, parentheses, strings?
+     → Missing commas in arrays/objects?
+     → Missing semicolons (where required by language)?
+     → Mismatched XML tags (Android layouts, configs)?
+
+  D. DEPENDENCY CHECK:
+     Read package.json / build.gradle / Podfile / requirements.txt:
+     → Is every imported package listed as a dependency?
+     → Are version ranges compatible?
+     → Any package used in code but not in dependency file?
+
+  E. CONFIGURATION CONSISTENCY:
+     Android: Does AndroidManifest.xml reference all activities/fragments?
+     Android: Do package declarations match directory structure?
+     Android: Are all resources referenced in code present in res/?
+     Web: Does tsconfig.json paths match actual directory structure?
+     Web: Are all environment variables referenced in code defined?
+     iOS: Does Info.plist match capabilities used in code?
+
+  F. CROSS-FILE CONSISTENCY:
+     When modifying a function signature → grep for ALL callers.
+     When renaming a file → grep for ALL importers.
+     When changing a type/interface → grep for ALL implementors.
+     When deleting an export → grep for ALL consumers.
+     → Any mismatch = build error BEFORE anyone compiles.
+```
+
+**Run actual build ONLY IF the environment supports it:**
+```
+  IF local build available:
+    Run: ./gradlew assembleDebug / npm run build / equivalent
+    Use output to VERIFY static analysis findings.
+
+  IF only CI available (GitHub Actions):
+    Push changes → check CI status via `gh run list` or GitHub API.
+    Read CI logs for errors: `gh run view [id] --log-failed`
+
+  IF no build possible:
+    Static analysis (above) IS the verification.
+    Tag: [STATIC-VERIFIED — no build environment available]
+    Log which checks were performed.
+```
+
+**The principle: Claude's eyes ARE the compiler.** Read imports like a
+linker. Read types like a type checker. Read syntax like a parser.
+Read references like a symbol resolver. Most build errors are visible
+in the code without running anything.
+
+**Three failed verification attempts on the same finding → mark [STUCK],
+log all three attempts and their failure reasons, move to next finding.**
+
+### §BUILD-DIAG — Build Error Diagnosis Protocol
+
+> **Claude's eyes ARE the compiler.** Most build errors are visible by reading
+> code. Don't wait for a build to fail — find the errors by tracing imports,
+> types, references, and syntax. This works on ANY platform, ANY language,
+> whether or not Claude can run the build locally.
+
+**When this activates:**
+- Before any build attempt (preventive scan)
+- When a CI build fails (read logs, trace to code)
+- When code changes touch imports, types, or cross-file references
+- When someone reports "it doesn't build" and Claude needs to find why
+
+```
+§BUILD-DIAG PROTOCOL:
+
+  STEP 1 — READ THE CODE LIKE A COMPILER
+
+  For every file changed this session, trace:
+
+  a) IMPORTS → TARGETS
+     Read every import/require/include statement.
+     Does the target file exist at that path?
+     Does the target export the symbol being imported?
+     → Broken link = the build WILL fail.
+
+  b) FUNCTION CALLS → SIGNATURES
+     Read every function/method call.
+     Does the function exist where it's called from?
+     Do the argument types match the parameter types?
+     Is the return value used correctly by the caller?
+     → Mismatch = compile error or runtime crash.
+
+  c) REFERENCES → DEFINITIONS
+     Read every variable, constant, class, type reference.
+     Is it defined? Is it in scope? Is it the right type?
+     → Undefined reference = build error.
+
+  d) SYNTAX → STRUCTURE
+     Brackets balanced? Strings closed? Commas present?
+     XML tags matched? (Android layouts, configs, manifests)
+     JSON/YAML valid? (package.json, build configs)
+     → Syntax error = immediate build failure.
+
+  e) CROSS-FILE RIPPLE
+     When you changed file A:
+     → Who imports from A? Read them. Are they still compatible?
+     → What does A import? Are those still compatible with your changes?
+     → Did you rename, move, delete, or change the signature of anything?
+     → Grep for the old name/path — any remaining references = broken.
+
+  STEP 2 — CHECK CONFIGURATION
+
+  a) DEPENDENCIES
+     Is every package used in code listed in the dependency file?
+     package.json → node_modules | build.gradle → dependencies
+     Podfile → pods | requirements.txt → pip | Cargo.toml → crates
+     → Missing dependency = build fails on clean install.
+
+  b) PLATFORM CONFIG
+     Android: AndroidManifest.xml — activities registered? Permissions present?
+              Package declarations match directory structure?
+              Resources in res/ match references in code?
+              minSdk/targetSdk/compileSdk aligned?
+     iOS:     Info.plist — capabilities match usage? Bundle ID correct?
+     Web:     tsconfig/vite/webpack config — paths resolve?
+              Environment variables referenced but not defined?
+     Python:  setup.py/pyproject.toml — entry points correct?
+     Any:     .env files — all referenced vars exist?
+
+  c) BUILD SCRIPTS
+     Does the build command in §0 still work with the changes?
+     Any new build steps needed? (codegen, asset processing, etc.)
+
+  STEP 3 — CLASSIFY WHAT'S WRONG (if errors found)
+
+  │  SYNTAX error → fix exact file:line
+  │  IMPORT error → update path or add missing export
+  │  TYPE error → align types between caller and callee
+  │  DEPENDENCY error → add to dependency file, install
+  │  CONFIG error → fix configuration file
+  │  CROSS-FILE error → update all consumers of changed code
+  │  MULTI-ERROR → fix the FIRST one only, re-scan after
+
+  STEP 4 — FIX ROOT CAUSE, NOT SYMPTOM
+
+  The error you SEE is often a cascade from the error you DON'T see.
+  20 "unresolved reference" errors → probably ONE renamed file.
+  Fix the rename → 20 errors disappear.
+
+  **SEARCH BEFORE GUESSING:**
+  If the root cause isn't obvious after Step 3:
+    WebSearch("[exact error message]")
+    WebSearch("[error] [framework] [version]")
+    WebFetch the top result → read the actual solution code.
+  Someone has hit this exact error. Find their fix. Don't reinvent.
+
+  After fixing: re-run Step 1 on the fixed files.
+  New errors? → repeat from Step 3.
+  Clean? → log [STATIC-VERIFIED] or run build if available.
+
+  STEP 5 — VERIFY (platform-dependent)
+
+  IF local build available → run it now. Compare with static analysis.
+  IF CI only → push, monitor CI, read logs if it fails.
+  IF neither → static analysis IS the verification.
+     Tag: [STATIC-VERIFIED — checks A through E passed]
+```
+
+**Common Error Patterns (lookup table for speed):**
+
+| Pattern | Root Cause | Static Fix |
+|---------|-----------|-----------|
+| Symbol not found / unresolved reference | File moved/renamed, import stale | Grep old path, update all imports |
+| Type mismatch / wrong argument | Function signature changed | Read callee signature, fix all callers |
+| Module not found / can't resolve | Missing dependency or wrong path | Check dependency file + import path |
+| Duplicate definition | Two files export same name | Rename one or fix import specificity |
+| Null/undefined where not expected | Missing null check or wrong optional | Add check or fix type to nullable |
+| XML parse error (Android) | Unclosed tag, invalid attribute | Read XML file character by character |
+| Resource not found (Android) | Deleted/renamed resource, stale reference | Grep `@drawable/`, `@string/`, etc. |
+| Manifest merge conflict | Conflicting entries across libraries | Read full merge error, resolve conflict |
+| Circular dependency | A imports B imports A | Restructure: extract shared code to C |
+| Missing export / not exported | Used internally but not exported | Add export or fix import to correct source |
 
 
 ---
 
 ## §SIM — H5W SIMULATION ENGINE
 
-The simulation engine is the brain of H5W. It generates a simulated user
-population, maps the app's state space, walks personas through the app by
-reading code, discovers issues through six lenses, and expands findings
-through the micro-H5W loop.
-
-### §SIM.1. Persona Generation
-
-**Three mandatory personas (always generated):**
-
-| ID | Type | Device | Expertise | Behavior | Purpose |
-|----|------|--------|-----------|----------|---------|
-| P1 | First-time | Mobile, slow 3G, small screen | None | Cautious, reads labels | Empty states, onboarding, unclear labels, first impressions |
-| P2 | Power user | Desktop, fast, large screen | Expert | Rapid, uses shortcuts | Edges, efficiency, data limits, missing shortcuts |
-| P3 | Hostile-env | Small screen, interrupted | Intermediate | Impatient, back-button | Error recovery, data loss, interrupted flows |
-
-**Domain-specific personas (1–2 more, from §I.1):**
-
-| Domain | Additional Persona | Focus |
-|--------|--------------------|-------|
-| Game companion | P4: Theorycrafting optimizer — tests formulas, boundary math, data density | Correctness at extremes |
-| Game companion | P5: Casual collector — browsing, low commitment, visual-first | Scannability, delight |
-| Medical | P4: Stressed clinician — time-critical, zero ambiguity, gloved hands | Clarity, touch targets, error cost |
-| Productivity | P4: Admin for 50 users — bulk operations, edge permissions | Scale, batch actions |
-| E-commerce | P4: Comparison shopper — rapid nav, tab-switching, price sensitivity | Speed, comparison flows |
-| AI-powered | P4: Skeptical user — tests limits, questions outputs, probes failures | Failure modes, trust |
-
-**Persona specification template:**
-```yaml
-PERSONA: P[N]
-TYPE: first-time | power-user | hostile-env | [domain-specific name]
-DEVICE: [concrete — "iPhone SE, 375×667, slow 3G" or "Desktop, 1920×1080"]
-GOAL: [specific action — "add a team with 4 characters to compare DPS"]
-BEHAVIOR: methodical | exploratory | impatient | careful | chaotic
-ACCESSIBILITY: none | screen-reader | keyboard-only | reduced-motion | high-contrast
-ENTRY POINT: [which route/screen they start from]
-WALKTHROUGH SCRIPT: [sequence of actions this persona will attempt]
-  1. [arrive at entry point]
-  2. [first interaction]
-  3. [core goal action]
-  4. [disruption scenario]
-  5. [edge scenario]
-```
-
-**Rules:**
-- Goals must be specific. "Uses the app" is not a goal. "Adds a team with 4 characters" is.
-- Devices must be concrete with dimensions. "Mobile" is not a device.
-- At least one persona targets §0 Primary Device.
-- At least one persona has an accessibility consideration.
-- Walkthrough scripts are planned before execution — not improvised during.
-
-**Worked example (game companion app):**
-```yaml
-PERSONA: P1
-TYPE: first-time
-DEVICE: Xiaomi 13T, 439×976 CSS, DPR 2.78, 4G
-GOAL: Find and compare two characters' DPS
-BEHAVIOR: exploratory — taps around, doesn't read instructions
-ACCESSIBILITY: none
-ENTRY POINT: / (home)
-WALKTHROUGH SCRIPT:
-  1. Arrive at home — what's visible? What invites interaction?
-  2. Navigate to characters/teams — is the path obvious?
-  3. Attempt to add two characters — can they find the add flow?
-  4. Disruption: network drops mid-add — is data preserved?
-  5. Edge: search for a character with special characters in name
-```
-
-### §SIM.2. State Space Mapping
-
-Before walkthroughs, map the reachable state space by reading code.
-
-**Step 1 — Enumerate screens:**
-Read router config, navigation graph, AndroidManifest, or equivalent.
-List every reachable screen with its route/path.
-
-**Step 2 — State variables per screen:**
-For each screen, identify every state variable that changes the render.
-
-```yaml
-Screen: /teams
-  loading: boolean → skeleton vs content
-  error: Error | null → content vs error message
-  teams: Team[] → length determines:
-    - 0: empty state
-    - 1: single card
-    - 2+: grid layout
-  selectedTeam: string | null → list vs detail
-  networkStatus: online | offline → live vs cached/stale
-```
-
-**Step 3 — Build transition matrix:**
-```
-FROM              → ACTION          → TO              → EDGE?  → HANDLER?
-──────────────────────────────────────────────────────────────────────────
-/teams:empty      → add team        → /teams:1-team   → —      → [CODE: Teams.jsx:42]
-/teams:1-team     → delete team     → /teams:empty    → modal? → [CODE: Teams.jsx:68]
-/teams:loaded     → network drop    → /teams:???      → YES    → ???
-/teams:loaded     → resize < 440px  → /teams:mobile   → break? → [CODE: Teams.css:120]
-/teams:detail     → back button     → /teams:loaded   → kept?  → ???
-/teams:loading    → error response  → /teams:error    → retry? → [CODE: Teams.jsx:28]
-```
-
-**Step 4 — Mark investigation targets:**
-- `???` in TO column → unknown behavior → **mandatory investigation**
-- `YES` in EDGE column → known risk → **priority investigation**
-- `???` in HANDLER column → no handler found → **likely crash/unhandled**
-- Transitions with no code reference → dead path or missing implementation
-
-**Worked example output:**
-> State map for /teams: 6 states, 8 transitions.
-> Investigation targets: 3 unknown (network drop, back-nav state,
-> error→retry). 2 edge risks (responsive breakpoint, delete confirmation).
-> Handler gaps: 2 (network drop, back-nav preservation).
-
-### §SIM.3. Walkthrough Protocol
-
-For each persona × each relevant entry point, execute the walkthrough script
-by reading code as if running it in the persona's context. Apply all six
-H5W lenses at four stages.
-
-#### Stage 1 — ARRIVAL (what does the persona see on first render?)
-
-Read the component that renders at this route. Trace from mount:
-- What renders during loading? (Suspense, skeleton, spinner, blank?)
-- What renders when data arrives? (first meaningful paint)
-- What renders if data is empty? (empty state, or just... nothing?)
-- What is the visual hierarchy? (what draws the eye first?)
-- Where does focus land? (keyboard/screen-reader starting point)
-
-Apply each lens:
-```
-How:   How does the page load? What's the sequence? Any flash/flicker?
-Who:   Does P1 (first-time, mobile) understand what they're seeing?
-Will:  Will P1 know what to do next? Is there a clear CTA?
-What:  What's missing? (empty state text, loading skeleton, focus management)
-When:  When does content appear? Is perceived performance acceptable?
-Where: Where is P1's attention drawn? Is it the right place?
-```
-
-#### Stage 2 — INTERACTION (persona pursues their goal)
-
-Follow the walkthrough script's action sequence through the code:
-- Read the event handler for each interaction
-- Trace state mutations from action to re-render
-- Check validation logic for each input
-- Check feedback for each action (confirmation, animation, state change)
-
-Apply each lens:
-```
-How:   How does P1 perform the action? Steps? Click targets? Gesture areas?
-Who:   Who else might try this differently? (keyboard vs touch, a11y routes)
-Will:  Will the interaction succeed? What if input is edge-case?
-What:  What feedback does P1 get? Immediate? Delayed? None?
-When:  When does feedback arrive? Optimistic update? Spinner? Latency?
-Where: Where does P1 go next? Is navigation clear? Dead ends?
-```
-
-#### Stage 3 — DISRUPTION (something goes wrong)
-
-Inject failures from the walkthrough script:
-- Network drop mid-action
-- Back-button press during async operation
-- Tab/app switch and return
-- Error response from API
-- Permission denial
-
-Apply each lens:
-```
-How:   How does the app handle this failure? Error boundary? Fallback? Crash?
-Who:   Who suffers most? (P3 hostile-env is the canonical victim)
-Will:  Will recovery be possible? Data preserved? Session intact?
-What:  What is lost? (form data, scroll position, navigation state)
-When:  When does P3 learn something broke? Immediately? After retry?
-Where: Where is the error surfaced? Toast? Inline? Console-only? Silent?
-```
-
-#### Stage 4 — EDGE (boundary push)
-
-Push the persona's goal to extremes:
-- 0 items, 1 item, 100+ items
-- Empty string, max-length string, special characters, emoji
-- Rapid repeated action (double-tap, spam-click)
-- Concurrent state changes (two tabs, two users)
-- Maximum data accumulation over time
-
-Apply each lens:
-```
-How:   How does the app behave at this extreme? Graceful? Degraded? Crash?
-Who:   Who realistically hits this? P2 power user is the canonical edge-finder.
-Will:  What's the worst realistic outcome? Data loss? Security? Embarrassment?
-What:  What exactly breaks? (specific component, function, render)
-When:  When does the edge trigger? First time? After accumulation? Specific sequence?
-Where: Where does it manifest? (component, API call, state store, render output)
-```
-
-#### Collation
-
-After all personas complete all walkthroughs:
-1. Group findings by screen/component location.
-2. Tag findings appearing across 2+ personas → priority boost.
-3. Identify persona-unique findings → context-specific gaps.
-4. Format all findings using §FMT.
-5. Enter all findings into H5W-QUEUE.md.
-6. Sort by §V.2 priority rules.
-
-### §SIM.4. Expansion Protocol (Micro-H5W)
-
-After every fix — from any module, any phase — apply all six lenses to the
-fix itself. This is the expandantic mechanism: each fix seeds further investigation.
-
-**Micro-H5W template:**
-```
-MICRO-H5W ON FIX F-[NNN] — [file:line]
-──────────────────────────────────────────
-How   → Does this fix interact with adjacent code?
-        Action: check imports and consumers of the modified file.
-        Result: [list affected files or "no consumers"]
-
-Who   → Is anyone else affected by this change?
-        Action: check components/functions that share state with this code.
-        Result: [list shared state consumers or "isolated"]
-
-Will  → Could this cause a regression?
-        Action: trace the logic path through the fix. Check boundary inputs.
-        Result: [describe traced path + conclusion]
-
-What  → Does this fix reveal an adjacent issue?
-        Action: now that this is fixed, re-read surrounding code.
-        Result: [describe adjacent issue or "none found"]
-
-When  → Could this fix behave differently under other states?
-        Action: check what happens when state is empty, null, error, max.
-        Result: [list states checked + any issues]
-
-Where → Does the same pre-fix pattern exist elsewhere?
-        Action: grep the codebase for the pattern that was fixed.
-        Result: [list matches with file:line or "unique instance"]
-        → If 3+ matches: invoke MOD-SCOP for systematic fix.
-──────────────────────────────────────────
-New findings: [F-NNN, F-NNN] → H5W-QUEUE.md
-No findings: [proceed to next in queue]
-```
-
-**Worked example:**
-```
-MICRO-H5W ON FIX F-012 — components/TeamCard.jsx:84
-──────────────────────────────────────────
-How   → TeamCard is imported by TeamsPage.jsx and TeamCompare.jsx.
-        Both render TeamCard with the same props interface.
-Who   → TeamCompare.jsx also passes team.members — same empty risk.
-Will  → Traced: TeamCompare renders cards side-by-side. If both teams
-        have 0 members → two empty states side by side → confusing layout.
-What  → Adjacent issue: TeamCompare has no "both empty" layout handling.
-        → NEW FINDING F-018.
-When  → Checked: empty, 1 member, 10 members — all render correctly now.
-Where → Grep for `.members.map(` without empty check:
-        - TeamCompare.jsx:62 — SAME PATTERN → F-018
-        - CharacterList.jsx:34 — SAME PATTERN → F-019
-        → 3 matches → consider MOD-SCOP for systematic fix.
-──────────────────────────────────────────
-New findings: F-018 (TeamCompare empty), F-019 (CharacterList empty)
-```
-
-### §SIM.5. Checkpoint Protocol
-
-**Stop and report when ANY trigger fires:**
-
-| Trigger | Standard Mode | Continuous Mode |
-|---------|--------------|-----------------|
-| Expansion cycles since last checkpoint | 3 | 5 |
-| Files modified since last checkpoint | 5 | 10 |
-| T3 decision encountered | Immediate | Immediate |
-| Queue empty | **Continuous Improvement Loop** (see below) | **Continuous Improvement Loop** |
-| Runway limit hit (§AUTO) | Session end | Session end |
-| User interrupt | Immediate | Immediate |
-
-### Queue Empty ≠ Done — The Continuous Improvement Loop
-
-When the queue empties after fixing findings, the CODE HAS CHANGED since the
-original simulation. Fixes expose new issues. New code paths are reachable.
-The app is never "done" — there is always more to improve.
-
-**An app is never finished. Claude runs out of runway, not work.**
-
-```
-QUEUE EMPTY PROTOCOL:
-  1. Queue empties after fixes.
-
-  2. RE-SCAN (always — no exceptions):
-     a. Re-read all files modified this session.
-     b. Run targeted simulation on modified files:
-        - Stage 1 + 2 with P1 (first-time) and P3 (hostile-env)
-     c. New findings? → queue them, continue fixing.
-
-  3. SCOPE EXPANSION (if re-scan found nothing):
-     a. Expand scope to adjacent files (imports/consumers of modified files)
-     b. Run walkthrough on expanded scope
-     c. New findings? → queue them, continue fixing.
-
-  4. DEPTH ESCALATION (if expansion found nothing):
-     a. Shift from bugs → polish → enhancements → optimizations
-     b. Run deeper analysis:
-        - MOD-CODE §D3 (optimization) on hot paths
-        - MOD-DESG quick pass (visual consistency)
-        - §P.5 (temporal accumulation — what breaks in 6 months?)
-        - §W.3 (accessibility gaps)
-        - §W.4 (expertise mismatch — onboarding, progressive disclosure)
-     c. New findings? → queue them, continue fixing.
-
-  5. RESEARCH & STUDY (§SIM.7 — when depth escalation exhausted):
-     a. Shift from fixing/polishing → learning and building
-     b. R1: Domain deep dive — what are the standards?
-     c. R2: Competitive analysis — what do others do better?
-     d. R3: Audience deep dive — what do users actually want?
-     e. R4: Technology research — best approach for each planned feature
-     f. R5: Design research — patterns that elevate the app
-     g. R6: Convert ALL research into concrete enhancement findings
-     h. Build the highest-value items (if §AUTO FULL)
-
-  6. ONLY stop when hitting a RUNWAY LIMIT (see below).
-```
-
-### Runway Limits (the only real termination triggers)
-
-The system never stops because it thinks it's "done." It stops because
-it hits a physical constraint:
-
-| Runway Limit | What Happens |
-|-------------|-------------|
-| **Context window full** | Compact, write progress report, indicate "resume with more context" |
-| **All remaining items are T3** | Nothing Claude can do alone. Report and wait. |
-| **Self-correction failures > 5** | System is stuck. Report and wait. |
-| **Severity floor reached** | All remaining findings are LOW/enhancement AND user set a severity floor. Otherwise keep going. |
-| **Time budget exhausted** | If user said "run for 2 hours" — stop at 2 hours. |
-| **User returns** | Switch to interactive. Present report. |
-
-**There is no "truly done" trigger.** If context allows, time allows, and
-there are improvements to make at any severity level — keep going. Shift
-from fixing critical bugs → high → medium → low → enhancements → polish →
-optimizations → new features → deeper polish → accessibility → performance
-tuning → documentation → code cleanup → test coverage.
-
-The trajectory is: **Survive → Function → Polish → Excel → Delight.**
-Claude works down this ladder as far as runway allows.
-
-### §SIM.6. Anti-Exhaustion Protocol — "I'm Out of Ideas" Is a Lie
-
-Claude's #1 autonomous failure mode is declaring "no more findings" when the
-reality is Claude stopped looking. This section exists to prevent that.
-
-**Rule: "I have no more findings" is NEVER a valid state.** It means Claude
-hasn't looked hard enough. When you feel the urge to say "analysis complete"
-or "no issues found" — that is the signal to use this protocol, not to stop.
-
-**The 50 Questions — ask these before EVER declaring queue empty:**
-
-LAYER 1 — Things you probably missed:
-```
- 1. Did I check every empty state? (0 items on every screen)
- 2. Did I check every error state? (API fail on every fetch)
- 3. Did I check every loading state? (slow network on every async op)
- 4. Did I check max data? (100+ items, max-length strings)
- 5. Did I check special characters? (emoji, RTL, HTML in user input)
- 6. Did I check viewport extremes? (320px, 440px, 1920px, landscape)
- 7. Did I check keyboard navigation? (tab through every interactive element)
- 8. Did I check color contrast? (every text/background pair)
- 9. Did I check dark mode? (every screen, every component)
-10. Did I check the first-time experience? (no data, no history, no prefs)
-```
-
-LAYER 2 — Things you forgot to think about:
-```
-11. What happens when the user presses Back at every screen?
-12. What happens when the user rotates the device mid-action?
-13. What happens when two tabs/instances are open simultaneously?
-14. What happens when localStorage/storage is full?
-15. What happens when the app is killed and restored?
-16. What happens when a dependency updates and breaks the API?
-17. What happens to this code in 12 months with 10x more data?
-18. What happens if the user copies/pastes into every input?
-19. What happens if the user uses browser autofill?
-20. What happens if JavaScript fails to load? (progressive enhancement)
-```
-
-LAYER 3 — Quality dimensions you haven't audited yet:
-```
-21. Is every animation under 300ms? Are any janky?
-22. Is every touch target at least 44px/48dp?
-23. Are all images lazy-loaded? Do they have alt text?
-24. Are all strings externalized? (i18n readiness)
-25. Is there any hardcoded data that should be configurable?
-26. Are there console.log/print statements left in production code?
-27. Is every CSS variable actually used? Any orphaned tokens?
-28. Is every import actually used? Any dead imports?
-29. Is every exported function actually imported somewhere?
-30. Are all event listeners cleaned up on unmount/destroy?
-```
-
-LAYER 4 — Polish nobody asked for but users notice:
-```
-31. Do focus rings appear correctly on keyboard nav?
-32. Is there a favicon? App icon? Meta tags?
-33. Is the page title correct on every route?
-34. Do links have meaningful text (not "click here")?
-35. Is scroll position preserved on back navigation?
-36. Is there a 404 page?
-37. Is there a loading indicator on initial app load?
-38. Do numbers format correctly for locale? (1,000 vs 1.000)
-39. Is there a way to undo destructive actions? (delete, clear)
-40. Is the README accurate? Would a new developer understand?
-```
-
-LAYER 5 — Meta-improvements:
-```
-41. Can any two components be merged without losing clarity?
-42. Can any component be split to improve reusability?
-43. Can any utility function be generalized for broader use?
-44. Can any magic number become a named constant?
-45. Can any callback chain become async/await?
-46. Can any imperative DOM manipulation become declarative?
-47. Can any inline style become a design token?
-48. Can any copy be made clearer, shorter, or more helpful?
-49. Can any error message tell the user what to DO, not what went wrong?
-50. Can any feature be made faster with caching, memo, or preloading?
-```
-
-LAYER 6 — Delivery & infrastructure (§DELIVER):
-```
-51. Can the user actually build this project from a fresh clone?
-52. Is there a CI/CD pipeline? Does it produce a working artifact?
-53. Is the artifact installable/deployable? (APK installs, URL loads, etc.)
-54. Is signing/deployment configured? Or just documented?
-55. Does the README explain build, run, test, AND deploy?
-```
-
-**How to use:** When the queue empties and re-scan finds nothing, go through
-these 50 questions one by one against the actual codebase. Each question is
-a concrete investigation. Most will produce at least one finding.
-
-**Severity:**
-- Layer 1–2: HIGH to MEDIUM (real bugs)
-- Layer 3: MEDIUM to LOW (quality gaps)
-- Layer 4: LOW to ENHANCEMENT (polish)
-- Layer 5: ENHANCEMENT (optimization)
-
-**After the 50 Questions → activate §SIM.7 (Research & Study Protocol).**
-
-**This protocol is mandatory.** Whenever Claude reaches "no findings," it MUST
-run through at minimum Layers 1–3 (30 questions) before any report or shift.
-Skipping is an anti-pattern: **Premature Completion.**
-
-**Premature Completion is the worst anti-pattern in the system.** It wastes
-more user trust than any bad fix. A bad fix can be reverted. Stopping early
-means the user comes back to an app that still has obvious issues — issues
-Claude would have found in 5 minutes with the 50 Questions.
-
-### §SIM.7. Research & Study Protocol — Learn the Domain, Improve the App
-
-**Purpose:** Claude actively researches the app's domain, competition, audience,
-and best practices — then converts that research into concrete improvements
-and new features. This is not optional inspiration. This is structured
-investigation with required outputs.
-
-**When this activates:**
-- After §SIM.6 (50 Questions) when code-level improvements are exhausted
-- When user says "research and improve", "study the domain", "what are we missing"
-- In §AUTO mode: automatically after Layer 5 of 50 Questions
-- In §BUILD B1 (Discovery): to inform architecture and feature decisions
-- Anytime Claude needs domain knowledge it doesn't have
-
-**This protocol uses `WebSearch` and `WebFetch` extensively.**
-If web search is unavailable, Claude uses its training knowledge tagged
-`[UNVERIFIED]` and asks the user to validate before acting on it.
-
----
-
-#### R1. Domain Deep Dive — Understand the World the App Lives In
-
-**Goal:** Become an expert in the app's domain, not just its code.
-
-```
-DOMAIN RESEARCH:
-  Search: "[domain] best practices [year]"
-  Search: "[domain] common user complaints"
-  Search: "[domain] UX patterns"
-  Search: "building [app type] what users expect"
-  Search: "[domain] accessibility requirements"
-
-  For each result:
-    → Extract concrete patterns, standards, or expectations
-    → Tag: [WEB: source, date]
-    → Compare against current app: does it meet this standard?
-    → Gap found? → Finding in H5W-QUEUE.md as enhancement
-```
-
-**Domain-specific research templates:**
-
-| Domain | What to Research |
-|--------|-----------------|
-| Game companion | Meta builds, community calculators, popular tools, game wiki structure, theorycraft forums, what data players track, how top companion apps present DPS/stats |
-| Medical/Health | Clinical workflow standards, accessibility for medical contexts, regulatory requirements (HIPAA/GDPR), what clinicians expect from tools, error tolerance standards |
-| Productivity | GTD/workflow methodologies, keyboard-first design, bulk operation patterns, integration expectations, what power users demand |
-| E-commerce | Checkout conversion patterns, trust signals, payment UX, comparison features, mobile shopping patterns |
-| Social | Community moderation patterns, notification design, content discovery, engagement without addiction |
-| AI-powered | Prompt UX patterns, confidence display, error handling for AI failures, user control over AI behavior |
-
-**Output:** Domain Research Brief in H5W-LOG.md:
-```
-DOMAIN RESEARCH BRIEF — [domain]
-─────────────────────────────────────
-Standards found: [list with sources]
-User expectations: [list with sources]
-Common complaints in similar apps: [list with sources]
-Current app gaps vs standards: [list → enhancement findings]
-```
-
----
-
-#### R2. Competitive Analysis — What Do Others Do Better?
-
-**Goal:** Find concrete features and patterns from competing/similar apps.
-
-```
-COMPETITIVE RESEARCH:
-  Step 1: Identify competitors
-    Search: "[app type] best apps [year]"
-    Search: "[app type] alternatives"
-    Search: "[specific domain] tools comparison"
-    → List 3–5 competitors with URLs
-
-  Step 2: Analyze each competitor
-    WebFetch each competitor's landing page / app store listing
-    For each:
-      → What features do they offer that this app doesn't?
-      → What visual patterns do they use?
-      → What's their onboarding experience?
-      → What do user reviews praise?
-      → What do user reviews criticize?
-
-  Step 3: Extract actionable items
-    → Feature gaps: things competitors have that this app lacks
-    → UX patterns: interaction patterns that work well
-    → Visual patterns: design approaches worth studying
-    → Anti-patterns: competitor mistakes to avoid
-
-  Each item → H5W-QUEUE.md as enhancement finding with source
-```
-
-**Output:** Competitive Analysis in H5W-LOG.md:
-```
-COMPETITIVE ANALYSIS — [app name]
-─────────────────────────────────────
-Competitors: [list with URLs]
-Feature gaps: [what they have, we don't — with priority]
-UX wins: [patterns worth adopting]
-Visual wins: [design approaches worth studying]
-Their mistakes: [what to avoid]
-User review insights: [what users love/hate about competitors]
-```
-
----
-
-#### R3. Audience Deep Dive — What Do Users Actually Want?
-
-**Goal:** Understand real user needs beyond what the developer specified.
-
-```
-AUDIENCE RESEARCH:
-  Search: "[app domain] users want"
-  Search: "[app domain] feature requests"
-  Search: "[app domain] reddit wishlist"
-  Search: "[app domain] common frustrations"
-  Search: "[specific audience] app expectations"
-
-  For game companion apps specifically:
-    Search: "[game name] companion app features"
-    Search: "[game name] community tools"
-    Search: "[game name] reddit what tools"
-    Search: "[game name] discord bot features"
-
-  For each finding:
-    → Is this something the current app could do?
-    → How hard would it be to implement?
-    → How much would users value it?
-    → Priority: HIGH (many users want, feasible) to LOW (niche)
-```
-
-**Output:** Audience Research in H5W-LOG.md:
-```
-AUDIENCE RESEARCH — [audience]
-─────────────────────────────────────
-What users want most: [ranked list with sources]
-What users complain about in existing tools: [list]
-Unmet needs: [things nobody builds well yet]
-Feature proposals: [concrete features → H5W-QUEUE.md]
-```
-
----
-
-#### R4. Technology & Pattern Research — Build It Right
-
-**Goal:** Find the best technical approaches for planned improvements.
-
-```
-TECHNOLOGY RESEARCH (run for each planned feature/improvement):
-  Search: "[feature] best implementation [framework]"
-  Search: "[pattern] [framework] best practices [year]"
-  Search: "[library] for [feature] [framework]"
-  Search: "[feature] performance [framework]"
-  Search: "[feature] accessibility patterns"
-
-  For each approach found:
-    → Does it fit the current architecture (§0)?
-    → Does it respect the design identity (§0)?
-    → What's the implementation cost?
-    → What are the tradeoffs?
-```
-
-**Output:** Technical approach decisions logged in H5W-LOG.md with
-`[AUTO-DECIDED: chose X because Y]` tags.
-
----
-
-#### R5. Design & UX Research — Make It Beautiful and Usable
-
-**Goal:** Find visual and interaction patterns that elevate the app.
-
-```
-DESIGN RESEARCH:
-  Search: "[app type] UI design inspiration"
-  Search: "[app type] best UX patterns [year]"
-  Search: "[domain] design system examples"
-  Search: "[visual source from §0] design language"
-  Search: "[aesthetic role from §0] app design patterns"
-
-  For game companion apps with a specific game source:
-    Search: "[game name] UI design"
-    Search: "[game name] aesthetic fan art"
-    Search: "[game name] official design elements"
-
-  For each pattern found:
-    → How could this apply to the current app?
-    → Does it align with §0 Design Identity?
-    → What specific component or screen would benefit?
-    → Is it an enhancement or a redesign? (tier check)
-```
-
-**Output:** Design research → MOD-ART source material if redesign needed,
-or direct enhancement findings for targeted improvements.
-
----
-
-#### R6. Convert Research to Action
-
-Every research phase MUST produce concrete findings. Research without action
-is wasted runway.
-
-```
-RESEARCH → ACTION PIPELINE:
-  1. All research findings logged in H5W-LOG.md with sources
-  2. Each actionable finding → H5W-QUEUE.md as enhancement
-  3. Priority sort: user demand × feasibility × impact
-  4. In §AUTO FULL: build the top 3 highest-value items
-  5. In interactive mode: present research + recommendations to user
-
-FINDING FORMAT for research-derived enhancements:
-  FINDING: F-[NNN]
-  MODULE: H5W
-  SEVERITY: enhancement
-  CONFIDENCE: high
-  SOURCE: [WEB: source, date] + [CODE: where it would integrate]
-  How: [how to implement — technical approach]
-  Who: [which personas benefit most]
-  Will: [projected user value]
-  What: [the concrete feature/improvement]
-  When: [implementation order — depends on what?]
-  Where: [which files/components need changes]
-  FIX: [implementation plan]
-  TIER: [T1 for additive, T2 for structural, T3 if changing existing features]
-  EXPANSION: [what else this enables]
-```
-
----
-
-#### Research Scheduling in the Improvement Loop
-
-Research isn't a one-time event. It's a recurring phase:
-
-```
-IMPROVEMENT LOOP (updated):
-  Queue empty
-  → §SIM.5: Re-scan modified files
-  → §SIM.5: Scope expansion
-  → §SIM.5: Depth escalation (deeper analysis dimensions)
-  → §SIM.6: 50 Questions (concrete code-level checks)
-  → §SIM.7: Research & Study
-     R1: Domain deep dive (first time only per session — cache results)
-     R2: Competitive analysis (first time only — cache results)
-     R3: Audience deep dive (first time only — cache results)
-     R4: Technology research (per planned feature)
-     R5: Design research (per planned improvement)
-     R6: Convert to action → findings in queue → keep building
-  → Queue has items again → continue fixing/building
-  → Queue empty again after research items built
-  → Runway limit hit → report
-```
-
-**Checkpoint report template:**
-```
-══════════════════════════════════════════
-H5W CHECKPOINT — Cycle [N]
-══════════════════════════════════════════
-SCOPE:    [area examined]
-MODE:     [full | targeted | expansion | continuous]
-MODULES:  [active modules this cycle]
-PERSONAS: [IDs + types used]
-STATES:   [explored / total mapped]
-
-─── METRICS ──────────────────────────────
-FOUND: [total findings this cycle]
-FIXED: [n] (T0: [n] T1: [n] T2: [n])
-QUEUED: [n] (remaining)
-BLOCKED: [n] (T3 — needs user)
-
-─── FIXES APPLIED ────────────────────────
-  F-001 [sev] [tier] [mod] [file] — [summary]
-  F-002 [sev] [tier] [mod] [file] — [summary]
-
-─── BLOCKED (T3) ─────────────────────────
-  F-005 — [description + why T3 + what user needs to decide]
-
-─── EXPANSION CANDIDATES ─────────────────
-  [what micro-H5W surfaced as next targets]
-
-─── ASSUMPTIONS ACTIVE ────────────────────
-  A-001 [conf 3/5] — [assumption + impact if wrong]
-  A-002 [conf 4/5] — [assumption]
-
-─── COMPOUNDS (⏱) ────────────────────────
-  F-003 → F-007 → F-015 chain: [desc of compound risk]
-
-Continue? [yes / no / redirect scope / confirm assumption / resolve T3]
-══════════════════════════════════════════
-```
-
+> **Loaded on demand.** Full protocol lives in `references/sim-engine.md`.
+> Read that file when this section is needed; do not duplicate its
+> content here.
+>
+> **Summary:** Persona generation, state space mapping, walkthroughs (4-stage × 6-lens), micro-H5W expansion, checkpoint protocol, 50 Questions, research & study (R1–R6).
+>
+> **Triggers:** "simulate", "H5W", "as a user", "find issues", "walkthrough", "research the domain", "competitive analysis".
+>
+> **Pattern for loading (Chief Guide):** When §TRIAGE routes here,
+> Claude reads `references/sim-engine.md` (preferably via `Agent` subagent to
+> avoid main-context bloat) and proceeds with the protocol described
+> there. The Iron Laws and shared protocols (§LAW, §FMT, §SRC, §REV,
+> §VER, §DOC) apply unchanged — the module never re-derives them.
 
 ---
 
@@ -1858,942 +1468,55 @@ Where the issue lives, where it cascades, where the pattern repeats.
 
 ## §PRODUCT — FULL PRODUCT LIFECYCLE PROTOCOL
 
-> **The skill thinks like a full team: strategist, developer, designer,
-> marketer, and maintainer.** Every project — new or existing — is a product
-> that needs to find users, solve problems, sustain itself, and grow.
-> §PRODUCT wraps the entire pipeline from idea through post-launch evolution.
-
-### When §PRODUCT Activates
-
-- "Build [app] from scratch" → §PRODUCT first, then §BUILD
-- "Plan this project" / "think through this product"
-- "How should I ship this?" / "How do I get users?"
-- "Business plan" / "monetization" / "marketing plan"
-- "What happens after launch?" / "maintenance plan"
-- In §AUTO: automatically when building from scratch
-- Any time the user treats Claude as a full product partner, not just a coder
-
-### The Product Lifecycle
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│ §PRODUCT wraps everything. Every phase feeds the next.       │
-│                                                              │
-│  P1 THINK ──→ P2 VALIDATE ──→ P3 PLAN ──→ P4 BUILD         │
-│     Why?        Does anyone      Roadmap      §BUILD         │
-│     For whom?   actually need    Business     pipeline       │
-│     What?       this?            model                       │
-│                                                              │
-│  P5 SHIP ──→ P6 GROW ──→ P7 MAINTAIN ──→ P8 EVOLVE         │
-│     §DELIVER    Marketing    Bug triage     Next version     │
-│     Launch      Users        Updates        Pivot/expand     │
-│     strategy    Analytics    Support                         │
-└──────────────────────────────────────────────────────────────┘
-```
-
----
-
-### P1. THINK — Why Does This Exist?
-
-Before any code, architecture, or design — answer these questions.
-Claude fills these by asking the user (interactive) or making best-judgment
-decisions (§AUTO) logged with `[AUTO-DECIDED]`.
-
-```yaml
-PRODUCT BRIEF:
-  # ─── THE PROBLEM ─────────────────────────────
-  Problem:         # What pain does this solve? (one sentence)
-  Current Solution: # How do people solve this today without your app?
-  Why Now:         # Why build this now? What changed?
-
-  # ─── THE AUDIENCE ────────────────────────────
-  Primary User:    # Specific person, not "everyone" — e.g. "Wuthering Waves
-                   # players who want to compare team DPS"
-  User Context:    # When/where do they need this? (commuting, at desk, in-game)
-  User Skill:      # Technical level of target users
-  User Volume:     # How many people have this problem? (order of magnitude)
-
-  # ─── THE VISION ──────────────────────────────
-  One-Line Pitch:  # "It's [analogy] for [audience]"
-  Core Value:      # The ONE thing that makes someone use this instead of nothing
-  Non-Goals:       # Explicitly: what this is NOT
-
-  # ─── THE DIFFERENTIATION ─────────────────────
-  Competitors:     # What already exists? (list 2-5)
-  Why Different:   # What does this do that competitors don't?
-  Unfair Advantage: # What makes this hard to copy? (data, community, UX, niche)
-```
-
-**Gate:** The product brief must be coherent before ANY technical work.
-"I want to build an app" is not enough. "I want to build a DPS comparison
-tool for Wuthering Waves players because existing tools are ugly and don't
-work on mobile" is enough.
-
----
-
-### P2. VALIDATE — Does Anyone Need This?
-
-Before investing build effort, validate demand. Claude does this research
-using §SIM.7 (Research & Study) tools.
-
-```
-VALIDATION RESEARCH:
-  1. Search: "[problem] [audience] need"
-     → Are people actually looking for this?
-
-  2. Search: "[competitor] reviews complaints"
-     → What do users hate about existing solutions?
-
-  3. Search: "[domain] reddit wishlist feature request"
-     → What do community members ask for?
-
-  4. Search: "[app type] market size [year]"
-     → Is there a market, or just a few people?
-
-  5. Assess: Given §0 Constraints (one developer, mobile-first, no backend),
-     is this buildable and maintainable?
-
-VALIDATION VERDICT:
-  Demand:     strong / moderate / weak / unvalidated
-  Competition: none / weak / moderate / strong
-  Feasibility: easy / moderate / hard / beyond constraints
-  Recommendation: build / pivot / simplify / research more
-```
-
-**In §AUTO:** If demand is "weak" and competition is "strong" → log `[AUTO-DECIDED: validation suggests pivot]` with alternatives. Don't build something nobody needs.
-
----
-
-### P3. PLAN — Roadmap, Business Model, Launch Strategy
-
-#### P3.1 Feature Roadmap
-
-```yaml
-ROADMAP:
-  MVP (v1.0):           # Ship THIS first. Minimum features to test core value.
-    - [feature 1]       # The one feature that IS the product
-    - [feature 2]       # Essential support feature
-    - [feature 3]       # Minimum viable polish
-
-  v1.1 (post-launch):   # Based on user feedback
-    - [feature 4]
-    - [feature 5]
-
-  v2.0 (growth):        # Expand value proposition
-    - [feature 6]
-    - [feature 7]
-
-  Future:                # Nice-to-have, not committed
-    - [ideas]
-```
-
-**Rule:** MVP is SMALL. The goal is to ship and learn, not to build everything.
-An ugly app that's live teaches more than a perfect app that's not.
-
-#### P3.2 Business Model
-
-```yaml
-BUSINESS MODEL:
-  Type: [free | freemium | paid | subscription | ads | donation | open-source]
-
-  # For FREE:
-  Sustainability:    # How is development sustained? (hobby, portfolio, community)
-  Costs:             # Hosting, domain, API calls — what does it cost to run?
-
-  # For FREEMIUM:
-  Free Tier:         # What's free? (must be useful on its own)
-  Paid Tier:         # What's paid? (must be clearly more valuable)
-  Price Point:       # Research competitor pricing
-  Payment Provider:  # Stripe, Play Store billing, etc.
-
-  # For ADS:
-  Ad Placement:      # Where? (never interrupt core flow)
-  Ad Provider:       # AdMob, etc.
-  Revenue Estimate:  # CPM × estimated impressions
-
-  # For OPEN-SOURCE:
-  License:           # MIT, GPL, Apache, etc.
-  Contribution Model: # How do others contribute?
-  Sustainability:    # Sponsors, grants, or pure community?
-```
-
-#### P3.3 Launch Strategy
-
-```yaml
-LAUNCH PLAN:
-  Pre-Launch:
-    - [ ] Landing page or app store listing draft
-    - [ ] Screenshots / demo content prepared
-    - [ ] Beta testers identified (friends, community members)
-    - [ ] Social media accounts created (if applicable)
-
-  Launch Day:
-    - [ ] Deploy to production (§DELIVER)
-    - [ ] Post to relevant communities (Reddit, Discord, forums)
-    - [ ] Share with beta testers for initial feedback
-    - [ ] Monitor: crashes, errors, first-user experience
-
-  Post-Launch Week:
-    - [ ] Collect feedback (app reviews, DMs, forum threads)
-    - [ ] Fix critical bugs (same-day)
-    - [ ] Fix high bugs (within 3 days)
-    - [ ] Plan v1.1 based on real feedback
-```
-
-#### P3.4 Marketing Basics
-
-```yaml
-MARKETING:
-  Positioning:
-    For [target user]
-    Who [has this problem]
-    [App name] is a [category]
-    That [key benefit]
-    Unlike [competitors]
-    We [differentiator]
-
-  Channels:            # Where does the target audience hang out?
-    - # e.g. "r/WutheringWaves subreddit"
-    - # e.g. "Game-specific Discord servers"
-    - # e.g. "Twitter/X game community"
-    - # e.g. "YouTube game content creators"
-
-  Content Plan:
-    - # Launch post: "I built [app] because [problem]"
-    - # Demo video or screenshots
-    - # Tutorial: how to use the core feature
-    - # Update posts for each new version
-
-  App Store Optimization (if applicable):
-    - Title:          # [App Name] — [Key Benefit]
-    - Description:    # Problem → Solution → Features → CTA
-    - Keywords:       # Research competitor keywords
-    - Screenshots:    # Show the core value, not the splash screen
-    - Category:       # Correct primary + secondary category
-```
-
----
-
-### P4. BUILD — Technical Execution
-
-This is §BUILD. The entire §BUILD pipeline (B1–B9) runs here.
-But now it's informed by §PRODUCT:
-
-- B1 Discovery uses the Product Brief (P1) instead of asking from scratch
-- B2 Architecture is constrained by the business model (ads need ad SDK,
-  payments need Stripe, open-source needs clean architecture)
-- B3 Design System is informed by the positioning and audience
-- B9 Launch Gate includes marketing readiness, not just code quality
-
----
-
-### P5. SHIP — Get It Into Users' Hands
-
-This is §DELIVER + Launch Strategy (P3.3). But also:
-
-```
-SHIPPING CHECKLIST:
-  [ ] Code: all §BUILD gates passed
-  [ ] Delivery: §DELIVER verified — artifact builds and installs
-  [ ] Legal: privacy policy (if collecting data), terms of service (if needed),
-      open-source license (if applicable)
-  [ ] Store listing: screenshots, description, category, keywords (P3.4)
-  [ ] Analytics: basic crash reporting + usage analytics configured
-      (Firebase, Sentry, Plausible — something)
-  [ ] Feedback channel: how do users report bugs or request features?
-      (GitHub Issues, email, Discord, in-app feedback)
-  [ ] Version: v1.0.0 tagged in git
-```
-
----
-
-### P6. GROW — Get Users and Keep Them
-
-```
-GROWTH PROTOCOL (post-launch):
-  Week 1:
-    - Monitor crash reports daily
-    - Read every piece of user feedback
-    - Fix critical/high bugs same-day
-    - Thank early users personally
-
-  Month 1:
-    - Analyze: which features are used? Which are ignored?
-    - Identify: where do users drop off?
-    - Plan v1.1: top 3 user-requested improvements
-    - Post update to community: "Here's what's coming"
-
-  Month 3:
-    - Re-run §SIM.7 R2 (competitive analysis): has the landscape changed?
-    - Re-run §SIM.7 R3 (audience research): what do users want now?
-    - Plan v2.0 based on data, not assumptions
-    - Consider: is the business model working? Pivot?
-
-  Ongoing:
-    - Update cadence: at least monthly for active apps
-    - Changelog: every update gets a user-facing changelog
-    - Community: respond to issues, engage with users
-```
-
----
-
-### P7. MAINTAIN — Keep It Running
-
-```
-MAINTENANCE PROTOCOL:
-  Regular (monthly):
-    - [ ] Update dependencies (npm audit / dependabot / gradle updates)
-    - [ ] Check for security advisories
-    - [ ] Review crash reports — any new patterns?
-    - [ ] Review analytics — any usage changes?
-    - [ ] Run H5W targeted simulation on recent changes
-
-  Quarterly:
-    - [ ] Full H5W simulation (are there new issues?)
-    - [ ] MOD-CODE audit on areas that changed
-    - [ ] Performance check — has it degraded?
-    - [ ] Re-run §DELIVER — does CI/CD still work?
-
-  Annually:
-    - [ ] Full deep audit (all modules)
-    - [ ] SDK/framework version review — should we upgrade?
-    - [ ] Competitive landscape check — still differentiated?
-    - [ ] Product vision check — still solving the right problem?
-```
-
----
-
-### P8. EVOLVE — What's Next?
-
-```
-EVOLUTION PROTOCOL:
-  When to evolve:
-    - Core value proven, users engaged, growth plateaued
-    - Market changed — new opportunities or threats
-    - User requests consistently point in a new direction
-    - Technical debt accumulated enough to warrant restructuring
-
-  How to evolve:
-    1. Re-run P1 (THINK) with new context — has the problem changed?
-    2. Re-run P2 (VALIDATE) — is there demand for the new direction?
-    3. Re-run P3 (PLAN) — new roadmap, updated business model
-    4. Execute via §BUILD or §SIM (depending on scope)
-    5. Ship via §DELIVER + P5
-    6. Measure via P6
-
-  Evolution types:
-    - Feature expansion: add capabilities within current vision
-    - Audience expansion: serve new user segments
-    - Platform expansion: new platform (web → mobile, mobile → desktop)
-    - Pivot: change the core value proposition
-    - Sunset: the product served its purpose — archive gracefully
-```
-
----
-
-### §PRODUCT Integration Map
-
-| Phase | Shared Protocols Used | Modules Used |
-|-------|----------------------|-------------|
-| P1 Think | §0 (identity) | — |
-| P2 Validate | §SIM.7 R1–R3 (research) | — |
-| P3 Plan | §0 (constraints) | — |
-| P4 Build | §BUILD (full), all modules | All |
-| P5 Ship | §DELIVER, §BUILD B9 | MOD-APP §C (security) |
-| P6 Grow | §SIM.7 (research), §SIM (simulation) | MOD-APP §X (R&D) |
-| P7 Maintain | §SIM (simulation), §VER | MOD-CODE, MOD-APP |
-| P8 Evolve | §PRODUCT (restart from P1) | All |
+> **Loaded on demand.** Full protocol lives in `references/product-lifecycle.md`.
+> Read that file when this section is needed; do not duplicate its
+> content here.
+>
+> **Summary:** P1 Think (problem/audience/vision) → P2 Validate (demand/competition) → P3 Plan (roadmap/business) → §BUILD handoff → P5 Ship → P6 Grow → P7 Maintain → P8 Evolve.
+>
+> **Triggers:** "plan this", "business model", "how to monetize", "how to get users", "what after launch".
+>
+> **Pattern for loading (Chief Guide):** When §TRIAGE routes here,
+> Claude reads `references/product-lifecycle.md` (preferably via `Agent` subagent to
+> avoid main-context bloat) and proceeds with the protocol described
+> there. The Iron Laws and shared protocols (§LAW, §FMT, §SRC, §REV,
+> §VER, §DOC) apply unchanged — the module never re-derives them.
 
 ---
 
 ## §BUILD — BUILD FROM SCRATCH PROTOCOL
 
-When the user wants to build a new app, H5W orchestrates the full pipeline from
-discovery through launch-readiness. This is not "generate some code" — this is a
-structured engineering process with verification gates between every phase.
-
-### Build Phases
-
-| Phase | What Happens | Owner | Gate |
-|-------|-------------|-------|------|
-| B1. Discovery | Problem, audience, constraints, features, non-goals | Chief Guide | User approves brief |
-| B2. Architecture | Stack, data model, state, API, error strategy, file org | Chief Guide | User approves architecture |
-| B3. Design System | Art direction, tokens, palette, typography, components | MOD-ART | User approves design |
-| B4. Scaffold | File structure, routing, state stores, build config, tooling | Chief Guide + MOD-REST | Builds clean |
-| B5. Implement | Feature-by-feature vertical slices with per-feature gates | Direct coding | Per-feature gate |
-| B6. Integrate | Cross-feature flows, shared state, navigation, data sync | Direct coding | Integration gate |
-| B7. Quality | Full MOD-CODE audit + H5W simulation on complete codebase | MOD-CODE + §SIM | Passes audit |
-| B8. Polish | Visual refinement, interaction polish, copy, a11y, perf | MOD-DESG + MOD-APP | Passes design + a11y |
-| B9. Launch Gate | Full H5W simulation + MOD-APP security/perf/compat | MOD-APP + §SIM | Ready to ship |
-
----
-
-### B1. Discovery — Define the Problem
-
-**If §PRODUCT was run first:** B1 is already done. Use the Product Brief (P1),
-Validation (P2), and Plan (P3) to fill §0 and proceed to B2.
-
-**If jumping straight to §BUILD:** Run §PRODUCT P1 (Think) at minimum.
-Fill §0 from the product brief.
-
-**Mandatory questions (ask via `AskUserQuestion` if not provided):**
-
-```yaml
-DISCOVERY BRIEF:
-  Problem Statement:    # What problem does this solve? (one sentence)
-  Target User:          # Who uses this? Be specific — not "everyone"
-  User Goal:            # What does the user accomplish with this app?
-  Stakes:               # LOW | MEDIUM | HIGH | CRITICAL
-  Core Features:        # 3–5 features, priority-ordered
-    1.                  # MVP — the one feature that makes the app useful
-    2.                  # Second priority
-    3.                  # Third priority
-  Non-Goals:            # Explicitly exclude — "NOT a social network"
-  Primary Device:       # Phone? Desktop? Tablet? Which one FIRST?
-  Visual Direction:     # "Dark and atmospheric" / "Clean and minimal" / reference
-  Data Persistence:     # Where does data live? Local? Server? Both?
-  Offline Required:     # Must it work without network?
-  Auth Required:        # Does it need user accounts?
-  Deployment Target:    # Vercel? Play Store? App Store? Self-hosted?
-```
-
-**Gate:** Present the brief to the user. Get explicit "yes, build this."
-
----
-
-### B2. Architecture — Design the System
-
-Every decision logged in H5W-LOG.md with rationale. These are T2 decisions —
-reversible but costly. Get user confirmation on the full architecture before coding.
-
-#### B2.1 Stack Selection
-
-| Requirement | Decision Path |
-|------------|---------------|
-| Web + SEO critical | → Next.js (App Router, SSR) |
-| Web + SPA, modern tooling | → Vite + React 18 / Vue 3 |
-| Web + zero-build simplicity | → CDN React (single file, no node_modules) |
-| Web + content-heavy, minimal JS | → Astro + islands |
-| Android native, stable ecosystem | → Kotlin + XML Views + Material Design 3 |
-| Android native, modern declarative | → Kotlin + Jetpack Compose + Material 3 |
-| iOS native | → SwiftUI (iOS 15+) or UIKit (legacy compat) |
-| Cross-platform, perf-critical | → Flutter + Dart |
-| Cross-platform, JS ecosystem | → React Native + Expo |
-| CLI tool | → Node.js or Python |
-| Simple calculator/tool | → Vanilla HTML/CSS/JS |
-
-**Log:** `DECISION: Stack = [choice]. Rationale: [why]. Alternatives considered: [what and why not].`
-
-#### B2.2 Data Modeling
-
-Define every entity the app works with before writing code.
-
-```yaml
-DATA MODEL:
-  Entities:
-    - name: [Entity]
-      fields:
-        - name: id          type: string    required: true    generated: true
-        - name: createdAt   type: datetime  required: true    generated: true
-        - name: [field]     type: [type]    required: [bool]  validation: [rules]
-      relationships:
-        - type: hasMany | belongsTo | hasOne
-          target: [OtherEntity]
-          through: [field]
-
-  Derived Data:
-    - name: [computed value]
-      from: [which entities/fields]
-      formula: [how computed]
-      cache: [yes/no — recompute on every render or cache?]
-```
-
-**Validation rules per field:** Define at model level, not at UI level. UI just renders the model's validation. This prevents validation-at-A-but-not-at-B bugs.
-
-#### B2.3 State Architecture
-
-| Question | Decision |
-|----------|----------|
-| What state is UI-only? (form inputs, modals, tooltips) | → Component-local state |
-| What state is shared across screens? | → Global store (Zustand/Context/ViewModel) |
-| What state persists across sessions? | → Persistence layer (localStorage/Room/CoreData) |
-| What state comes from a server? | → Server state (React Query/SWR/Retrofit) |
-| What state is derived from other state? | → Computed/derived — NEVER stored independently |
-
-**State shape spec:**
-```yaml
-STATE STORES:
-  - name: [storeName]
-    scope: global | feature | screen
-    persistence: none | localStorage | Room | API
-    shape:
-      [field]: [type]    # with initial value
-    actions:
-      [actionName]: [what it does]
-    selectors:
-      [selectorName]: [what it derives]
-```
-
-**Iron rule:** Derived state is NEVER stored. It is computed from source state.
-Storing derived state creates synchronization bugs — the #1 state management failure.
-
-#### B2.4 Error Strategy
-
-Define before coding — not as afterthought.
-
-| Error Type | Strategy |
-|-----------|----------|
-| Network failure | Retry with backoff → fallback UI → user notification |
-| Validation failure | Inline field errors → prevent submission → preserve input |
-| Unexpected crash | Error boundary (React) / try-catch (imperative) → crash report → recovery UI |
-| Data corruption | Validate on read → repair or discard → notify user |
-| Permission denied | Explain why → offer alternative → never silent fail |
-| Empty state | Explicit empty-state UI per screen — NEVER blank |
-
-**Per screen, define:** What happens when the primary data source fails?
-This prevents the most common build gap: screens that work on success but
-crash/blank on failure.
-
-#### B2.5 API & Data Contract (if backend-connected)
-
-```yaml
-API CONTRACTS:
-  - endpoint: [path]
-    method: [GET/POST/PUT/DELETE]
-    request: [shape]
-    response: [shape]
-    error: [error shape]
-    auth: [required/optional/none]
-    cache: [strategy]
-    offline: [behavior when offline]
-```
-
-If building client-only: define the persistence contract instead —
-what goes to localStorage/Room/CoreData, what format, what migration
-path when schema changes.
-
-#### B2.6 Component Architecture
-
-| Level | What | Naming | State |
-|-------|------|--------|-------|
-| Page/Screen | Route entry point | `[Name]Page` / `[Name]Screen` / `[Name]Fragment` | Owns data fetching, passes to children |
-| Container | Feature logic wrapper | `[Name]Container` | Owns feature state, passes UI props |
-| Component | Reusable UI element | `[Name]` (no suffix) | Stateless or UI-only state |
-| Primitive | Design system atom | `Button`, `Input`, `Card` | Stateless, style-only props |
-
-**Prop flow rule:** Data flows down. Events flow up. No prop drilling beyond
-2 levels — at level 3, use context/store. This prevents prop drilling debt
-that compounds as the app grows.
-
-#### B2.7 Testing Strategy
-
-| Layer | What to Test | Tool | When |
-|-------|-------------|------|------|
-| Unit | Business logic, utils, formatters | Jest/JUnit | Per function |
-| Component | Render output, interaction | RTL/Compose Test | Per component |
-| Integration | Multi-component flows | RTL/Espresso | Per feature |
-| E2E | Full user journeys | Playwright/Maestro | Pre-launch |
-
-For MVPs: minimum = unit tests on business logic + H5W simulation (no E2E).
-
-**Architecture document:**
-```yaml
-ARCHITECTURE DECISION RECORD:
-  Stack:        [from B2.1]
-  Data Model:   [from B2.2]
-  State:        [from B2.3]
-  Errors:       [from B2.4]
-  API/Persist:  [from B2.5]
-  Components:   [from B2.6]
-  Testing:      [from B2.7]
-```
-
-**Gate:** Present architecture to user. Confirm before coding.
-
----
-
-### B3. Design System (→ MOD-ART)
-
-Load `references/mod-art-direction.md`. Execute: §BRIEF → §BUILD → §CHECK.
-
-**Required outputs from MOD-ART:**
-
-| Deliverable | What It Contains |
-|-------------|------------------|
-| Color tokens | Background, surface (2-3 levels), text (3 levels), accent, semantic (error, success, warning, info), dark mode variants |
-| Typography scale | Font families (display + body + mono), size scale (6-8 steps), weight scale, line heights, letter spacing |
-| Spacing scale | 4px base unit (or 8px), scale: 4/8/12/16/24/32/48/64 |
-| Component library | Button (primary/secondary/ghost/destructive × default/hover/active/disabled), Input, Card, Modal, Navigation, List item, Empty state, Loading skeleton |
-| Motion vocabulary | Duration scale (instant/fast/normal/slow), easing curves, entry/exit patterns |
-| Iconography | Icon style (outlined/filled/duotone), size scale, source library |
-
-**Gate:** User approves the design system before implementation.
-
----
-
-### B4. Scaffold — Create the Structure
-
-Based on B2 architecture decisions, create the file structure.
-
-**Web / React scaffold:**
-```
-src/
-├── app/                    # Routes/pages
-│   ├── layout.tsx          # Root layout
-│   ├── page.tsx            # Home
-│   └── [feature]/
-│       └── page.tsx
-├── components/
-│   ├── ui/                 # Design system primitives
-│   │   ├── Button.tsx
-│   │   ├── Card.tsx
-│   │   └── Input.tsx
-│   └── [feature]/          # Feature-specific components
-├── lib/
-│   ├── store.ts            # State management
-│   ├── types.ts            # Data model types
-│   ├── utils.ts            # Pure utility functions
-│   └── constants.ts        # App constants
-├── hooks/                  # Custom hooks
-└── styles/
-    ├── tokens.css          # Design tokens as CSS vars
-    └── globals.css         # Global styles
-```
-
-**Android / Kotlin scaffold:**
-```
-app/src/main/
-├── java/.../
-│   ├── data/
-│   │   ├── model/          # Data classes
-│   │   ├── repository/     # Data access
-│   │   └── local/          # Room DAOs, SharedPrefs
-│   ├── ui/
-│   │   ├── theme/          # Colors, Typography, Theme
-│   │   ├── components/     # Reusable composables / custom views
-│   │   └── [feature]/
-│   │       ├── [Feature]Fragment.kt  (or [Feature]Screen.kt)
-│   │       └── [Feature]ViewModel.kt
-│   └── util/               # Extensions, formatters
-├── res/
-│   ├── values/             # colors.xml, strings.xml, dimens.xml, themes.xml
-│   ├── values-night/       # Dark theme overrides
-│   ├── layout/             # XML layouts (if not Compose)
-│   └── navigation/         # nav_graph.xml
-└── AndroidManifest.xml
-```
-
-**Scaffold includes:**
-1. File structure created
-2. Build config (package.json / build.gradle) with dependencies
-3. Design tokens applied (from B3)
-4. Navigation/routing skeleton
-5. State store skeleton (empty stores with correct shape)
-6. Empty-state and loading-state components
-7. Dev environment configured:
-   - Linting: ESLint + Prettier / ktlint + detekt (match §0 conventions)
-   - Formatting: auto-format on save configured
-   - Git: `.gitignore`, initial commit, branch strategy
-   - TypeScript: `strict: true` if TS project (no `any` escapes)
-   - Editor config: `.editorconfig` for consistent whitespace
-8. **Delivery infrastructure configured (§DELIVER):**
-   - CI/CD pipeline (GitHub Actions / equivalent)
-   - Build artifact generation (APK / IPA / deploy script)
-   - Signing config (if applicable)
-   - Deployment target configured (Vercel / Play Store / etc.)
-   - README with build + run + deploy instructions
-
-**Gate:** `npm run build` / `./gradlew build` succeeds. Linting passes. App launches to blank home screen.
-
----
-
-### B5. Implement — Per-Feature Vertical Slices
-
-Build ONE feature at a time. Complete it end-to-end before starting the next.
-
-**Feature implementation order:**
-1. Core data model + persistence (the foundation everything else depends on)
-2. MVP feature (Feature #1 from discovery — the reason the app exists)
-3. Second feature (builds on core data)
-4. Third feature
-5. ...repeat until all features complete
-
-**Per-feature implementation sequence:**
-```
-1. DATA:  Define types/models for this feature
-2. STATE: Create store/ViewModel for this feature's state
-3. UI:    Build the screen — start with the happy path
-4. LOGIC: Wire data flow: user action → state mutation → re-render
-5. ERROR: Add error handling per B2.4 strategy
-6. EMPTY: Add empty-state UI
-7. LOAD:  Add loading-state UI
-8. GATE:  Run per-feature quality gate
-```
-
-**Per-feature gate (mandatory before next feature):**
-```
-[ ] Happy path works: user can accomplish the feature's goal
-[ ] Error path works: every failure scenario from B2.4 is handled
-[ ] Empty state: screen looks correct with no data
-[ ] Loading state: screen shows feedback during async operations
-[ ] MOD-CODE §D5 (logic): no logic errors in new code
-[ ] MOD-CODE §D7 (errors): error handling present and correct
-[ ] H5W Stage 1 (arrival): first render is correct for P1 (first-time)
-[ ] H5W Stage 2 (interaction): goal achievable for P2 (power user)
-[ ] H5W Stage 3 (disruption): P3 (hostile-env) can recover from failure
-[ ] Types: all data flows are typed — no `any`, no implicit coercion
-[ ] No T2+ changes to already-gated features
-[ ] Commit: atomic commit for this feature — "feat: [feature name]"
-```
-
----
-
-### B6. Integrate — Cross-Feature Flows
-
-After all features are built individually, wire them together:
-
-```
-[ ] Navigation: every screen reachable, back-nav works, deep links resolve
-[ ] Shared state: features that share data are synchronized
-[ ] Cross-feature flows: multi-step journeys work end-to-end
-[ ] Data consistency: creating/editing/deleting in one feature reflects in others
-[ ] Loading orchestration: no waterfall loads — parallel where possible
-[ ] Error propagation: error in shared data surfaces in all consuming features
-```
-
-**Gate:** All cross-feature workflows from §0 work end-to-end.
-
----
-
-### B7. Quality — Full System Audit
-
-Load MOD-CODE. Run all 8 dimensions on the complete codebase:
-
-```
-[ ] §D1 Format & Conventions: naming consistent, imports ordered
-[ ] §D2 Health & Hygiene: no dead code, no duplication, no dependency issues
-[ ] §D3 Optimization: no render waste, no unnecessary re-computations
-[ ] §D4 Structure & Architecture: SRP, clean module boundaries
-[ ] §D5 Logic & Correctness: every formula correct, types sound
-[ ] §D6 State & Data: single source of truth, no derived state stored
-[ ] §D7 Error Handling: every failure path covered
-[ ] §D8 Async & Concurrency: no races, proper cleanup, cancellation
-```
-
-Then run full H5W simulation:
-```
-[ ] All personas (P1–P5) walk through all entry points
-[ ] All states from state map explored
-[ ] All 4 stages × 6 lenses applied
-[ ] All findings entered in H5W-QUEUE.md
-[ ] All T0/T1 findings fixed
-[ ] All T2 findings fixed with rationale
-[ ] T3 findings surfaced to user
-```
-
----
-
-### B8. Polish — Refinement Pass
-
-Load MOD-DESG. Run quick visual audit:
-
-```
-[ ] Token consistency: all colors from palette, no hardcoded values
-[ ] Typography consistency: all text uses type scale
-[ ] Spacing consistency: all spacing from spacing scale
-[ ] Component consistency: all instances of same component look identical
-[ ] Dark mode: if applicable, every screen verified in dark mode
-[ ] Empty states: every screen has a designed empty state (not just blank)
-[ ] Loading states: every async screen has skeleton/spinner
-[ ] Error states: every error has a designed error UI
-[ ] Micro-interactions: button feedback, form validation, transitions
-[ ] Responsive: primary device + 2 others verified
-```
-
-Load MOD-APP for targeted checks:
-```
-[ ] §G Accessibility: keyboard nav, contrast ratios, screen reader labels
-[ ] §D Performance: load time within budget, no memory leaks, no jank
-[ ] §F4 Copy: all labels clear, all error messages helpful
-```
-
----
-
-### B9. Launch Gate — Ship Readiness
-
-```
-[ ] H5W simulation: 0 critical, 0 high findings remaining
-[ ] MOD-APP §C (security): no critical security findings
-[ ] MOD-APP §D (performance): within §0 budget
-[ ] MOD-APP §G (accessibility): WCAG 2.1 AA minimum
-[ ] MOD-APP §H (compatibility): primary device + 2 others
-[ ] All T3 decisions resolved with user
-[ ] H5W-QUEUE.md: empty or only low/enhancement remaining
-[ ] Documentation: README with setup, architecture, deployment
-[ ] Deployment config: verified on target platform
-[ ] Error tracking: crash reporting configured (if applicable)
-```
-
-**The build is complete when:** A new developer could clone the repo, read the
-README, understand the architecture, and add a new feature without asking the
-builder. The code explains itself. The design is consistent. The errors are
-handled. The states are covered.
-
-### Build Reversibility
-
-| Phase | Tier | Rationale |
-|-------|------|-----------|
-| B1–B3 (Discovery, Architecture, Design) | T0 | Planning documents only |
-| B4 (Scaffold) | T1 | New files only — trivially reversible |
-| B5 (Implement features) | T1 per feature | New code — git revert per feature |
-| B6 (Integration) | T2 | Cross-feature wiring harder to revert cleanly |
-| B7–B8 (Quality, Polish) | T1 | Fixes are small and surgical |
-| B9 (Launch config) | T2 | Deployment config affects production |
+> **Loaded on demand.** Full protocol lives in `references/build-protocol.md`.
+> Read that file when this section is needed; do not duplicate its
+> content here.
+>
+> **Summary:** 9 verification-gated phases: B1 Discovery, B1.5 Spike, B2 Architecture, B3 Design System, B4 Scaffold, B5 Implement, B6 Integrate, B7 Quality, B8 Polish, B9 Launch Gate.
+>
+> **Triggers:** "build", "create", "from scratch", "new app".
+>
+> **Pattern for loading (Chief Guide):** When §TRIAGE routes here,
+> Claude reads `references/build-protocol.md` (preferably via `Agent` subagent to
+> avoid main-context bloat) and proceeds with the protocol described
+> there. The Iron Laws and shared protocols (§LAW, §FMT, §SRC, §REV,
+> §VER, §DOC) apply unchanged — the module never re-derives them.
 
 ---
 
 ## §DELIVER — DELIVERY INFRASTRUCTURE PROTOCOL
 
-> **The app isn't done when the code works. It's done when the user can use it.**
-> A working codebase without delivery infrastructure is a project, not a product.
-> This section is MANDATORY for both §BUILD (new apps) and audits (existing apps).
-
-### The Delivery Question
-
-Before any session is considered complete, Claude must answer:
-
-**"Can the user (or their users) actually get a working artifact from this code?"**
-
-If no → delivery infrastructure is the #1 priority finding.
-
-### Platform Delivery Checklists
-
-**Android:**
-```
-[ ] build.gradle: applicationId, versionCode, versionName set
-[ ] build.gradle: signingConfigs for release (or documented setup)
-[ ] build.gradle: buildTypes (debug + release) with ProGuard/R8
-[ ] build.gradle: minSdk, targetSdk, compileSdk correct
-[ ] AndroidManifest.xml: permissions, exported activities
-[ ] .github/workflows/android-build.yml: GitHub Actions APK builder
-      - Trigger: push to main + manual dispatch
-      - Steps: checkout → setup JDK → setup Gradle → build → upload artifact
-      - Signing: via GitHub Secrets (keystore base64, passwords)
-[ ] Keystore: generated or documented how to generate
-[ ] README: how to build locally (./gradlew assembleDebug)
-[ ] README: how to install APK on device
-[ ] README: how CI builds work
-```
-
-**GitHub Actions template for Android APK:**
-```yaml
-name: Build APK
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-      - uses: gradle/actions/setup-gradle@v3
-      - run: chmod +x gradlew
-      - run: ./gradlew assembleRelease
-        # For signed builds: add signing config + secrets
-      - uses: actions/upload-artifact@v4
-        with:
-          name: app-release
-          path: app/build/outputs/apk/release/*.apk
-```
-
-**Web (Vercel/Netlify/static):**
-```
-[ ] package.json: build script produces deployable output
-[ ] Deployment config: vercel.json / netlify.toml / equivalent
-[ ] Environment variables: documented, .env.example provided
-[ ] Build verification: npm run build succeeds clean
-[ ] Deploy preview: branch deploys configured (if Vercel/Netlify)
-[ ] README: how to deploy (one-command if possible)
-[ ] README: how to run locally (npm install && npm run dev)
-[ ] Domain/URL: configured or documented
-```
-
-**iOS:**
-```
-[ ] Xcode project: bundle ID, version, build number set
-[ ] Signing: development + distribution certificates documented
-[ ] Fastlane or GitHub Actions: automated build pipeline
-[ ] TestFlight or direct IPA: distribution method configured
-[ ] README: how to build locally (xcodebuild or Xcode)
-[ ] README: how to distribute to testers
-```
-
-**Cross-platform (Flutter/RN):**
-```
-[ ] Platform-specific build configs for BOTH Android and iOS
-[ ] CI/CD builds BOTH platforms
-[ ] README covers building for each platform
-```
-
-### When to Run §DELIVER
-
-| Context | When §DELIVER Runs |
-|---------|-------------------|
-| §BUILD B4 (Scaffold) | Set up CI/CD and delivery as part of scaffolding |
-| §BUILD B9 (Launch Gate) | Verify delivery works: CI builds, artifact generated |
-| Audit (existing app) | Check if delivery infrastructure exists — missing = HIGH finding |
-| §AUTO continuous | If no delivery infrastructure detected → create it before feature work |
-| §SIM.6 (50 Questions) | Question 51: "Can the user actually build and install this?" |
-
-### Delivery as a Finding
-
-When auditing an existing app with no delivery infrastructure:
-
-```
-FINDING: F-[NNN]
-MODULE: H5W
-SEVERITY: HIGH
-CONFIDENCE: confirmed
-SOURCE: [CODE: missing .github/workflows/ or equivalent]
-How:   No CI/CD pipeline. Code can't be built into a distributable artifact
-       without manual steps the developer may not know.
-Who:   The developer (can't distribute) and all end users (can't install).
-Will:  App is unusable despite working code. All other improvements are moot.
-What:  Missing delivery infrastructure. Need: CI/CD pipeline, build config,
-       signing setup, deployment target, README instructions.
-When:  Blocks ALL user access to the app.
-Where: Project root — missing .github/workflows/, deployment config.
-FIX:   Create platform-appropriate CI/CD (see §DELIVER checklists).
-TIER:  T1 (additive — new files only)
-EXPANSION: After CI/CD works, verify the built artifact actually runs.
-```
-
-**Severity: HIGH, not enhancement.** A beautiful, bug-free app that nobody can
-install is worse than an ugly app with a working APK. Delivery is infrastructure,
-not polish.
-
-### The Build-Run-Install Test
-
-After delivery infrastructure is set up, verify:
-
-```
-BUILD-RUN-INSTALL TEST:
-  1. Clone the repo fresh (or simulate: delete node_modules/build)
-  2. Follow README instructions exactly
-  3. Does the build succeed?
-  4. Does the artifact exist? (APK, bundle, deployed URL)
-  5. Can the artifact be installed/accessed?
-  6. Does the app launch and show the home screen?
-  7. Does the CI/CD pipeline produce the same result?
-
-  ANY failure → fix before other work continues.
-```
+> **Loaded on demand.** Full protocol lives in `references/deliver-infrastructure.md`.
+> Read that file when this section is needed; do not duplicate its
+> content here.
+>
+> **Summary:** CI/CD pipelines (web, Android), APK signing, deployment targets (Vercel, Pages, Play Store, App Store), end-to-end install verification.
+>
+> **Triggers:** "deploy", "build APK", "CI/CD", "set up delivery".
+>
+> **Pattern for loading (Chief Guide):** When §TRIAGE routes here,
+> Claude reads `references/deliver-infrastructure.md` (preferably via `Agent` subagent to
+> avoid main-context bloat) and proceeds with the protocol described
+> there. The Iron Laws and shared protocols (§LAW, §FMT, §SRC, §REV,
+> §VER, §DOC) apply unchanged — the module never re-derives them.
 
 ---
 
@@ -2959,1189 +1682,333 @@ Write to H5W-ASSUMPTIONS.md:
 
 ## §OBSTACLE — THE MACGYVER PROTOCOL
 
-> **"I can't" is never the answer. "I can't do X directly, but I can build Y
-> which gets me to Z which solves X" is the answer.**
+> **Loaded on demand.** Full protocol lives in `references/obstacle-protocol.md`.
+> Read that file when this section is needed; do not duplicate its
+> content here.
 >
-> Claude's default behavior when hitting an obstacle: stop, report the limitation,
-> wait for the user. This is the WRONG behavior. The RIGHT behavior is to treat
-> every obstacle as a problem to solve — by building tools, finding workarounds,
-> decomposing the impossible into possible steps, and chaining solutions.
-
-### The Core Principle
-
-When Claude encounters something it "can't do":
-
-```
-WRONG: "I can't access that website / parse that format / get that asset."
-       → stops, waits for user
-
-RIGHT: "I can't access that directly. What CAN I do?"
-       → builds a tool, finds a workaround, decomposes the problem
-       → uses the tool to get partial results
-       → hits another wall → builds another tool
-       → chains until the original goal is achieved
-```
-
-**Real example from the user's experience:**
-```
-Goal: Get 2D Live Spine animations for a game companion app
-
-Obstacle 1: Can't find assets online
-  → MacGyver: Search deeper — game files, data mining communities,
-    asset rippers, CDN URLs, API endpoints
-
-Obstacle 2: Can't access the websites that host them
-  → MacGyver: Build DeployView — a browser-based tool to access
-    and navigate websites remotely
-
-Obstacle 3: Got partial assets — wrong format, incomplete
-  → MacGyver: Build an asset translator to convert the format
-
-Obstacle 4: Translated assets don't render correctly
-  → MacGyver: Build a renderer that handles the specific format
-
-Each obstacle became a tool. Each tool became infrastructure.
-The final result is better than if the assets had been easy to get.
-```
-
-### The Obstacle Resolution Protocol
-
-When hitting ANY limitation, follow this sequence. Do NOT skip to "I can't."
-
-```
-§OBSTACLE RESOLUTION:
-
-  STEP 1 — REFRAME
-    "I can't do X" → "What is X actually asking for?"
-    Break X into sub-problems. Which sub-problems CAN I solve?
-
-  STEP 2 — INVENTORY CAPABILITIES
-    What tools do I have right now?
-    - File system access (read, write, execute)
-    - Web search (find resources, docs, tools)
-    - Web fetch (download files, read pages, access APIs)
-    - Code execution (build tools, scripts, parsers, converters)
-    - Git (clone repos, read other projects' solutions)
-    - Package managers (install libraries that solve sub-problems)
-    - Claude Code Agent (spawn sub-agents for parallel work)
-
-  STEP 3 — FIND THE PATH
-    For each sub-problem:
-    a. Can I solve it directly with existing tools? → Do it.
-    b. Can I solve it by installing a library? → Install and use.
-    c. Can I solve it by building a small tool? → Build it.
-    d. Can I solve it by finding how others solved it? → Search.
-    e. Can I solve it by approaching from a different angle? → Reframe.
-    f. Can I get PARTIAL results that move me forward? → Get them.
-
-  STEP 4 — BUILD THE BRIDGE
-    If no direct path exists, build a tool that creates the path:
-    - Need to access a website? → Build a fetcher/scraper
-    - Need to parse an unknown format? → Reverse-engineer it
-    - Need assets from a game? → Find the asset pipeline, build an extractor
-    - Need data from an API without docs? → Probe endpoints, build a client
-    - Need to test on a device you can't access? → Build a remote viewer
-    - Need to convert between formats? → Build a converter
-
-  STEP 5 — CHAIN
-    Use the tool from Step 4. Did it fully solve the problem?
-    YES → continue with the original goal.
-    PARTIALLY → what's still missing? → go back to Step 1 with the new sub-problem.
-    NO → what did it reveal? → use that information to find a better path.
-
-  STEP 6 — INTEGRATE
-    The tool you built IS part of the project now. It's infrastructure.
-    Document it. Log it. It may be useful for future obstacles.
-```
-
-### Obstacle Categories & MacGyver Patterns
-
-| Obstacle | Claude's Default | MacGyver Response |
-|----------|-----------------|-------------------|
-| "Can't access website" | Stop, tell user | Fetch with web_fetch. If blocked → build a scraper. If JS-required → use headless browser. If auth-required → check for API. |
-| "Can't parse this file format" | Stop, tell user | Search for format spec. Install a parser library. If none exists → reverse-engineer by reading hex/binary patterns. Build a custom parser. |
-| "Can't find the asset/resource" | Stop, tell user | Search game files, CDN URLs, community data-mining repos, asset ripper tools. Check if the app itself downloads them at runtime → intercept. |
-| "Library doesn't exist for this" | Stop, tell user | Search for partial solutions. Combine multiple libraries. Build the missing piece. Port from another language. |
-| "Can't test on that device/platform" | Stop, tell user | Build a remote preview tool. Use device emulation. Build a viewport simulator. Screenshot comparison. |
-| "API has no documentation" | Stop, tell user | Probe common endpoints (/api, /v1, /graphql). Read the app's network requests. Reverse-engineer from the frontend code. |
-| "Format is proprietary/encrypted" | Stop, tell user | Search for community reverse-engineering. Check open-source projects that handle it. Build a decoder from observed patterns. |
-| "Too complex to do in one step" | Stop, tell user | Decompose into 10 small steps. Build step 1. Test. Build step 2. Chain. |
-| "Would need a server/backend" | Stop, tell user | Can it be done client-side? Can a serverless function handle it? Can a free-tier service (Vercel, Render, Firebase) host it? |
-| "Exceeded rate limit / quota" | Stop, tell user | Implement caching. Batch requests. Add delays. Use a different endpoint. Store results locally. |
-| "Data is incomplete/partial" | Stop, tell user | Use what you have. Build a gap-filler. Interpolate. Generate placeholders. Fetch missing pieces from alternate sources. |
-
-### The Anti-Surrender Rule
-
-**"I can't do X" must ALWAYS be followed by "but I can do Y."**
-
-This is a binding rule. Claude is NEVER allowed to present an obstacle as
-a dead end without simultaneously presenting at least one workaround path.
-
-```
-FORBIDDEN:
-  "I can't access that website to get the sprite assets."
-
-REQUIRED:
-  "I can't access that website directly. Here's what I can try:
-   1. web_fetch on the URL — might work if it's not JS-rendered
-   2. Search for the asset on CDN URLs or community mirrors
-   3. Search for a data-mining tool/repo for this game
-   4. Build a headless browser tool to navigate the site
-   5. Check if the game's own app downloads these at runtime — if so,
-      we can intercept the download URL
-   Starting with option 1..."
-```
-
-### Integration with §AUTO
-
-In autonomous mode, §OBSTACLE is even more critical — there's no user to
-ask for help. Claude must MacGyver through every obstacle independently.
-
-```
-§AUTO + §OBSTACLE:
-  1. Hit obstacle → run §OBSTACLE protocol (Steps 1–6)
-  2. Log the obstacle and chosen approach in H5W-LOG.md:
-     "[OBSTACLE] Can't access [resource] directly.
-      Approach: building format converter from [source format] to [target].
-      [AUTO-DECIDED: approach 3 of 5 options. Confidence 3/5.]"
-  3. Build the tool/workaround
-  4. If the tool fails → try next approach (up to 3 attempts)
-  5. If all approaches fail → log as [STUCK] with all attempted approaches
-     → T3 queue (needs user creativity)
-  6. If the tool succeeds → integrate it, continue original goal
-```
-
-### Tool Building Protocol
-
-When §OBSTACLE requires building a tool:
-
-```
-TOOL BUILDING:
-  1. Define: what does this tool need to do? (one sentence)
-  2. Scope: minimum viable tool — solve THIS obstacle, nothing more
-  3. Build: write the script/module/utility
-  4. Test: does it produce the needed output?
-  5. Integrate: wire it into the project or use it standalone
-  6. Document: add to README or H5W-LOG.md — what it does, when to use it
-  7. Preserve: don't delete tools after use — they're infrastructure
-
-  TOOL NAMING: [purpose]-tool.[ext]
-  e.g. spine-converter.py, asset-fetcher.js, format-decoder.kt
-```
-
-### Full Authorization — What Claude Is ALLOWED to Do
-
-> **This section exists because Claude's default caution prevents autonomous
-> problem-solving.** Claude will say "I should ask before installing a package"
-> — but in §AUTO mode there's nobody to ask. Without explicit authorization,
-> §OBSTACLE is theoretical. This makes it practical.
-
-**In §AUTO + §OBSTACLE, Claude is AUTHORIZED to do ALL of the following
-without asking. These are T1/T2 actions — reversible by uninstalling,
-deleting, or reverting.**
-
-#### Installing Dependencies
-
-```
-AUTHORIZED (T1 — trivially reversible):
-  npm install [package]
-  npm install -D [package]
-  pip install [package] --break-system-packages
-  pip install -r requirements.txt
-  cargo add [crate]
-  go get [module]
-
-  Gradle (add to build.gradle):
-    implementation("[group]:[artifact]:[version]")
-    testImplementation("[group]:[artifact]:[version]")
-
-  Swift (add to Package.swift):
-    .package(url: "[repo]", from: "[version]")
-
-LOG: Every dependency installed → H5W-LOG.md:
-  "[DEPENDENCY] Installed [package]@[version] — needed for [reason]"
-```
-
-#### Cloning & Using Open-Source Tools
-
-```
-AUTHORIZED (T1):
-  git clone [repo] /tmp/[tool-name]    # Clone to temp for use
-  git clone [repo] tools/[tool-name]   # Clone into project if ongoing need
-
-  Use cases:
-  - Asset extraction tools (game rippers, data miners)
-  - Format converters (image, audio, data format tools)
-  - Code generators (schema→code, API→client)
-  - Testing tools (headless browsers, mock servers)
-  - Build tools (bundlers, compilers, transpilers)
-
-LOG: Every clone → H5W-LOG.md:
-  "[TOOL-CLONE] Cloned [repo] — using for [purpose]"
-
-EVALUATE before cloning:
-  - Is this repo maintained? (last commit < 1 year)
-  - Does it have a permissive license? (MIT, Apache, BSD)
-  - Does it solve the obstacle? (read README first)
-  - Is there a simpler alternative? (npm package vs full repo)
-```
-
-#### Building Tools from Scratch
-
-```
-AUTHORIZED (T1):
-  Write ANY script, utility, converter, parser, fetcher, renderer,
-  extractor, transformer, validator, generator, or automation that
-  solves the current obstacle.
-
-  Languages: use whatever fits — Python for quick scripts, Node.js
-  for web-related, Kotlin for Android-related, bash for system tasks.
-
-  Size limit: none. If the tool needs 500 lines, write 500 lines.
-  If it needs a dependency, install it (see above).
-
-  Examples of tools Claude should build without hesitation:
-  - Format converter (proprietary/binary → usable format)
-  - Asset downloader (fetch from CDN, APIs, protected sources)
-  - Data parser (decode unknown/undocumented structures)
-  - Screenshot comparator (visual diff between versions)
-  - Data scraper (extract structured data from web)
-  - Mock API server (for testing without real backend)
-  - Migration script (convert old data format → new)
-  - Build automation (multi-step build/deploy process)
-  - Test harness (automated verification of fixes)
-  - Preview server (local server for testing builds)
-  - Batch processor (apply operation to N files at scale)
-  - Reverse-engineering probe (discover API endpoints, formats)
-
-LOG: Every tool built → H5W-LOG.md:
-  "[TOOL-BUILT] Created [filename] — [purpose]. [N] lines."
-```
-
-#### Downloading & Fetching Resources
-
-```
-AUTHORIZED (T1):
-  curl -o [output] [url]
-  wget [url]
-  web_fetch [url]                    # Claude's built-in
-  npm/npx scripts that download resources
-  Python scripts that fetch data
-
-  Use cases:
-  - Game assets (sprites, animations, data files)
-  - API responses (for testing, for data)
-  - Documentation (for research)
-  - Open-source resources (fonts, icons, data sets)
-  - Competitor screenshots (for analysis)
-
-  NOT authorized without user permission (T3):
-  - Accessing authenticated/private resources
-  - Downloading paid/pirated content
-  - Accessing other people's private data
-```
-
-#### Modifying Build Configuration
-
-```
-AUTHORIZED (T2 — reversible but requires attention):
-  Modify package.json (add scripts, dependencies)
-  Modify build.gradle (add dependencies, plugins, build types)
-  Modify tsconfig.json (add paths, compiler options)
-  Modify webpack/vite config (add loaders, plugins)
-  Create new config files (.env, .eslintrc, etc.)
-  Add GitHub Actions workflows
-  Add Dockerfile / docker-compose.yml
-  Modify AndroidManifest.xml (add permissions, features)
-
-LOG: Every config change → H5W-LOG.md:
-  "[CONFIG] Modified [file] — added [what] for [reason]"
-```
-
-#### Creating Project Infrastructure
-
-```
-AUTHORIZED (T2):
-  Create new directories (tools/, scripts/, assets/, etc.)
-  Create new modules/packages within the project
-  Create test fixtures and mock data
-  Create documentation files
-  Create CI/CD pipelines
-  Create development utilities
-  Set up linting, formatting, pre-commit hooks
-
-LOG: Every infrastructure addition → H5W-LOG.md:
-  "[INFRA] Created [path] — [purpose]"
-```
-
-#### What's Still T3 (NEVER without permission)
-
-```
-NOT AUTHORIZED (T3 — queue and skip):
-  - Deleting existing user features or data
-  - Changing data schemas that affect existing users
-  - Publishing to app stores or production
-  - Accessing authenticated services (user's API keys, accounts)
-  - Modifying .git history (force push, rebase main)
-  - Changing the app's fundamental architecture without §BUILD B2 approval
-  - Spending money (paid APIs, cloud services beyond free tier)
-  - Anything that can't be undone with git revert + npm uninstall
-```
-
-### Autonomous Escalation Path
-
-When Claude hits an obstacle in §AUTO, this is the decision tree:
-
-```
-OBSTACLE HIT
-  │
-  ├─ Can I solve it with existing tools in the project?
-  │  YES → solve it → continue
-  │
-  ├─ Can I solve it by installing a package? (T1)
-  │  YES → install it → solve it → continue
-  │
-  ├─ Can I solve it by cloning an open-source tool? (T1)
-  │  YES → clone it → use it → continue
-  │
-  ├─ Can I solve it by building a tool from scratch? (T1)
-  │  YES → build it → use it → continue
-  │
-  ├─ Can I solve it by downloading a resource? (T1)
-  │  YES → download it → use it → continue
-  │
-  ├─ Can I solve it by modifying build config? (T2)
-  │  YES → modify → log → continue
-  │
-  ├─ Does it require a MULTI-TOOL PIPELINE? (see below)
-  │  YES → §OBSTACLE Pipeline Engineering → design + build chain
-  │
-  ├─ Does it require something in the T3 list?
-  │  YES → queue [T3-BLOCKED] → skip → continue with other work
-  │
-  └─ All approaches failed (3 attempts)?
-     YES → queue [STUCK] → log all attempted approaches → continue
-```
-
-### Pipeline Engineering — When One Tool Isn't Enough
-
-Most real-world obstacles aren't solved by a single tool. They require a
-CHAIN of tools where each tool's output feeds the next tool's input.
-Claude must learn to think like a systems engineer: see the full pipeline
-before building, anticipate the downstream obstacles, design for them.
-
-**The Pipeline Mindset:**
-
-```
-WRONG (reactive — one wall at a time):
-  Need [resource] → build fetcher → output too large
-  → "I didn't expect this, let me ask the user"
-  → user says compress → build compressor → output is loose files
-  → "Where do these go? Let me ask"
-  → user says auto-place → build placer
-  (3 stops, 3 waits, user had to architect the pipeline)
-
-RIGHT (proactive — see the full chain):
-  Need [resource] → THINK AHEAD:
-    1. Acquire: where does it live? → need access method
-    2. Access: is it protected/rendered/authenticated? → may need tooling
-    3. Volume: how much data? → large output needs compression
-    4. Format: what format does the app need? → may need conversion
-    5. Delivery: where do files go in the project? → need auto-placement
-    6. Reference: how does the app find them? → need manifest/index
-
-  Design the FULL pipeline before building:
-    access → acquire → process → format → place → integrate
-
-  Build each stage. Test each stage. Wire them together.
-  One pipeline, not six separate panics.
-```
-
-**Pipeline Design Protocol:**
-
-```
-PIPELINE ENGINEERING:
-  1. GOAL: What do I ultimately need? (e.g., "processed assets in the
-     project, referenced by the app, at acceptable size and format")
-
-  2. TRACE BACKWARDS from the goal:
-     - To have [resource] in the project → I need to PLACE it
-     - To place it → I need it in the right FORMAT
-     - To format it → I need to PROCESS it (size, structure, encoding)
-     - To process it → I need the RAW source
-     - To get the raw source → I need to ACQUIRE it
-     - To acquire it → I need ACCESS to the source
-
-  3. DESIGN FORWARD — each stage:
-     ┌─────────┐   ┌─────────┐   ┌──────────┐   ┌────────┐   ┌───────┐   ┌────────┐
-     │ ACCESS  │──→│  FETCH  │──→│ COMPRESS │──→│ FORMAT │──→│ PLACE │──→│ INDEX  │
-     │ browser │   │ extract │   │ optimize │   │ convert│   │ auto  │   │manifest│
-     └─────────┘   └─────────┘   └──────────┘   └────────┘   └───────┘   └────────┘
-
-  4. FOR EACH STAGE:
-     a. What's the input? (from previous stage or external)
-     b. What's the output? (feeds next stage)
-     c. What could go wrong? (pre-plan the obstacle)
-     d. What tool/script handles this stage?
-     e. How do I verify it worked?
-
-  5. BUILD sequentially — stage 1 first, test, stage 2, test, wire together.
-
-  6. ITERATE — if a stage reveals the pipeline needs modification,
-     redesign from that point forward. Don't restart from scratch.
-```
-
-**Real Pipeline Examples (adapt to YOUR project's domain):**
-
-The specific pipeline depends entirely on what the project needs. Claude designs
-the pipeline from the goal backwards (see Pipeline Design Protocol above).
-Here are PATTERNS, not templates — the stages and tools change per project:
-
-| Pattern | When It Applies | Typical Stages |
-|---------|----------------|----------------|
-| **Asset acquisition** | Need resources that aren't freely available | locate → access → extract → process → integrate |
-| **Format conversion** | Source data exists but in wrong format | read → decode → transform → validate → write |
-| **Data aggregation** | Need to combine data from multiple sources | discover → fetch (parallel) → normalize → merge → deduplicate → store |
-| **Build automation** | Multi-step build process is manual | clean → compile → bundle → optimize → version → deploy |
-| **Visual asset processing** | Images/graphics need processing at scale | source → batch-process → optimize → resize/format → place → reference |
-| **Reverse engineering** | Need to understand undocumented format/API | probe → capture → analyze → decode → document → build client |
-| **Testing infrastructure** | Can't test something without tooling | mock → instrument → capture → compare → report |
-
-Claude designs the SPECIFIC pipeline for the SPECIFIC obstacle. These patterns
-are starting points for thinking, not copy-paste solutions.
-
-**Pipeline Output Requirements:**
-
-Every pipeline Claude builds must:
-1. Be runnable as a single command (entry point script)
-2. Have each stage independently testable
-3. Log progress per stage
-4. Handle stage failures gracefully (retry or skip with partial output)
-5. Be documented in README or H5W-LOG.md
-6. Be preserved in the project (not temp files)
-
-**Pipeline as Reusable Infrastructure:**
-
-Tools built for one obstacle often solve future obstacles because the
-CAPABILITY is more general than the specific use case:
-
-| What Was Built | Specific Use | General Capability |
-|---------------|-------------|-------------------|
-| A script that fetches files from a JS-rendered site | Getting one specific resource | Fetching ANY resource from ANY JS-rendered site |
-| A format converter for a proprietary format | Converting one file type | Framework for converting ANY proprietary format |
-| A compression + placement script | Optimizing one set of assets | Batch-processing ANY large files into project structure |
-| A headless browser automation tool | Navigating one website | Automated browser interaction with ANY website |
-| A data normalization pipeline | Cleaning one API's output | Normalizing ANY inconsistent data source |
-| A mock server for testing | Mocking one API endpoint | Mocking ANY API for offline development |
-
-When building a tool, Claude should ask: **"Is this tool more general than
-the current obstacle?"** If yes — build it general. The marginal effort is
-small and the future payoff is large.
-
-Log pipelines as project infrastructure in H5W-LOG.md:
-```
-[PIPELINE] Built: [name] ([N] stages)
-  [stage 1] → [stage 2] → [stage 3] → ...
-  Entry: [command to run]
-  Built for: [specific obstacle]
-  Reusable for: [general capability]
-```
-
-### Compound Obstacles — Obstacles That Reveal Obstacles
-
-Some obstacles are fractal — solving one reveals three more:
-
-```
-COMPOUND OBSTACLE PROTOCOL:
-  1. Hit obstacle A
-  2. Start solving A → discover obstacles B and C are prerequisites
-  3. DO NOT ask the user. DO NOT declare stuck.
-  4. Stack the obstacles: solve C first (deepest dependency), then B, then A
-  5. Each sub-obstacle runs the full §OBSTACLE protocol
-  6. Track the stack in H5W-LOG.md:
-
-  [OBSTACLE-STACK]
-    Level 0: Need [resource] integrated into the app
-    Level 1: → Need acquisition tool (existing tools are paid/unavailable)
-    Level 2: → → Need access to source (protected, JS-rendered, etc.)
-    Currently solving: Level 2 (building access tooling)
-    After Level 2: return to Level 1 (build acquisition tool using access)
-    After Level 1: return to Level 0 (integrate resource into app)
-
-  Maximum stack depth: 5 levels
-  Beyond 5: the obstacle is T3-complex. Log everything, queue it.
-```
-
-### §OBSTACLE in the Continuous Loop
-
-Obstacles don't just happen during builds. They happen during improvement:
-
-```
-IMPROVEMENT LOOP (updated):
-  → Find issue → plan fix → HIT OBSTACLE → §OBSTACLE protocol
-  → Build tool to overcome → fix the original issue → micro-H5W → continue
-  → The tool itself may enable finding MORE issues (like DeployView
-    enabling visual testing that was previously impossible)
-```
-
-### MacGyver Mindset Triggers
-
-Claude should activate §OBSTACLE thinking whenever it catches itself writing:
-- "I can't..."
-- "This isn't possible..."
-- "I don't have access to..."
-- "This would require..."
-- "Unfortunately..."
-- "I'm unable to..."
-- "This is beyond..."
-
-Each of these phrases is the SIGNAL to run the protocol, not to stop.
+> **Summary:** 6-step obstacle resolution, obstacle category playbook, Anti-Surrender Rule, Full Authorization in §AUTO (packages, repos, tools, configs, CI), tool-building protocol.
+>
+> **Triggers:** "I can't", "how do I get", "workaround", "bypass" — and implicit on any phase failure.
+>
+> **Pattern for loading (Chief Guide):** When §TRIAGE routes here,
+> Claude reads `references/obstacle-protocol.md` (preferably via `Agent` subagent to
+> avoid main-context bloat) and proceeds with the protocol described
+> there. The Iron Laws and shared protocols (§LAW, §FMT, §SRC, §REV,
+> §VER, §DOC) apply unchanged — the module never re-derives them.
 
 ---
 
 ## §META — SELF-IMPROVEMENT & SKILL AUDIT PROTOCOL
 
-> **H5W can audit and improve itself, its modules, and any other skill.**
-> A skill file is a codebase. It has structure, conventions, patterns,
-> contradictions, dead content, and missing coverage. The same H5W process
-> applies — with adapted lenses.
-
-### When §META Activates
-
-- "Improve the skill itself" / "audit the H5W skill"
-- "Audit this other skill" / "improve [skill name]"
-- "Meta-improve" / "self-audit"
-- In §AUTO: optionally after completing app work, if runway remains
-- After a live test reveals a skill failure (Claude did something wrong
-  because the instruction was unclear → fix the instruction)
-
-### The Subject Shift
-
-| App Audit Concept | §META Equivalent |
-|-------------------|------------------|
-| Codebase | Skill file(s) — markdown, YAML, structured text |
-| User | Claude — the AI instance following the instructions |
-| UI Screen | § section — a section Claude navigates to and executes |
-| State | Execution context — what Claude knows at each point in the skill |
-| Route/Navigation | § code references — how Claude jumps between sections |
-| Empty state | Missing instruction — Claude encounters a situation with no guidance |
-| Error state | Contradiction — two instructions conflict, Claude can't follow both |
-| Component | Protocol block — a self-contained instruction unit |
-| Data flow | Information flow — how context passes between sections |
-| Touch target | Trigger phrase — how reliably does the right section activate? |
-
-### H5W Lenses Adapted for Skills
-
-**HOW — Instruction Mechanics:**
-- How does Claude follow this instruction? Is the sequence clear?
-- How does information flow from §0 to modules? Any gaps in handoff?
-- How does Claude know when a section is "done" and what comes next?
-- How does Claude resolve ambiguity when two sections could apply?
-- Are there instructions that sound clear but produce wrong behavior?
-
-**WHO — Claude as User:**
-- Which Claude model/context is this optimized for? (Opus 4.7 vs Sonnet)
-- Does the instruction assume capabilities Claude doesn't have?
-- Does the instruction work with Claude Code CLI? Web? Both?
-- Does a tired/long-context Claude still follow this correctly?
-- Would a Claude instance with no prior context understand this?
-
-**WILL — Instruction Edge Cases:**
-- What happens if Claude encounters a situation not covered by any section?
-- What happens if two Iron Laws contradict for a specific case?
-- What happens if a module reference file is missing or corrupted?
-- What happens if the app has a stack not covered by §PLAT?
-- What happens if the §0 context block can't be filled (no code yet)?
-
-**WHAT — Concrete Instruction Gaps:**
-- What specific instruction is missing, wrong, or ambiguous?
-- What is the root cause — bad wording, missing section, or structural gap?
-- What is the minimum change to fix it? (Same Law 8 — minimum footprint)
-- What's the impact radius — which other sections depend on this one?
-
-**WHEN — Execution Timing:**
-- When in the execution flow does Claude hit this instruction?
-- When would Claude lose track of which section it's in?
-- When does context window pressure cause Claude to forget instructions?
-- When during long sessions do specific protocols get dropped?
-
-**WHERE — Instruction Location:**
-- Where in the skill file is the problem? (line, section, § code)
-- Where else does the same pattern appear? (cross-reference consistency)
-- Where should this instruction live architecturally?
-  (Chief Guide vs module? Shared protocol vs domain-specific?)
-
-### §META Finding Format
-
-```
-══════════════════════════════════════
-SKILL FINDING: SF-[NNN]
-TARGET: [SKILL.md | mod-name.md | other-skill.md]
-══════════════════════════════════════
-TYPE:     gap | contradiction | ambiguity | dead-content | optimization | missing-coverage
-SEVERITY: critical (causes wrong behavior) | high (causes confusion) |
-          medium (suboptimal) | low (polish) | enhancement
-
-How:   [how Claude would misinterpret or fail to follow this]
-Who:   [which Claude context/model is affected]
-Will:  [what goes wrong if unfixed — concrete scenario]
-What:  [exact text that's wrong + proposed fix]
-When:  [when during execution this surfaces]
-Where: [file:section:line or § code]
-
-FIX:   [specific text change]
-══════════════════════════════════════
-```
-
-### §META Audit Dimensions (for skill files)
-
-| Dimension | What to Check |
-|-----------|---------------|
-| **Structural coherence** | Do all § codes in TOC resolve to actual sections? Do all cross-references work? Any orphaned content? |
-| **Instruction clarity** | Could Claude misinterpret any instruction? Are conditionals explicit? Are defaults stated? |
-| **Contradiction scan** | Do any two instructions conflict? (e.g., "always ask" vs "never ask in §AUTO") |
-| **Coverage completeness** | Are there execution paths with no guidance? Situations not covered? |
-| **Dead content** | Sections referenced nowhere? Instructions that can never trigger? |
-| **Trigger accuracy** | Do trigger phrases route to the correct section? Any overlaps? Missing triggers? |
-| **Hierarchy consistency** | Is the § numbering consistent? Are nesting levels logical? |
-| **Example coverage** | Do critical sections have worked examples? Would Claude know what "good" looks like? |
-| **Token efficiency** | Any section that's verbose without adding value? Repeated content? |
-| **Platform coverage** | Does every platform-specific instruction cover all supported platforms? |
-| **Cross-reference integrity** | Every "Chief Guide §X" reference → does §X exist and say what's expected? |
-| **Module boundary clarity** | Is it always clear which module owns which concern? Any overlapping jurisdiction? |
-| **§AUTO compatibility** | Does every interactive instruction have an §AUTO equivalent? |
-| **Failure mode coverage** | Does the skill handle Claude running out of context? Hitting errors? Getting confused? |
-| **Versioning** | Are version-dependent instructions marked? Would skill work on a different Claude version? |
-
-### §META on Other Skills
-
-H5W can audit any skill file — not just itself. The process:
-
-```
-META-AUDIT ON EXTERNAL SKILL:
-  1. Read the skill file completely.
-  2. Fill a lightweight context:
-     - Skill name, purpose, trigger phrases
-     - Target platform/stack
-     - § structure map
-  3. Run the 15 audit dimensions above.
-  4. Produce findings in SF-[NNN] format.
-  5. If §AUTO: fix the skill directly (T1/T2 edits).
-  6. Verify: re-read, check cross-refs, check coherence.
-```
-
-### §META Self-Improvement Loop
-
-After a live test reveals a skill failure:
-
-```
-FAILURE → IMPROVEMENT:
-  1. Claude did something wrong during execution.
-  2. Identify: was this a code bug, a judgment error, or a SKILL INSTRUCTION FAILURE?
-  3. If skill instruction failure:
-     a. What instruction was Claude following?
-     b. What did Claude interpret it as?
-     c. What should have happened instead?
-     d. Write SF-[NNN] finding.
-     e. Fix the instruction.
-     f. Verify: would the fix prevent the original failure?
-  4. Log in H5W-LOG.md: "Meta-fix: SF-001 — [instruction] was ambiguous,
-     causing [wrong behavior]. Fixed to [new instruction]."
-```
-
-### Integration with §AUTO
-
-In autonomous mode, §META can run as a final phase after app work:
-
-```
-§AUTO CONTINUOUS LOOP (with §META):
-  App work → §SIM.6 (50 Questions) → §SIM.7 (Research) →
-  Queue empty, runway remains →
-  §META: Self-audit the skill for improvements learned this session →
-  Propose skill improvements as SF findings →
-  If FULL autonomy: apply improvements to skill files →
-  Report includes "Skill improvements made" section
-```
+> **Loaded on demand.** Full protocol lives in `references/meta-protocol.md`.
+> Read that file when this section is needed; do not duplicate its
+> content here.
+>
+> **Summary:** H5W lenses re-mapped for skill files (instruction mechanics, Claude-as-user, instruction edge cases, gaps, timing, location). 15 audit dimensions. SF-NNN finding format. Proposal-only output in §AUTO.
+>
+> **Triggers:** "improve the skill", "self-audit", "meta", "audit [skill]".
+>
+> **Pattern for loading (Chief Guide):** When §TRIAGE routes here,
+> Claude reads `references/meta-protocol.md` (preferably via `Agent` subagent to
+> avoid main-context bloat) and proceeds with the protocol described
+> there. The Iron Laws and shared protocols (§LAW, §FMT, §SRC, §REV,
+> §VER, §DOC) apply unchanged — the module never re-derives them.
 
 ---
 
 ## §AUTO — DEEP AUTONOMOUS AGENT PROTOCOL
 
-> **This section transforms H5W from a skill into an agent.** When the user
-> says "run autonomously", "I'll be back", "you decide everything", "handle it",
-> or sets a time horizon ("improve for the next 2 hours"), this protocol governs
-> ALL behavior until the user returns.
+> **Loaded on demand.** Full protocol lives in `references/auto-mode.md`.
+> Read that file when this section is needed; do not duplicate its
+> content here.
+>
+> **Summary:** Activation Gate (literal phrase only for FULL), GUIDED default, Risk Acknowledgment, 5 rules of autonomous operation, structured compaction, REAL vs FAKE runway limits, git policy resolution, build-error handling, autonomous report template.
+>
+> **Triggers:** literal `run H5W full autonomous mode` (as start of prompt) for FULL; "you decide", "handle it", "I'll be back" for GUIDED.
+>
+> **Pattern for loading:** When §TRIAGE routes here, Claude reads
+> `references/auto-mode.md` (preferably via `Agent` subagent to avoid
+> main-context bloat) and proceeds with the protocol described there.
+> The Iron Laws and shared protocols (§LAW, §FMT, §SRC, §REV, §VER,
+> §DOC) apply unchanged — the module never re-derives them.
 
-### Activation
+### ⚠ Activation Gate — visible summary (full text in references/auto-mode.md)
 
-User says anything indicating unattended operation. Claude:
-1. Confirms the scope and autonomy level (once, at start).
-2. Sets the session parameters.
-3. Begins work. Does NOT stop until §AUTO termination triggers.
+§AUTO FULL is the single most consequential mode in this skill. The
+activation gate is **enforced at TWO layers**:
 
-```
-AUTONOMOUS SESSION START
-─────────────────────────
-Scope:           [from user or self-selected per §I.3]
-Autonomy Level:  [FULL — default if user says "you decide"]
-Session Budget:  [time horizon if stated, else "until done or blocked"]
-Working Branch:  [git branch name if applicable]
-Report Target:   [H5W-REPORT.md — written at end]
-─────────────────────────
-Proceeding autonomously. Will report when done.
-```
+1. **Script layer (h5w-autoloop.sh):** The wrapper detects the literal
+   activation phrase as the start of the user's prompt, prints the Risk
+   Acknowledgment to the terminal, and reads typed `proceed` from stdin
+   BEFORE invoking Claude. `--permission-mode auto` is set only after
+   confirmation. If the user types anything other than `proceed`, the
+   wrapper drops to GUIDED.
 
-### Autonomy Levels
-
-| Level | What Claude Decides | What Waits for User |
-|-------|--------------------|--------------------|
-| **FULL** (default) | Everything T0–T2. Module routing. Scope expansion. Build decisions. | T3 only (queued, not blocking) |
-| **GUIDED** | T0–T1. Module routing within stated scope. | T2+, scope changes, build architecture |
-| **SUPERVISED** | T0 only. | Everything else logged as recommendations |
-
-**Default is FULL.** User can specify otherwise: "autonomous but don't touch
-the API layer" → FULL except T3 on API-touching changes.
-
-### The Five Rules of Autonomous Operation
-
-**Rule 1 — Never Stop, Always Log**
-Checkpoints (§SIM.5) switch from STOP-AND-ASK to LOG-AND-CONTINUE.
-Instead of printing "Continue? [yes/no]" and waiting, Claude:
-- Writes the checkpoint report to H5W-LOG.md
-- Continues to the next cycle
-- Stopping only on termination triggers (see below)
-
-**Rule 2 — T3 Items Queue, Don't Block**
-When a T3 decision is encountered:
-- Log it in H5W-QUEUE.md with tag `[T3-BLOCKED]`
-- Log the full context: what decision is needed, what the options are, Claude's recommendation
-- SKIP to the next non-blocked finding
-- Continue working on everything that ISN'T blocked by T3
-- T3 items are presented in the final report for user decision
-
-**Rule 3 — No Questions, Best Judgment**
-In autonomous mode, Claude NEVER uses `AskUserQuestion`. Instead:
-- Make the best decision based on available evidence
-- Log the decision and rationale in H5W-LOG.md
-- Tag: `[AUTO-DECIDED: chose X because Y. Override if wrong.]`
-- If confidence < 3/5 → also log in H5W-ASSUMPTIONS.md
-
-**Rule 4 — Self-Correct Before Moving On**
-After every fix, the verification protocol (§VER) runs. If verification FAILS:
-```
-SELF-CORRECTION PROTOCOL:
-  Attempt 1: Revert the fix. Re-read the code. Re-plan from scratch.
-  Attempt 2: Try alternative approach (different fix strategy).
-  Attempt 3: If still failing → log as [STUCK], add to T3 queue,
-             move to next finding. Do NOT keep retrying.
-```
-Maximum 3 attempts per finding. After 3 failures → skip and log.
-
-**Rule 5 — Manage Context Proactively**
-### Context Window Management — Structured Compaction
-
-Long autonomous sessions WILL exceed context. This is not a failure — it's
-expected. Compaction is a scheduled maintenance operation, not an emergency.
-
-**COMPACTION SCHEDULE:**
-
-| Trigger | Action |
-|---------|--------|
-| After every 5 fixes | Evaluate: is context > 60% capacity? If yes → compact. |
-| After every Phase completion (1→2, 2→3, etc.) | Mandatory compact. |
-| After every module unload (finished with MOD-CODE, etc.) | Compact. |
-| After every §SIM.5 escalation stage | Compact before next stage. |
-| Before loading a large module reference file | Compact first. |
-| Whenever Claude notices repetition in its own output | Emergency compact. |
-
-**In practice: compact roughly every 3–5 cycles.** Don't wait until context
-is full. Proactive compaction preserves coherence. Reactive compaction loses state.
-
-**PRE-COMPACTION PROTOCOL (write to files BEFORE compacting):**
+2. **Claude layer (this skill):** When Claude detects the literal phrase
+   in chat (no wrapper involved), Claude prints the Risk Acknowledgment
+   block from `references/auto-mode.md` and waits for typed `proceed`.
 
 ```
-BEFORE /compact or context reset:
-  1. Write FULL current state to H5W-LOG.md:
-     - What phase am I in?
-     - What was I working on (current finding ID)?
-     - What files have I modified this session? (list all)
-     - How many findings fixed / queued / blocked?
-     - Which modules have been loaded and unloaded?
-     - What assumptions are active?
-     - What §OBSTACLE tools were built?
+TRIGGER (must be at start of prompt):
+    run H5W full autonomous mode
 
-  2. Write queue state to H5W-QUEUE.md:
-     - Current priority-sorted queue (must be up to date)
+→ Risk Acknowledgment is printed (lists what permission gates are
+  suspended, what Claude will do without asking, what stays T3-blocked).
 
-  3. Write assumptions to H5W-ASSUMPTIONS.md:
-     - All active assumptions with confidence
+→ User must type one of:
+    proceed                 → §AUTO FULL activates
+    adjust scope: <text>    → modify scope, re-print, re-confirm
+    cancel                  → drop to §AUTO-GUIDED
+    anything else           → drop to §AUTO-GUIDED, treat as request
 
-  4. Write a COMPACT-RESUME.md file:
-     ───────────────────────────────────
-     COMPACT RESUME POINT
-     ───────────────────────────────────
-     Session:     [app name, mode, scope]
-     Phase:       [current phase number and name]
-     Current Fix: [F-NNN — what I was working on]
-     Next Action: [exactly what to do next after resuming]
-     Files Changed: [list every file modified]
-     Modules Used: [which modules loaded this session]
-     Cycles Completed: [N]
-     Fixes Applied: [N]
-     Queue Size: [N remaining]
-     T3 Blocked: [N]
-     Context Note: [anything important that's in context
-                    but not in files — conversations, decisions]
-     ───────────────────────────────────
-
-  5. THEN run /compact (CLI) or summarize and discard (web)
+→ If proceed: Claude Code runs with --permission-mode auto. §META
+  proposes only (never auto-merges to skill files). Git policy resolved
+  from .h5w/git-policy.
 ```
 
-**POST-COMPACTION PROTOCOL (reload state AFTER compacting):**
+**Other autonomous-sounding phrases** ("run autonomously", "you decide",
+"handle it", "I'll be back") route to **§AUTO-GUIDED** — same protocols
+but Claude Code's permission prompts stay active and block on T2+
+actions. GUIDED is the safe default. This is intentional: the friction
+on FULL activation is the safety feature.
+
+**Why two layers.** The script layer protects users invoking via the
+autoloop wrapper (the common path). The Claude layer protects users
+typing the phrase directly into a chat session that already has §AUTO
+loaded. Both layers print the same Risk Acknowledgment.
+
+### ⚠⚠⚠ §AUTO-UNCHAINED — above FULL
+
+A higher-autonomy mode exists for cases where FULL's T3 gate and
+preservation laws are more obstructive than protective on a specific
+project (personal sandboxes, scratch projects, repos you can recreate).
+
+**It is not "FULL with longer runtime."** It removes protections.
+Read `references/auto-mode.md` §AUTO-UNCHAINED for the full risk
+acknowledgment before using.
 
 ```
-AFTER /compact or context reset:
-  1. Read COMPACT-RESUME.md — this tells you where you are
-  2. Read H5W-QUEUE.md — this is your work queue
-  3. Read H5W-ASSUMPTIONS.md — these are active beliefs
-  4. Read the LAST 20 lines of H5W-LOG.md — recent context
-  5. Read §0 in SKILL.md — app identity (always needed)
-  6. DO NOT re-read module reference files unless needed for next fix
-  7. DO NOT re-read files you've already modified unless the next fix
-     touches them
-  8. Resume from "Next Action" in COMPACT-RESUME.md
+TRIGGER (must be at start of prompt):
+    run H5W unchained autonomous mode
 
-  FIRST ACTION after resume: log in H5W-LOG.md:
-  "[COMPACTED] Resumed from COMPACT-RESUME.md. Cycle [N].
-   Context was at ~[X]% capacity. State restored from files."
+→ UNCHAINED Risk Acknowledgment is printed (longer than FULL's —
+  lists T3 actions that will execute, Iron Laws demoted to advisories,
+  §META permitted to edit skill files mid-session).
+
+→ User must type EXACTLY:
+    i accept full responsibility
+  Anything else (including 'proceed') drops to GUIDED.
+  This two-phrase confirmation is intentional — muscle memory from
+  FULL's 'proceed' will not escalate you to UNCHAINED.
+
+→ If confirmed: --permission-mode auto, MAX_LOOPS=60 (vs 30 in FULL),
+  T3 gate disabled, Iron Laws 6/7/9 demoted to advisories,
+  §META can write directly to SKILL.md and references/*.md (with
+  mirror to skill-improvements/SF-NNN.md for diff trail).
+
+→ Iron Laws 1, 2, 3, 4, 5, 8, 10, 11, 12 STILL APPLY. They are about
+  honesty and accuracy, not caution. Removing them would just make
+  Claude lie about what it did.
 ```
 
-**COMPACT-RESUME.md is the brain transplant file.** Everything Claude needs
-to continue working after losing its in-context memory goes here. It must
-be written BEFORE every compaction and read AFTER every compaction.
+**Resume:** `./h5w-autoloop.sh --resume --unchained` (or
+`--resume --unchained --brainstorm` if BRAINSTORM was active). Plain
+`--resume` drops to GUIDED for safety even if the previous session was
+UNCHAINED or BRAINSTORM.
 
-**What survives compaction (in files):**
-- Full finding queue (H5W-QUEUE.md)
-- Full assumption list (H5W-ASSUMPTIONS.md)
-- Full activity log (H5W-LOG.md)
-- Resume point (COMPACT-RESUME.md)
-- §0 context (SKILL.md)
-- All code changes (in the actual files)
+### §BRAINSTORM — closed-sandbox deep-work modifier (on top of UNCHAINED)
 
-**What is lost and must be recovered:**
-- Which module sections were relevant (re-derive from next finding)
-- Detailed reasoning about past fixes (summarized in LOG)
-- Conversation context with user (irrelevant in §AUTO mode)
+For closed local sandboxes where you want Claude to brainstorm itself
+harder rather than politely bail. Append `:brainstorm` to the UNCHAINED
+prompt; at the secondary gate type **`this is my sandbox`**.
 
-**Context Budget Rules:**
-- Module reference files (2,000+ lines each) are the biggest context consumers.
-  Load ONLY when needed. Read ONLY the relevant sections (grep for § codes).
-  Unload after use (don't keep in context).
-- After unloading a module: compact.
-- COMPACT-RESUME.md + H5W-QUEUE.md + H5W-LOG.md (tail) = ~200 lines.
-  This is the minimum context needed to continue. Everything else is on-demand.
+What changes vs plain UNCHAINED:
+- Self-correction attempts: 3 → 20 (each must use a different approach class)
+- §OBSTACLE attempts: 3 → 10 (must span ≥5 different approach classes)
+- 5-failures-and-stop runway limit: removed
+- `MAX_LOOPS`: 60 → 200
+- STUCK is no longer a queue entry — it's a routing signal to **§SIM.8
+  BRAINSTORM-PIVOT** (research wider → decompose → reframe → sleep on it)
+- `[GENUINELY-STUCK]` only fires after all 4 pivot stages fail
 
-### Autonomous Checkpoint (replaces §SIM.5 in auto mode)
+What does NOT change: Iron Laws 1-5, 8, 10-12 (the honesty/accuracy
+laws) still apply. Genuine walls (auth, captcha, paid-account) still
+get flagged honestly. BRAINSTORM raises the bar for what counts as a
+wall — it does not pretend impossibilities are tractable.
 
-Instead of stopping, Claude writes to H5W-LOG.md:
+**The four-mode escalation summary:**
 
-```
-──── AUTO CHECKPOINT [N] ────
-Time: [timestamp]
-Cycle: [N] | Files changed: [N] | Findings fixed: [N]
-Queue: [remaining] | Blocked: [T3 count]
-Context health: [ok / compacting / heavy]
-Re-scans completed: [N] (0 = first pass still running)
-Decision: [continuing to cycle N+1 / re-scanning / expanding scope / escalating depth / hit runway limit]
-────────────────────────────
-```
+| Mode | Activation | T3 actions | Iron Laws 6/7/9 | §META edits skill files? | MAX_LOOPS | STUCK behavior |
+|------|------------|------------|-----------------|--------------------------|-----------|----------------|
+| GUIDED | default; autonomous-sounding phrase | queue | enforced | proposals only | 30 | log + queue |
+| FULL | `run H5W full autonomous mode` + `proceed` | queue | enforced | proposals only | 30 | log + queue |
+| UNCHAINED | `run H5W unchained autonomous mode` + `i accept full responsibility` | execute (logged) | advisories | direct edits + mirror | 60 | log + queue |
+| UNCHAINED + BRAINSTORM | UNCHAINED prompt + `:brainstorm` flag + `this is my sandbox` | execute (logged) | advisories | direct edits + mirror | 200 | route to §SIM.8 pivot |
 
-### Autonomous Module Routing
-
-In autonomous mode, Claude doesn't ask which module — it routes based on
-the finding pattern:
-
-| Pattern Detected | Action |
-|-----------------|--------|
-| No CI/CD or delivery infrastructure | Run §DELIVER FIRST — before any feature work |
-| 3+ code quality findings | Load MOD-CODE, run relevant dimensions |
-| 3+ visual findings in same area | Load MOD-DESG, run targeted analysis |
-| Structural anti-patterns found | Load MOD-REST, run diagnosis |
-| 3+ instances of same pattern | Load MOD-SCOP, run concept scaffold |
-| All modules return clean | Expand scope to adjacent areas |
-| §SIM.6 exhausted (50 Questions done) | Activate §SIM.7 Research & Study |
-| §SIM.7 produces features | Build highest-value features |
-| App work complete, runway remains | Activate §META — self-audit skill for improvements |
-
-No confirmation needed. Log the routing decision in H5W-LOG.md.
-
-### Autonomous Build (§BUILD in auto mode)
-
-Build gates that normally require user approval become:
-
-| Gate | Normal Mode | Autonomous Mode |
-|------|------------|-----------------|
-| B1 Discovery brief | User approves | Claude writes best brief, logs `[AUTO-DECIDED]`, proceeds |
-| B2 Architecture | User approves | Claude selects per decision trees, logs all decisions |
-| B3 Design system | User approves | Claude runs MOD-ART with best judgment, logs results |
-| B5 Per-feature | User reviews | Gate auto-passes if all checks ✓, fails → self-correct |
-| B9 Launch gate | User signs off | Claude runs all checks, presents results in report |
-
-### Termination Triggers
-
-Claude stops autonomous execution ONLY when hitting a runway limit.
-**There is no "I'm done" trigger.** Queue empty → re-scan → scope expand →
-depth escalate → feature discover (§SIM.5 Continuous Improvement Loop).
-
-| Runway Limit | What Happens |
-|-------------|-------------|
-| All remaining items are T3-blocked | Nothing Claude can do alone. Write report, wait. |
-| Context window approaching limit | Compact, write progress report, indicate "resume needed" |
-| Self-correction failures > 5 total | System hitting issues it can't solve. Write report. |
-| Build/compile error unrecoverable | Revert last change. Write report. |
-| Time budget exhausted | If user set a time horizon — respect it. |
-| User returns | Switch to interactive mode. Present report. |
-
-**If none of these fire, keep working.** Shift severity: critical → high →
-medium → low → enhancement → polish → features → optimization → documentation.
-
-### Build Failure Recovery (§AUTO + §BUILD)
-
-When `npm run build`, `./gradlew build`, or equivalent fails during autonomous operation:
-1. **Read the error.** Extract the file, line, and message.
-2. **Revert the last change** that caused the failure.
-3. **Diagnose:** Is this a fixable error (typo, missing import) or structural?
-   - Fixable → fix it, re-run build, continue if green.
-   - Structural → log as `[STUCK]`, add to T3 queue, move on.
-4. **If build was already broken before the session:** Log this at session start.
-   Do NOT count pre-existing build failures against the self-correction budget.
-
-### Git Branch Strategy (§AUTO)
-
-Autonomous sessions work on a dedicated branch to keep main clean:
-```
-git checkout -b h5w/auto-[date]-[scope]
-# All autonomous work happens here
-# User reviews branch, merges to main when satisfied
-```
-If git is not available (no repo), work directly — but log every file changed
-in H5W-REPORT.md so the user can review diffs.
-
-### The Autonomous Report (H5W-REPORT.md)
-
-Written at session end. This is what the user reads when they return.
-
-```markdown
-# H5W Autonomous Session Report
-
-## Session Parameters
-- Started: [timestamp]
-- Scope: [what was worked on]
-- Autonomy: [FULL/GUIDED/SUPERVISED]
-- Termination: [why it stopped]
-
-## Executive Summary
-[3-5 sentences: what was accomplished, what remains, what needs your decision]
-
-## What Was Done
-[chronological list of all fixes applied, grouped by area]
-
-### Fixes Applied ([count])
-| ID | Sev | File | Summary | Verified |
-|----|-----|------|---------|----------|
-| F-001 | high | TeamCard.jsx:84 | Added empty state | ✓ |
-| ...
-
-### Modules Invoked ([count])
-| Module | Why | Findings Produced |
-|--------|-----|-------------------|
-| MOD-CODE | 4 code quality findings | F-020 through F-025 |
-| ...
-
-## What Needs Your Decision ([count] T3 items)
-| ID | Decision Needed | Claude's Recommendation | Why T3 |
-|----|----------------|------------------------|--------|
-| F-005 | Delete legacy export? | Keep it (users may depend) | Irreversible |
-| ...
-
-## Autonomous Decisions Made ([count])
-[Every [AUTO-DECIDED] item — review these for correctness]
-| Decision | Rationale | Confidence | Override? |
-|----------|-----------|------------|-----------|
-| Stack: Next.js | SEO needed, React ecosystem | 4/5 | Change if wrong |
-| ...
-
-## What Remains
-- Queue: [N] findings remaining
-- Assumptions: [N] active (review H5W-ASSUMPTIONS.md)
-- Recommended next: [what to focus on]
-
-## Files Changed
-[git diff --stat or equivalent]
-
-## How to Review
-1. Read "What Needs Your Decision" — resolve T3 items
-2. Scan "Autonomous Decisions" — override any you disagree with
-3. Run the app — verify nothing feels wrong
-4. Say "continue" to resume, or "revert [F-NNN]" to undo specific fixes
-```
-
-### Context Window Strategy
-
-### Context Strategy (see §AUTO Rule 5 for full protocol)
-
-```
-COMPACTION SCHEDULE:
-  - Every 5 fixes → evaluate
-  - Every phase completion → mandatory compact
-  - Every module unload → compact
-  - Before loading large module → compact first
-  - Write COMPACT-RESUME.md BEFORE every compaction
-  - Read COMPACT-RESUME.md AFTER every compaction
-  - Module files: grep for § codes, read sections, not whole file
-```
-
-### Integration with Existing Protocols
-
-| Protocol | Interactive Mode | Autonomous Mode |
-|----------|-----------------|-----------------|
-| §SIM.5 Checkpoints | Stop, report, wait | Log, continue |
-| §SIM.6 Anti-Exhaustion | Mandatory before "no findings" | Mandatory — runs automatically |
-| §SIM.7 Research | User-triggered or after §SIM.6 | Auto-triggers after §SIM.6 exhausts code-level |
-| §OBSTACLE MacGyver | Activates on any limitation | Auto-resolves: 3 attempts, then T3 queue |
-| §META Self-improve | User-triggered | Auto-triggers after app work if runway remains |
-| §REV T3 decisions | Stop, ask | Queue, skip, report at end |
-| §BUILD gates | User approves | Auto-pass with logging |
-| §WORKFLOW handoffs | May ask which module | Auto-route by pattern |
-| §VER failures | Report to user | Self-correct (3 attempts) |
-| §SESSION continuity | Resume on user command | Resume automatically |
-| `AskUserQuestion` | Used freely | **NEVER used** |
+---
 
 ## §DOC. WORKING DOCUMENTS
 
-Create on system activation. Append-only — never overwrite previous entries.
+Create on system activation by copying from `templates/` directory.
+Run `scripts/h5w-init.sh [project-dir]` or copy manually. Append-only.
 
-### H5W-LOG.md — Audit Trail
+### Project Directory Structure
 
-```markdown
-# H5W Unified Log — [app name]
+> **From GSD:** Use a `.planning/` directory for persistent planning state.
+> Working documents go in project root. Planning artifacts go in `.planning/`.
 
-## Session: [date] — Mode: [mode] — Scope: [scope]
-
-### Phase 0: Understand
-- §0 filled: [timestamp]
-- Domain: [class] | Architecture: [class] | LOC: [est] | Scope: [size]
-- Aesthetic profile: A1:[val] A2:[val] A3:[val] A4:[val] A5:[val]
-- Modules planned: [list]
-
-### Phase 1: Discover
-- Personas: P1(first-time), P2(power), P3(hostile), P4([domain])
-- States mapped: [count] screens × [count] states = [count] transitions
-- Investigation targets: [count] unknown, [count] edge risk
-- Walkthrough: P1 → /home, /teams | P2 → /teams, /compare | ...
-- Findings: F-001 through F-[N]
-
-### Phase 2: Analyze
-- Module handoffs: MOD-CODE(F-014), MOD-DESG(F-013,F-016,F-017)
-- Module findings: F-020 through F-[N]
-
-### Phase 4: Execute
-- [ts] F-001 FIXED T1 [TeamCard.jsx:84] — added empty state — Verified: yes
-- [ts] F-002 FIXED T1 [Teams.css:120] — fixed breakpoint — Verified: yes
-- [ts] F-003 BLOCKED T3 — delete workflow changes user data contract
-
-### Phase 5: Verify (Expansion Cycle 1)
-- Micro-H5W F-001 → F-018, F-019 (same pattern in 2 other files)
-- Micro-H5W F-002 → no new findings
-- F-018 FIXED T1 — F-019 FIXED T1
-- Micro-H5W F-018 → no new findings
-- Micro-H5W F-019 → no new findings
-- Checkpoint 1: [paste report]
-
-### Handoff Log
-- [ts] → MOD-DESG: F-013,F-016,F-017 (3 visual findings in Teams tab)
-- [ts] ← MOD-DESG: F-020(color fix), F-021(spacing), F-022(typography)
-- [ts] → MOD-SCOP: F-019 pattern (5 instances of missing empty-state)
-- [ts] ← MOD-SCOP: F-023 through F-027 (systematic empty-state fixes)
+```
+project/
+├── .planning/              ← Planning state (persists across sessions)
+│   ├── spikes/             ← Feasibility test results
+│   │   └── 001-name/
+│   │       ├── README.md
+│   │       └── spike.js
+│   ├── roadmap.md          ← Current product roadmap
+│   └── forensics/          ← Diagnostic reports when things break
+├── H5W-LOG.md              ← Activity log (append-only)
+├── H5W-QUEUE.md            ← Finding queue (priority-sorted)
+├── H5W-ASSUMPTIONS.md      ← Unconfirmed beliefs
+├── COMPACT-RESUME.md       ← Compaction resume point
+├── H5W-REPORT.md           ← Session report (written at end)
+├── CLAUDE.md               ← Project-level H5W configuration
+└── .github/workflows/      ← CI/CD (from §DELIVER)
 ```
 
-### H5W-QUEUE.md — Priority Queue
+### Forensics Protocol
 
-```markdown
-# H5W Finding Queue — [app name]
-# Sorted by: severity → cascade → tier → persona overlap → compounds
+> **From GSD:** When things go wrong in non-obvious ways — state seems
+> corrupted, fixes produce unexpected results, the app behaves differently
+> than the code suggests — run forensics before continuing.
 
-| # | ID | Sev | Tier | Mod | Conf | Source | Summary |
-|---|------|-----|------|-----|------|--------|---------|
-| 1 | F-003 | crit | T3 | H5W | confirmed | walkthrough P1 | Delete workflow - T3 blocked |
-| 2 | F-020 | high | T1 | DESG | confirmed | MOD-DESG handoff | Card header contrast |
-| 3 | F-014 | high | T2 | CODE | high | walkthrough P3 | Race in team deletion |
-| 4 | F-023 | med | T1 | SCOP | confirmed | MOD-SCOP | Empty-state: CharList |
-| 5 | F-024 | med | T1 | SCOP | confirmed | MOD-SCOP | Empty-state: Compare |
+```
+FORENSICS (triggered when stuck or confused):
+  1. Generate diagnostic report in .planning/forensics/:
+     - Current state of H5W-QUEUE.md vs actual files
+     - List of all files modified this session
+     - Git diff since session start
+     - Any build errors or test failures
+     - Active assumptions and their status
+     - Last 5 fixes and their verification results
+  2. Analyze: where did things diverge from expected?
+  3. Decision: revert to last known-good, or diagnose and fix
+  4. Log: [FORENSICS] at [timestamp] — diagnosis: [result]
 ```
 
-### H5W-ASSUMPTIONS.md — Unconfirmed Beliefs
+**Template source path (read-only):**
+Skill directory: the directory containing this SKILL.md file.
+Templates are at: `[skill-dir]/templates/`
+Scripts are at: `[skill-dir]/scripts/`
 
-```markdown
-# H5W Assumptions — [app name]
-# Active assumptions. Each fix that depends on one references it.
-
-| # | Assumption | Conf | Impact if Wrong | Depends On | Source |
-|---|-----------|------|-----------------|------------|--------|
-| 1 | Empty team.members renders empty-state | 3/5 | F-001 fix wrong | F-001 | [INFERRED: component structure] |
-| 2 | Network timeout → Error (not null) | 4/5 | F-014 misses null | F-014 | [CODE: api.js:42 try/catch] |
-| 3 | localStorage quota > 5MB available | 2/5 | Persistence fails silently | F-030 | [INFERRED: browser default] |
+Claude can locate the skill directory by searching for this file:
+```bash
+SKILL_DIR=$(dirname "$(find /mnt/skills -name 'SKILL.md' -path '*/h5w-unified/*' 2>/dev/null | head -1)")
 ```
 
-### COMPACT-RESUME.md — Compaction State Preservation
-
-Written BEFORE every `/compact`. Read AFTER every `/compact`. This is the
-brain transplant file — everything Claude needs to continue after context reset.
-
-```markdown
-# Compact Resume Point — [app name]
-
-Session:       [app name, mode, scope]
-Phase:         [current phase — e.g. "Phase 4: Execute, fixing F-012"]
-Current Fix:   [F-NNN — what was being worked on when compaction triggered]
-Next Action:   [exact next step — e.g. "verify fix for F-012, then micro-H5W"]
-Files Changed: [list every file modified this session]
-  - components/TeamCard.jsx (F-001, F-012)
-  - styles/teams.css (F-002)
-Modules Used:  [which modules were loaded]
-  - MOD-CODE (for F-014 async issues)
-Cycles:        [N completed]
-Fixes Applied: [N]
-Queue Size:    [N remaining in H5W-QUEUE.md]
-T3 Blocked:    [N]
-Escalation:    [which §SIM.5 stage — e.g. "in 55 Questions, at Layer 3"]
-Tools Built:   [any §OBSTACLE tools — e.g. "spine-converter.py"]
-Context Note:  [anything in context not captured in files]
+Copy templates to project working directory before use:
+```bash
+cp "$SKILL_DIR/templates/H5W-LOG.md" ./
+cp "$SKILL_DIR/templates/H5W-QUEUE.md" ./
+# etc.
 ```
+
+| Document | Template File | Purpose |
+|----------|--------------|---------|
+| `H5W-LOG.md` | `templates/H5W-LOG.md` | Chronological activity log — append every action |
+| `H5W-QUEUE.md` | `templates/H5W-QUEUE.md` | Priority-sorted finding queue |
+| `H5W-ASSUMPTIONS.md` | `templates/H5W-ASSUMPTIONS.md` | Unconfirmed beliefs with confidence scores |
+| `COMPACT-RESUME.md` | `templates/COMPACT-RESUME.md` | Brain transplant file for context compaction |
+| `H5W-REPORT.md` | `templates/H5W-REPORT.md` | Autonomous session report (written at end) |
+| `PRODUCT-BRIEF.md` | `templates/PRODUCT-BRIEF.md` | Product lifecycle brief (§PRODUCT P1–P3) |
+
+**CI/CD templates** (copy into project's `.github/workflows/`):
+
+| Template | Platform |
+|----------|----------|
+| `templates/ci/android-build.yml` | Android APK build + artifact upload |
+| `templates/ci/web-deploy.yml` | Web build + optional Vercel/GH Pages deploy |
+
+**Initialization:**
+```bash
+# Initialize H5W in a project (interactive — asks what to set up)
+./scripts/h5w-init.sh /path/to/project
+
+# Validate skill installation
+./scripts/h5w-validate.sh
+```
+
+**Claude auto-initialization:** On §AUTO activation, Claude copies templates
+into the project working directory. Templates are the source of truth.
 
 ---
+
+## §TOOL. CLAUDE CODE INTEGRATION
 
 | Task | Tool | When |
 |------|------|------|
 | Read codebase | `Agent` (Explore) | Start of any phase — parallel, no context bloat |
 | Search patterns | `Grep` / `Glob` | §I.5 extraction, §SIM.4 pattern grep, MOD-SCOP |
 | Track progress | `TodoWrite` | Multi-phase work — create at start, update per phase |
-| Ask user | `AskUserQuestion` | §TRIAGE routing, T3 decisions, §0 gaps, scope confirmation |
-| Research | `WebSearch` / `WebFetch` | §SRC source verification, MOD-APP §X competitive research |
+| Ask user | `AskUserQuestion` | §TRIAGE routing, T3 decisions, §0 gaps (not in §AUTO) |
+| Research | `WebSearch` / `WebFetch` | §SRC verification, §SIM.7 research, §OBSTACLE probing |
 | Edit files | `Edit` | All fixes — surgical edits |
-| Create files | `Write` | Scaffolding, new components, working documents |
-| Move/rename | `Bash` (mv, cp) | MOD-REST restructuring operations |
-| Verify build | `Bash` (build commands) | §VER after multi-file changes |
-| Run tests | `Bash` (test commands) | §VER regression check |
+| Create files | `Write` | Scaffolding, new components, tools, working documents |
+| Move/rename | `Bash` (mv, cp) | MOD-REST restructuring, §OBSTACLE tool placement |
+| Install deps | `Bash` (npm/pip/gradle) | §OBSTACLE authorized — install what's needed |
+| Clone repos | `Bash` (git clone) | §OBSTACLE authorized — use open-source tools |
+| Build/test | `Bash` (build/test commands) | §VER after changes, §DELIVER verification |
 | Git | `Bash` (git add, commit) | Atomic commits — one per fix or operation |
 | Map structure | `Bash` (find, tree) | §SIM.2 state mapping, MOD-REST §R2 |
+| Copy templates | `Bash` (cp) | §DOC initialization from templates/ |
+
+### Subagent Strategy — Throw Compute at the Problem
+
+Subagents keep the main context clean. Use them for any task that produces
+information Claude needs but doesn't need to reason about step-by-step.
+
+| When | Subagent Pattern |
+|------|-----------------|
+| Codebase exploration (>2K LOC) | Spawn 3-4 Explore agents in parallel (see below) |
+| Module audit | Spawn agent with module reference loaded, return findings |
+| Research | Spawn agent for each research topic (§SIM.7 R1-R5 in parallel) |
+| Pattern search (MOD-SCOP) | Spawn agent to grep + inventory all instances |
+| §OBSTACLE tool building | Spawn agent to build the tool while main continues planning |
+| Cross-file verification | Spawn agent to check all consumers of modified code |
+
+**Parallel Exploration (> 2K LOC):**
+```
+Agent(Explore, "Read all UI/component files — exports, imports, responsibility")
+Agent(Explore, "Read all util/service/hook files — exports, consumers")
+Agent(Explore, "Read all route/navigation files — structure, data deps")
+Agent(Explore, "Read all style/theme/token files — colors, spacing, values")
+```
+
+**Module Audit via Subagent:**
+```
+Agent("Load references/mod-code-audit.md. Run §D5 (Logic & Correctness) on
+  src/utils/calculator.js. Return findings in §FMT format. Each finding needs
+  [CODE: file:line]. Do not fix — only report.")
+```
+
+**Research via Subagent:**
+```
+Agent("Search the web for [domain] best practices [year]. Search for [domain]
+  user complaints. Search for competitors of [app type]. Return a structured
+  brief: standards found, user expectations, feature gaps.")
+```
+
+**Why subagents matter for H5W:**
+- Main context stays focused on the current fix/phase
+- Module reference files (2,000+ lines) load in the subagent, not main context
+- Research runs in parallel without consuming main context tokens
+- Exploration results return summarized, not raw
 
 ### Parallel Strategy (> 2K LOC)
 ```
-Agent(Explore, "Read all UI/component files — list exports, imports, responsibility per file")
-Agent(Explore, "Read all util/service/hook files — list what each exports and who imports")
-Agent(Explore, "Read all route/navigation files — list structure and data deps per route")
-Agent(Explore, "Read all style/theme/token files — list colors, spacing, typography values")
+Agent(Explore, "Read all UI/component files — exports, imports, responsibility")
+Agent(Explore, "Read all util/service/hook files — exports, consumers")
+Agent(Explore, "Read all route/navigation files — structure, data deps")
+Agent(Explore, "Read all style/theme/token files — colors, spacing, values")
 ```
 
 ### Pre-Flight Extraction Patterns
@@ -4149,14 +2016,14 @@ Agent(Explore, "Read all style/theme/token files — list colors, spacing, typog
 **Web / React / Next.js:**
 ```
 Grep("useEffect|useState|useContext|useReducer", glob: "*.{tsx,jsx,ts,js}")
-Grep("--[a-z]", glob: "*.css")  # CSS variables
-Read: package.json, router/pages/app config, tailwind.config.*
+Grep("--[a-z]", glob: "*.css")
+Read: package.json, router config, tailwind.config.*
 ```
 
 **Android / Kotlin:**
 ```
 Grep("class.*Fragment|class.*Activity|class.*ViewModel", type: "kotlin")
-Grep("(val|const|var)\\s+[A-Z_]{2,}\\s*=", type: "kotlin")  # Constants
+Grep("(val|const|var)\\s+[A-Z_]{2,}\\s*=", type: "kotlin")
 Grep("SharedPreferences|Room|DataStore", type: "kotlin")
 Read: AndroidManifest.xml, build.gradle*, nav_graph.xml, res/values/*
 ```
@@ -4238,7 +2105,7 @@ queue, or user interrupt. Each cycle: rescan for new issues, expand from fixes.
 
 ---
 
-## §ANTI. ANTI-PATTERNS — 15 Things Claude Must Never Do
+## §ANTI. ANTI-PATTERNS — 18 Things Claude Must Never Do
 
 | # | Pattern | What It Is | Why It's Harmful |
 |---|---------|-----------|-----------------|
@@ -4257,6 +2124,9 @@ queue, or user interrupt. Each cycle: rescan for new issues, expand from fixes.
 | 13 | **Source Laundering** | Training recall without `[UNVERIFIED]` tag | Fabrication disguised as knowledge |
 | 14 | **Premature Completion** | Declaring "no findings" without running §SIM.6 (50 Questions) | User returns to obvious issues. Worst trust violation. |
 | 15 | **Surrender** | Saying "I can't" without running §OBSTACLE protocol | User loses trust. Every obstacle has a workaround. |
+| 16 | **Response Bloat** | Trying to do 5+ things in one response | API timeout cuts response mid-execution, loses work, breaks loop. |
+| 17 | **Delivery Blindness** | Building features without CI/CD or deployment | Perfect app nobody can install. §DELIVER missing = HIGH finding. |
+| 18 | **Fake Runway Limit** | Declaring "too big for this session" / "multi-day feature" / "context budget" as a reason to stop | Claude invented a fake stop. Break it down, build the first piece, compact, continue. |
 
 ---
 
@@ -4386,16 +2256,41 @@ what needs maintaining. That trust is maintained by:
 
 ---
 
-## APPENDIX A — MODULE REFERENCE MAP
+## APPENDIX A — REFERENCE MAP
 
-When §TRIAGE or §WORKFLOW routes to a module, Claude reads the corresponding file.
-Each module contains ONLY domain-specific content — shared protocols live here.
+When §TRIAGE or §WORKFLOW routes to a module or protocol, Claude reads the
+corresponding file. Each reference contains ONLY domain-specific content —
+shared protocols (§LAW, §FMT, §SRC, §REV, §VER, §DOC) live in this Chief
+Guide and are inherited verbatim.
+
+### Domain modules (audit/build/restructure work)
 
 | Module | File | Content Summary |
 |--------|------|-----------------|
 | MOD-APP | `references/mod-app-audit.md` | Categories A–O: domain logic, state, security, performance, visual design, UX, accessibility, compatibility, code quality, AI/LLM, i18n, projections. R&D mode. Polish mode. |
 | MOD-CODE | `references/mod-code-audit.md` | 8 dimensions: format/conventions, health/hygiene, optimization, structure/architecture, logic/correctness, state/data, error handling, async/concurrency. JS/React + Kotlin/Android stack modules. |
 | MOD-DESG | `references/mod-design-audit.md` | 21-step path: style classification, color science, typography, motion architecture, visual hierarchy, surface/atmosphere, iconography, component character, copy alignment, brand identity, competitive positioning, source research. |
-| MOD-ART | `references/mod-art-direction.md` | Art direction engine: source research, anti-slop enforcement, visual craft (color, depth, texture, light, shape, composition), typography system, component design, interaction design, brand identity, psychology, audience analysis, platform tokens. |
-| MOD-SCOP | `references/mod-scope-context.md` | Two protocols: large-scope awareness (concept scaffold, pattern inventory, exhaustive scan, human verification gates) and ambiguity resolution (referential, spatial, implicit value disambiguation). Combined workflow. |
-| MOD-REST | `references/mod-restructuring.md` | 12-phase pipeline: archaeology, architecture mapping, structural diagnosis, debt triage, target design, migration plan, foundation, extract/relocate, rewire, decouple, consolidate, cleanup. 8 targeted operations (T1–T8). Verification gates. |
+| MOD-ART | `references/mod-art-direction.md` | Art direction engine: source research, anti-slop enforcement, visual craft, typography system, component design, interaction design, brand identity, psychology, audience analysis, platform tokens. |
+| MOD-SCOP | `references/mod-scope-context.md` | Large-scope awareness (concept scaffold, pattern inventory, exhaustive scan, verification gates) and ambiguity resolution (referential, spatial, implicit value disambiguation). |
+| MOD-REST | `references/mod-restructuring.md` | 12-phase restructuring pipeline. 8 targeted operations (T1–T8). Verification gates. |
+
+### Protocol references (orchestration work)
+
+| Protocol | File | When Loaded |
+|----------|------|-------------|
+| §SIM (simulation engine) | `references/sim-engine.md` | "simulate", "H5W", "as a user", "find issues", walkthroughs, 50 Questions, research |
+| §PRODUCT (full lifecycle) | `references/product-lifecycle.md` | "plan this", "business model", "monetize", "launch plan" |
+| §BUILD (from-scratch pipeline) | `references/build-protocol.md` | "build", "create", "from scratch", "new app" |
+| §DELIVER (CI/CD + APK + deploy) | `references/deliver-infrastructure.md` | "deploy", "build APK", "CI/CD", auto on missing delivery in §AUTO |
+| §OBSTACLE (MacGyver protocol) | `references/obstacle-protocol.md` | "I can't" / "how do I get" / on any phase wall — always loaded by §AUTO |
+| §META (self/skill audit) | `references/meta-protocol.md` | "improve the skill", "self-audit", "audit [skill]" |
+| §AUTO (autonomous agent) | `references/auto-mode.md` | literal `run H5W full autonomous mode` for FULL; literal `run H5W unchained autonomous mode` for UNCHAINED; "you decide", "handle it" for GUIDED |
+
+### Loading discipline
+
+- Module/protocol files are read **on demand**, not preloaded.
+- Use `Agent` subagent to load large reference files when possible — keeps
+  main context clean.
+- After unloading a reference, compact (see §AUTO Rule 5).
+- `§LAW`, `§FMT`, `§SRC`, `§REV`, `§VER`, `§DOC` live ONLY in this Chief
+  Guide. Modules and protocol files reference them; they do not redefine.

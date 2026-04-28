@@ -9,7 +9,7 @@ description: >
 
 > **MODULE: MOD-SCOP** — Scope awareness for the H5W unified system.
 >
-> **Invoked when:** Chief Guide §SIM.4 micro-H5W finds 3+ instances of the same
+> **Invoked when:** §SIM.4 (in references/sim-engine.md) micro-H5W finds 3+ instances of the same
 > pattern (§L.3 Pattern Repetition), or user requests "all X", "every Y",
 > "standardize Z", or any instruction with ambiguous spatial/referential targets.
 >
@@ -20,9 +20,9 @@ description: >
 > **After every fix from this module:** Chief Guide runs micro-H5W (§SIM.4).
 
 
-> **In §AUTO mode:** All `AskUserQuestion` calls and user-approval gates in this
+> **In §AUTO FULL or UNCHAINED:** All `AskUserQuestion` calls and user-approval gates in this
 > module become auto-decisions logged with `[AUTO-DECIDED]` tag in H5W-LOG.md.
-> Chief Guide §AUTO overrides any instruction below to stop and ask the user.
+> the §AUTO protocol (references/auto-mode.md) overrides any instruction below to stop and ask the user.
 ---
 
 # SCOPE_AND_CONTEXT.md

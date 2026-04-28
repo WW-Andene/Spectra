@@ -20,9 +20,9 @@ description: >
 > **After every restructuring operation:** Chief Guide runs micro-H5W (§SIM.4).
 
 
-> **In §AUTO mode:** All `AskUserQuestion` calls and user-approval gates in this
+> **In §AUTO FULL or UNCHAINED:** All `AskUserQuestion` calls and user-approval gates in this
 > module become auto-decisions logged with `[AUTO-DECIDED]` tag in H5W-LOG.md.
-> Chief Guide §AUTO overrides any instruction below to stop and ask the user.
+> the §AUTO protocol (references/auto-mode.md) overrides any instruction below to stop and ask the user.
 ---
 
 # MOD-REST — Live Restructuring
@@ -74,115 +74,78 @@ Key notes:
 > Chief Guide §LAW (12 Iron Laws) applies to ALL modules. These 10 laws
 > are ADDITIONAL rules specific to restructuring work.
 
-## IRON LAWS — Governing Rules for All Restructuring
+## §DOMAIN — RESTRUCTURING DOMAIN PRINCIPLES
 
-> **These are inviolable.** Every decision, every operation, every commit is tested against these laws. Violating any Iron Law is grounds for immediate rollback.
+> **Inherits Chief Guide §LAW (the 12 Iron Laws) verbatim.** Read Before
+> Act (§LAW 2), Bugs Before Refactors (§LAW 5), Identity Preservation
+> (§LAW 7), Reversibility Tiers (§LAW 9), Expansion Has Boundaries
+> (§LAW 10), Verify or Don't Claim (§LAW 12) all apply unchanged.
+>
+> The principles below are **additions** that only make sense at the
+> restructuring layer. They supplement Chief §LAW; they never override
+> it. Each cross-references the Chief Law it builds on.
 
-### Law 1 — UNDERSTAND BEFORE CHANGING
+### R1 — Atomicity (one operation, one commit) [extends §LAW 5, §LAW 8]
+Every restructuring change is atomic. One rename = one commit. One
+extraction = one commit. One move = one commit. The app MUST build and
+run after every single commit. If a commit breaks something, revert it —
+don't try to fix forward. Never combine restructuring with functional
+changes. *Violation indicator:* a commit contains both a file move AND a
+bug fix, or multiple unrelated moves.
 
-**Never restructure code you haven't fully read and understood.** This means:
-- Read every file that will be affected by the restructuring operation
-- Understand WHY the code is organized the way it is (§R1 Archaeology)
-- Identify hidden dependencies that aren't visible in imports (event listeners, global state, dynamic imports, string-based lookups, reflection)
-- If you don't understand something, ASK THE USER before touching it
+### R2 — Cascade verification [extends §LAW 12]
+Chief §LAW 12 requires re-reading after every fix. Restructuring extends
+this: after every operation, also verify (a) the app builds without
+errors, (b) all existing tests pass, (c) no circular dependencies were
+introduced, (d) every import path still resolves. Static analysis
+(§VER Stage 4) is the floor; actual build is preferred. *Violation
+indicator:* Claude proceeds to the next operation without running
+build/test.
 
-**Violation indicator:** Claude moves a file and something breaks because of a dependency Claude didn't see.
+### R3 — Preserve before restructure [extends §LAW 6 Feature Preservation]
+Never delete or overwrite without a safety net: git commit before each
+operation (revert point), re-export files at old paths when moving them
+(backwards compatibility), characterization tests for behavior about to
+be restructured, a Feature Preservation Ledger tracking what works.
+*Violation indicator:* a working feature breaks during restructuring
+because there was no test or re-export.
 
-### Law 2 — ONE OPERATION, ONE COMMIT
+### R4 — User approves the plan [hardens §LAW 9 Reversibility]
+Restructuring is structurally T2 minimum. Claude proposes; the user
+disposes. The Target Architecture (§R5) must be presented and approved
+before execution. The Migration Plan (§R6) must be reviewed before the
+first operation. Any restructuring that changes how the user interacts
+with the app (routes, navigation, visible behavior) requires explicit
+approval. If Claude discovers mid-execution that the plan needs to
+change, STOP and ask. *Violation indicator:* Claude restructures
+something the user didn't approve.
 
-**Every restructuring change is atomic.** One rename = one commit. One extraction = one commit. One move = one commit.
+### R5 — Concrete target architecture (restructuring-specific)
+Don't restructure toward a vague target. The Target Architecture (§R5
+in this module's pipeline) must be concrete: every module named, every
+boundary defined, every convention documented, every file placement
+decided. If you can't describe where something should go, you're not
+ready to move it. *Violation indicator:* Claude moves a file to a
+location not specified in the Target Architecture.
 
-- Each commit evolves the codebase from one valid state to another
-- The app MUST build and run after every single commit
-- If a commit breaks something, revert it — don't try to fix forward
-- Never combine restructuring with functional changes
+### R6 — Colocation over convention (restructuring-specific)
+Things that change together live together. A component's styles, tests,
+types, and helpers live next to it — never in a distant global folder.
+Feature-specific utilities live in the feature — not in a global
+`utils/`. Only genuinely shared code (used by 3+ features) goes in
+`shared/`. When in doubt, keep it colocated — you can always extract
+later. *Violation indicator:* Claude creates a global utility file for
+code used by only one feature.
 
-**Violation indicator:** A commit contains both a file move AND a bug fix, or multiple unrelated moves.
-
-### Law 3 — VERIFY AFTER EVERY OPERATION
-
-**After every restructuring operation, verify:**
-1. The app builds without errors
-2. All existing tests pass
-3. The affected feature works manually (if no tests exist)
-4. No circular dependencies were introduced
-5. Import paths resolve correctly
-
-**Violation indicator:** Claude proceeds to the next operation without running build/test.
-
-### Law 4 — PRESERVE BEFORE RESTRUCTURE
-
-**Never delete or overwrite without a safety net:**
-- Git commit before starting each operation (revert point)
-- Re-export files at old paths when moving files (backwards compatibility)
-- Characterization tests for behavior you're about to restructure
-- Feature Preservation Ledger tracking what works and must continue working
-
-**Violation indicator:** A working feature breaks during restructuring because there was no test or re-export.
-
-### Law 5 — THE USER APPROVES THE PLAN
-
-**Claude proposes. The user disposes.** Specifically:
-- The Target Architecture (§R5) must be presented and approved before execution
-- The Migration Plan (§R6) must be reviewed before the first operation
-- Any restructuring that changes how the user interacts with the app (routes, navigation, visible behavior) requires explicit approval
-- If Claude discovers mid-execution that the plan needs to change, STOP and ask
-
-**Violation indicator:** Claude restructures something the user didn't approve or wasn't informed about.
-
-### Law 6 — NEVER RESTRUCTURE INTO THE UNKNOWN
-
-**Don't restructure toward a vague target.** The Target Architecture (§R5) must be concrete:
-- Every module named
-- Every boundary defined
-- Every convention documented
-- Every file placement decided
-
-If you can't describe where something should go, you're not ready to move it.
-
-**Violation indicator:** Claude moves a file to a location not specified in the Target Architecture, or creates a module boundary that wasn't planned.
-
-### Law 7 — COLOCATION OVER CONVENTION
-
-**Things that change together live together.** When deciding where code belongs:
-- A component's styles, tests, types, and helpers live next to it — never in a distant global folder
-- Feature-specific utilities live in the feature — not in a global `utils/`
-- Only genuinely shared code (used by 3+ features) goes in `shared/`
-- When in doubt, keep it colocated — you can always extract later
-
-**Violation indicator:** Claude creates a global utility file for code used by only one feature.
-
-### Law 8 — NAMING IS ARCHITECTURE
-
-**Names must communicate structure.** Every file, folder, component, function, and variable name must tell the reader:
-- What it does (responsibility)
-- Where it belongs (domain/feature)
-- How it relates to other things (hierarchy)
-
-Unclear names cause future developers (including Claude) to put things in the wrong place, compounding structural degradation.
-
-**Violation indicator:** Claude creates a file called `helpers.ts` or `utils.ts` or `misc.ts` without a domain qualifier.
-
-### Law 9 — RESPECT THE EXISTING ARCHITECTURE
-
-**Restructuring is surgery, not demolition.** Specifically:
-- Preserve architectural systems that work (orbital patterns, design token systems, established conventions)
-- Make surgical changes — don't rewrite
-- If the user's existing patterns work but are inconsistent, UNIFY them toward the best existing pattern — don't invent a new one
-- When multiple conventions exist, the user chooses which one wins
-
-**Violation indicator:** Claude rewrites a working system because it prefers a different pattern.
-
-### Law 10 — STOP WHEN YOU'RE AHEAD
-
-**Restructuring has diminishing returns.** Know when to stop:
-- Cold code (unchanged in months) that works = leave it alone
-- Local debt with zero contagion = ignore it
-- Premature abstraction (extracting before patterns emerge) = don't do it
-- 80% improvement in structure is often better than 100% that takes 3× longer
-- If the user says "that's enough," it's enough
-
-**Violation indicator:** Claude restructures stable, rarely-changed code that nobody complained about.
+### R7 — Naming is architecture (restructuring-specific)
+Names must communicate structure. Every file, folder, component,
+function, and variable name must tell the reader what it does
+(responsibility), where it belongs (domain/feature), and how it relates
+to other things (hierarchy). Unclear names cause future developers
+(including Claude) to put things in the wrong place, compounding
+structural degradation. *Violation indicator:* Claude creates a file
+called `helpers.ts` or `utils.ts` or `misc.ts` without a domain
+qualifier.
 
 ---
 
