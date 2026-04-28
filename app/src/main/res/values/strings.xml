@@ -29,6 +29,7 @@
     <string name="perm_label_location">location</string>
     <string name="perm_label_bluetooth">Bluetooth</string>
     <string name="perm_label_ir">infrared</string>
+    <string name="camera_permission_required">Camera permission is required to learn IR commands by pointing a remote at the front camera.</string>
 
     <!-- Scanning -->
     <string name="scan_title">Scanning…</string>

@@ -37,4 +37,18 @@ Context health: ok
 Decision: continuing to cycle 2 (F-001 next, then medium-tier batch)
 ────────────────────────────
 
+- [ts] F-001 FIXED T1 [ui/screens/HomeFragment.kt + res/values/strings.xml] — fragment-owned permission launcher gating Scan — Verified: yes
+- [ts] F-007/F-008/F-009 FIXED T1 [ui/screens/HomeFragment.kt + ui/screens/MacroEditFragment.kt + ui/screens/LearnFragment.kt + res/values/strings.xml] — chip ripple, ContextCompat.getColor migration, '+ NEW MACRO' label, dialog literals → strings — Verified: yes
+- [ts] F-017 FIXED T1 [ui/screens/LearnFragment.kt] — disable OPEN REMOTE until commands present — Verified: yes
+- [ts] F-018 FIXED T1 [ui/screens/LearnFragment.kt] — sort layouts by command count desc, hint in title — Verified: yes
+- [ts] F-010 FIXED T1 [ui/screens/HomeFragment.kt + res/values/strings.xml] — wire statusMic/statusRf, long-press explanations — Verified: yes
+- [ts] F-014 FIXED T1 [ui/MainActivity.kt + res/values/strings.xml] — humanized permission denial toast — Verified: yes
+
+──── AUTO CHECKPOINT 2 ────
+Cycle: 2 | Files changed since CP1: 5 | Findings fixed since CP1: 7 (F-001, F-007, F-008, F-009, F-010, F-014, F-017, F-018)
+Total fixed: 14 | Queue remaining: 11
+Context health: ok
+Decision: continuing — remaining queue is mostly medium/low T1 fixes plus a couple of T2 dead-state cleanups
+────────────────────────────
+
 ### Handoff Log

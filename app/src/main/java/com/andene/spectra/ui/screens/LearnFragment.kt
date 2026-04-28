@@ -28,6 +28,23 @@ class LearnFragment : Fragment() {
 
     private val vm: MainViewModel by activityViewModels()
 
+    private var pendingPreviewView: PreviewView? = null
+    private val cameraPermissionLauncher = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        val pv = pendingPreviewView ?: return@registerForActivityResult
+        pendingPreviewView = null
+        if (granted) {
+            bindCameraPreview(pv)
+        } else {
+            android.widget.Toast.makeText(
+                requireContext(),
+                getString(R.string.camera_permission_required),
+                android.widget.Toast.LENGTH_LONG,
+            ).show()
+        }
+    }
+
     override fun onCreateView(inflater: LayoutInflater, c: ViewGroup?, s: Bundle?): View =
         inflater.inflate(R.layout.fragment_learn, c, false)
 
@@ -277,10 +294,17 @@ class LearnFragment : Fragment() {
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
             != PackageManager.PERMISSION_GRANTED
         ) {
-            requestPermissions(arrayOf(Manifest.permission.CAMERA), 100)
+            // Stash the preview view so the permission-result callback can
+            // resume binding once the user grants. The callback owns the
+            // single shared launcher.
+            pendingPreviewView = previewView
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
             return
         }
+        bindCameraPreview(previewView)
+    }
 
+    private fun bindCameraPreview(previewView: PreviewView) {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
         cameraProviderFuture.addListener({
             val cameraProvider = cameraProviderFuture.get()
