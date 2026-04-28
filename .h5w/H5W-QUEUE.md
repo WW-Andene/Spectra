@@ -35,4 +35,18 @@ Full §FMT detail in `H5W-FINDINGS.md`. This is the priority view.
 
 | # | ID | Decision Needed | Recommendation | Why T3 |
 |---|----|-----------------|----------------|--------|
-| - | F-004 | Persist mid-flow brute-force state across process death? | **Defer** — uncommon, complex (would require persisting a coroutine waypoint). Adds complexity for marginal gain. | Schema change to persist mid-flow state |
+| - | F-004 | Persist mid-flow brute-force state across process death? | **Defer permanently** — uncommon, complex (would require persisting a coroutine waypoint). Adds complexity for marginal gain. | Schema change to persist mid-flow state |
+
+### Cycle 2 (2026-04-28, post-CLAUDE.md autonomy)
+
+All previously-deferred enhancements resolved and pushed:
+
+| # | ID | Status | Commit |
+|---|------|--------|--------|
+| 26 | F-019 | FIXED T2 | macro-editor save/restore via Bundle |
+| 27 | F-022 | FIXED T2 | orchestrator privatized, three narrow facades added |
+| 28 | F-026 | FIXED T0 | word-token brandTokens/matchesBrand helpers |
+| 29 | F-028 | FIXED T1 | LearnFragment brand sorter migrated |
+| 30 | F-029 | FIXED T1 | IrCodeDatabase.lookup migrated |
+
+All clean, all tested where unit-testable. No new T3 surfaced.

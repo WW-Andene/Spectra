@@ -60,11 +60,44 @@ Decision: continuing — remaining queue is mostly medium/low T1 fixes plus a co
 - [ts] F-011 FIXED T1 [ui/screens/ResultsFragment.kt] — combine(activeDevice, phase) in ResultsFragment — Verified: yes
 - [ts] F-025 FIXED T1 [modules/rf/RfFingerprint.kt] — LocationManagerCompat.isLocationEnabled hint — Verified: yes
 
-──── AUTO CHECKPOINT 3 (TERMINATION) ────
+──── AUTO CHECKPOINT 3 (CYCLE 1 TERMINATION) ────
 Cycle: 3 | Total fixed: 22 | Queue remaining: 3 deferred (F-019/T2, F-022/T2, F-026/T0) + 1 T3 (F-004)
 Context health: ok
 Decision: terminating — queue is empty of actionable T0/T1/T2; T3 has defer recommendation; remaining are non-actionable enhancements
 H5W-REPORT.md written.
 ──────────────────────────────────────────
+
+## Session: 2026-04-28 (continued) — Cycle 2 — Mode: §AUTO Full (durable directive)
+
+User upgraded autonomy to "always continue, T0/T1/T2 without ask, T3 to log".
+CLAUDE.md captures this for future sessions. Reopened the deferred items.
+
+### Phase 4: Execute (cycle 2)
+
+- [ts] F-019 FIXED T2 [ui/screens/MacroEditFragment.kt] — onSaveInstanceState/restoreFromSaved with Unit-Separator-encoded steps — Verified: yes
+- [ts] F-022 FIXED T2 [ui/MainViewModel.kt + ui/screens/ResultsFragment.kt + ui/screens/LearnFragment.kt] — orchestrator privatized, narrow facades (orchestratorPhase, captureState, buildIrCameraAnalyzer) — Verified: yes (grep clean of vm.orchestrator)
+- [ts] F-026 FIXED T0 [modules/bruteforce/IrBruteForce.kt + new test BrandMatchTest.kt] — word-token brandTokens/matchesBrand helpers — Verified: yes (6 unit tests)
+
+### Phase 5: Verify + Expansion (cycle 2)
+
+- Micro-H5W F-019 → no new findings (LearnFragment / HomeFragment / ResultsFragment transient state already auto-saved by framework)
+- Micro-H5W F-022 → no new findings (vm.codeDatabase intentionally public — read-only data accessor, not module internals)
+- Micro-H5W F-026 → §L.3 matched 2 more substring callsites:
+  - F-028 [low T1] LearnFragment.showBrandPicker preorder
+  - F-029 [low T1] IrCodeDatabase.lookup filter
+  - 3+ instances → systematic fix per §SIM.4 §L.3 → both migrated to the
+    same brandTokens/matchesBrand helpers in one commit
+  - Re-grep confirmed no remaining lowercase().contains() in main code
+
+### Phase 6: Evolve (cycle 2)
+
+──── AUTO CHECKPOINT 4 (CYCLE 2 TERMINATION) ────
+Cycle: 4 (cycle 2 of session) | Fixes since cycle 1 close: 5 (F-019, F-022, F-026, F-028, F-029)
+Total fixes across both cycles: 27 | Queue remaining: 1 T3 (F-004 with defer recommendation)
+Context health: ok
+Decision: terminating — actionable queue truly empty; F-004 stays
+T3-blocked with the original recommendation; CLAUDE.md authorises future
+sessions to proceed under same autonomy when the queue refills.
+──────────────────────────────────────────────
 
 ### Handoff Log

@@ -134,5 +134,40 @@ app/src/main/res/values/strings.xml
    deferred enhancements and I'll do that follow-up cycle.
 
 ══════════════════════════════════════════
-SESSION END — 22 fixes applied, 1 T3 to resolve, branch pushed.
+SESSION END (CYCLE 1) — 22 fixes applied, 1 T3 to resolve, branch pushed.
+══════════════════════════════════════════
+
+---
+
+# Cycle 2 Addendum — 2026-04-28 (post-autonomy directive)
+
+User authorised always-on §AUTO via `CLAUDE.md`. The three previously-
+deferred enhancements were re-opened automatically:
+
+## Cycle 2 fixes (5)
+
+| ID | Sev | Tier | File(s) | Summary | Verified |
+|----|-----|------|---------|---------|----------|
+| F-019 | low | T2 | `MacroEditFragment.kt` | onSaveInstanceState + restore via Bundle; survives rotation + process death. | ✓ |
+| F-022 | medium | T2 | `MainViewModel.kt`, `ResultsFragment.kt`, `LearnFragment.kt` | orchestrator privatized; three narrow facades exposed (`orchestratorPhase`, `captureState`, `buildIrCameraAnalyzer`). | ✓ |
+| F-026 | low | T0 | `IrBruteForce.kt`, `BrandMatchTest.kt` (new) | word-token `brandTokens`/`matchesBrand` helpers in companion; 6 new unit tests. | ✓ |
+| F-028 | low | T1 | `LearnFragment.kt` | brand picker sort uses the new matcher (micro-H5W expansion of F-026). | ✓ |
+| F-029 | low | T1 | `IrCodeDatabase.kt` | DB lookup filter uses the new matcher. | ✓ |
+
+## Total across the session
+
+- **27 fixes applied** (22 cycle 1 + 5 cycle 2)
+- **1 T3 remaining** (F-004 — defer-permanently recommendation, no
+  action required)
+- **0 deferred enhancements** — the queue is genuinely empty
+
+## Termination
+
+Per `CLAUDE.md` §AUTO Full directive: queue is empty of actionable
+T0/T1/T2; T3 stands at one item with documented recommendation;
+context healthy. Cycle terminator triggered cleanly. Branch
+`claude/understand-project-ATKHd` is up to date on origin.
+
+══════════════════════════════════════════
+SESSION END — 27 fixes, branch pushed, queue empty.
 ══════════════════════════════════════════
