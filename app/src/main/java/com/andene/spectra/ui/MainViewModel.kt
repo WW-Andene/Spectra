@@ -198,8 +198,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     // ── Passive Scan ──────────────────────────────────────────
 
+    private var scanJob: kotlinx.coroutines.Job? = null
+
     fun startPassiveScan() {
-        viewModelScope.launch {
+        scanJob?.cancel()
+        scanJob = viewModelScope.launch {
             _isScanning.value = true
             _screen.value = Screen.SCANNING
             orchestrator.clearLog()
@@ -208,6 +211,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 orchestrator.scanPassive()
                 _activeDevice.value = orchestrator.discoveredDevice.value
                 _screen.value = Screen.RESULTS
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                // User cancelled — don't transition to RESULTS, leave them
+                // wherever they navigated to.
+                throw e
             } catch (e: SecurityException) {
                 _scanLog.value = _scanLog.value + "Permission denied: ${e.message}"
             } catch (e: Exception) {
@@ -216,6 +223,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _isScanning.value = false
             }
         }
+    }
+
+    fun cancelPassiveScan() {
+        scanJob?.cancel()
+        scanJob = null
     }
 
     // ── IR Camera Learning ────────────────────────────────────

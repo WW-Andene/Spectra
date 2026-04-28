@@ -34,6 +34,7 @@ class ScanningFragment : Fragment() {
         }
 
         btnCancel.setOnClickListener {
+            vm.cancelPassiveScan()
             vm.navigate(MainViewModel.Screen.HOME)
         }
     }
