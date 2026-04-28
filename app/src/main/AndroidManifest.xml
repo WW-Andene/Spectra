@@ -60,14 +60,32 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- Deep link: spectra://device/<id> opens the Remote screen
-                 with that device active. Used by share-and-resume flows
-                 where someone taps a saved profile link from chat / mail. -->
+            <!-- Deep links — three authorities under spectra://
+                 - device/<id>: open the Remote screen for that device
+                   (share-and-resume from chat / mail)
+                 - macro/<id>: run a macro without changing UI state
+                   (NFC tag triggers, B-007)
+                 - command/<deviceId>/<commandName>: fire one IR command
+                   stateless (NFC pinned to a single gesture, B-007) -->
             <intent-filter android:autoVerify="false">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="spectra" android:host="device" />
+                <data android:scheme="spectra" android:host="macro" />
+                <data android:scheme="spectra" android:host="command" />
+            </intent-filter>
+
+            <!-- NFC NDEF dispatch (B-007). When the phone is tapped on a
+                 tag containing one of our spectra:// URIs, the system
+                 fires NDEF_DISCOVERED here. Without the explicit NDEF
+                 filter Android falls through to the generic VIEW filter
+                 above which still works, but registering NDEF gives us
+                 priority over apps that registered a broader URI scope. -->
+            <intent-filter>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="spectra" />
             </intent-filter>
         </activity>
 

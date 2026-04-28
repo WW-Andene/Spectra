@@ -380,12 +380,14 @@ class HomeFragment : Fragment() {
                         .setItems(arrayOf(
                             getString(R.string.action_run),
                             getString(R.string.action_edit),
+                            getString(R.string.action_copy_nfc_uri),
                             getString(R.string.action_delete),
                         )) { _, which ->
                             when (which) {
                                 0 -> vm.runMacro(macro.id)
                                 1 -> vm.openMacroEditor(macro)
-                                2 -> AlertDialog.Builder(requireContext())
+                                2 -> copyMacroNfcUri(macro)
+                                3 -> AlertDialog.Builder(requireContext())
                                     .setMessage(getString(R.string.confirm_delete_macro, macro.name))
                                     .setPositiveButton(R.string.action_delete) { _, _ -> vm.deleteMacro(macro.id) }
                                     .setNegativeButton(R.string.action_cancel_dialog, null)
@@ -495,6 +497,25 @@ class HomeFragment : Fragment() {
 
     private fun toast(msg: String) {
         android.widget.Toast.makeText(requireContext(), msg, android.widget.Toast.LENGTH_LONG).show()
+    }
+
+    /**
+     * B-007 phase 2 (lite): copy the macro's NFC trigger URI to the
+     * clipboard so the user can write it to a tag with any existing
+     * NFC writer app (NFC Tools, TagWriter, etc.). A native in-app
+     * tag-write flow is queued for later — this gets users 90% of
+     * the value with zero new code paths.
+     */
+    private fun copyMacroNfcUri(macro: Macro) {
+        val uri = "spectra://macro/${macro.id}"
+        val cm = requireContext().getSystemService(android.content.Context.CLIPBOARD_SERVICE)
+            as android.content.ClipboardManager
+        cm.setPrimaryClip(android.content.ClipData.newPlainText("Spectra macro URI", uri))
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.nfc_uri_dialog_title)
+            .setMessage(getString(R.string.nfc_uri_dialog_message_format, uri))
+            .setPositiveButton(R.string.action_ok_dialog, null)
+            .show()
     }
 
     /**

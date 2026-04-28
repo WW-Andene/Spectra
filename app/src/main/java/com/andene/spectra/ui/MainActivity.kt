@@ -134,26 +134,65 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * spectra://device/<id> → open Remote with that device active.
-     * The URI authority is "device" (manifest-pinned); the first path
-     * segment is the device id. Defers to MainViewModel.openDeviceById
-     * which surfaces a toast when the id isn't known.
+     * spectra:// URI handler. Three authorities (B-007 adds the second
+     * and third):
+     *
+     *   spectra://device/<id>
+     *     Open Remote with that device active. Used by share-and-resume
+     *     flows (saved-profile share-link from chat / mail).
+     *
+     *   spectra://macro/<id>
+     *     Run the named macro. Used by NFC tag triggers — a sticker on
+     *     the wall encodes spectra://macro/<uuid> and the user taps the
+     *     phone to it. We don't navigate anywhere; the running-macro
+     *     banner on Home shows progress.
+     *
+     *   spectra://command/<deviceId>/<commandName>
+     *     Fire one IR command. Used by NFC tags pinned to specific
+     *     gestures ("tap to power on TV"). Same no-navigation
+     *     behaviour as macro.
+     *
+     * All paths wait up to 2 s for the saved-devices flow to populate
+     * because SpectraApp.appScope's loadKnownDevices coroutine runs
+     * async from onCreate. Empty after timeout falls through to the
+     * relevant viewmodel method's "not found" toast.
      */
     private fun handleDeepLink(intent: android.content.Intent?) {
         val uri = intent?.data ?: return
         if (uri.scheme != "spectra") return
-        if (uri.host != "device") return
-        val deviceId = uri.pathSegments.firstOrNull() ?: return
 
-        // Saved devices load asynchronously on cold-start (SpectraApp's
-        // appScope coroutine). Wait up to 2 s for the first non-empty
-        // emission then attempt the open. Empty after timeout falls
-        // through to openDeviceById's "Device not found" toast.
-        lifecycleScope.launch {
-            kotlinx.coroutines.withTimeoutOrNull(2_000) {
-                vm.savedDevices.first { it.isNotEmpty() }
+        when (uri.host) {
+            "device" -> {
+                val deviceId = uri.pathSegments.firstOrNull() ?: return
+                lifecycleScope.launch {
+                    kotlinx.coroutines.withTimeoutOrNull(2_000) {
+                        vm.savedDevices.first { it.isNotEmpty() }
+                    }
+                    vm.openDeviceById(deviceId)
+                }
             }
-            vm.openDeviceById(deviceId)
+            "macro" -> {
+                val macroId = uri.pathSegments.firstOrNull() ?: return
+                lifecycleScope.launch {
+                    kotlinx.coroutines.withTimeoutOrNull(2_000) {
+                        vm.macros.first { it.isNotEmpty() }
+                    }
+                    vm.runMacro(macroId)
+                }
+            }
+            "command" -> {
+                val deviceId = uri.pathSegments.getOrNull(0) ?: return
+                val commandName = uri.pathSegments.getOrNull(1) ?: return
+                lifecycleScope.launch {
+                    kotlinx.coroutines.withTimeoutOrNull(2_000) {
+                        vm.savedDevices.first { it.isNotEmpty() }
+                    }
+                    // Stateless fire — sendCommandTo doesn't change the UI's
+                    // active-device or screen, so an NFC tap doesn't drag
+                    // the user out of whatever they were doing.
+                    vm.sendCommandTo(deviceId, commandName)
+                }
+            }
         }
     }
 

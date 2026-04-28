@@ -592,6 +592,30 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Stateless variant of [sendCommand] — fire a named command on a
+     * specific device id without changing UI state. Used by the
+     * spectra://command/<deviceId>/<commandName> deep link (NFC
+     * triggers, tasker plugins) where the user wants the IR burst
+     * but doesn't want to be navigated into the Remote screen.
+     *
+     * Cold-process safety: ensures the IR profile is registered with
+     * IrControl by reloading from the repository if needed. Same
+     * pattern as WidgetCommandReceiver and the QS tile.
+     */
+    fun sendCommandTo(deviceId: String, commandName: String) {
+        viewModelScope.launch {
+            if (orchestrator.control.devices.value[deviceId] == null) {
+                val device = repository.load(deviceId) ?: run {
+                    emitToast("Device not found")
+                    return@launch
+                }
+                orchestrator.control.saveDevice(device)
+            }
+            orchestrator.control.sendCommand(deviceId, commandName)
+        }
+    }
+
     fun sendRepeated(commandName: String, count: Int = 3) {
         val deviceId = _activeDevice.value?.id ?: return
         viewModelScope.launch {

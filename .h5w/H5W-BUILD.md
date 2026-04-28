@@ -38,8 +38,7 @@ camera capture, RF discovery currently dead-ending in the matcher).
 | B-005 | Scheduled / timed commands | 2 — schedule editor UI | TODO | cron-lite picker |
 | B-006 | Custom remote layouts | 1 — drag-drop button arrangement | TODO | per-device layout JSON |
 | B-006 | Custom remote layouts | 2 — long-press to add/remove buttons | TODO | uses existing IrControl.Commands |
-| B-007 | NFC tag triggers | 1 — read tag → run macro | TODO | manifest already declares NFC |
-| B-007 | NFC tag triggers | 2 — write tag from macro detail | TODO | foreground dispatch |
+| B-007 | NFC tag triggers | 2 — native in-app tag write (foreground dispatch) | TODO | bigger NFC code path; clipboard-copy ships in phase 1 lite |
 | B-009 | Community fingerprint share | 1 — anonymized export format | TODO | strips BSSID, keeps brand+ssid prefix |
 | B-009 | Community fingerprint share | 2 — opt-in upload endpoint | TODO | requires backend; queued |
 | B-010 | Auto-discover-and-control | 1 — unified room view | TODO | combines RF + matcher + IR registry |
@@ -53,7 +52,8 @@ camera capture, RF discovery currently dead-ending in the matcher).
 | B-001 | Library backup / restore | 1 (repo + viewmodel) + 2+3 (UI + SAF + dialog/toast) | `74ee4df`, `3712eff` |
 | B-002 | Home screen widget | 1 — 1×1 power tile | `1dc241e` |
 | B-003 | Quick Settings tile | 1 — POWER on primary device | `10a76b5` |
-| B-008 | Universal "all off" | 1+2 — sequence builder + home menu action | (this commit) |
+| B-008 | Universal "all off" | 1+2 — sequence builder + home menu action | `0050d3d` |
+| B-007 | NFC tag triggers | 1 — read tag URI + clipboard-write affordance | (this commit) |
 
 ---
 

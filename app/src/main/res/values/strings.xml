@@ -62,6 +62,12 @@
     <!-- All-off macro (B-008) -->
     <string name="action_all_off">All off</string>
 
+    <!-- NFC tag triggers (B-007) -->
+    <string name="action_copy_nfc_uri">Copy NFC trigger URI</string>
+    <string name="action_ok_dialog">OK</string>
+    <string name="nfc_uri_dialog_title">NFC trigger URI</string>
+    <string name="nfc_uri_dialog_message_format">Copied to clipboard:\n\n%1$s\n\nUse any NFC writer app (e.g. NFC Tools) to encode this URI to a tag. Tapping the tag will run this macro.</string>
+
     <!-- Runtime-formatted strings — moved out of Kotlin code -->
     <string name="device_default_label">Device</string>
     <string name="device_unnamed_label">Unnamed Device</string>
