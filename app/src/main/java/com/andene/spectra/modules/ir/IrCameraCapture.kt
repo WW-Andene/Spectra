@@ -372,6 +372,16 @@ class IrCameraCapture(private val context: Context) {
             com.andene.spectra.modules.ir.protocols.SamsungCodec.decode(timings)?.packed()
         IrProtocol.LG ->
             com.andene.spectra.modules.ir.protocols.LgCodec.decode(timings)?.packed()
+        IrProtocol.SIRC_12, IrProtocol.SIRC_15, IrProtocol.SIRC_20 ->
+            com.andene.spectra.modules.ir.protocols.SonyCodec.decode(timings)?.let { decoded ->
+                // Only round-trip via packed-code for SIRC-12 — the
+                // common case. SIRC-15 / SIRC-20 captures fall back to
+                // rawTimings replay until SonyCodec.encodeFromPacked
+                // tracks the variant on the IrCommand. attemptProtocolDecode
+                // labels them all SIRC_12 currently anyway.
+                if (decoded.variant == com.andene.spectra.modules.ir.protocols.SonyCodec.Variant.SIRC_12)
+                    decoded.packed() else null
+            }
         else -> null
     }
 

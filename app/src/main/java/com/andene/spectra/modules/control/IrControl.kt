@@ -123,7 +123,9 @@ class IrControl(private val context: Context) {
         val device = _devices.value[deviceId]
         val command = device?.irProfile?.commands?.get(commandName)
             ?: return@withContext false
-        val carrier = device.irProfile?.carrierFrequency ?: DEFAULT_CARRIER
+        val carrier = protocolCarrier(command)
+            ?: device.irProfile?.carrierFrequency
+            ?: DEFAULT_CARRIER
 
         val timings = synthesizeOrFallback(command)
         // Hold the mutex across the whole repeat sequence so a single
@@ -160,6 +162,7 @@ class IrControl(private val context: Context) {
         }
 
         val carrier = carrierFreqOverride
+            ?: protocolCarrier(command)
             ?: _devices.value[deviceId]?.irProfile?.carrierFrequency
             ?: DEFAULT_CARRIER
 
@@ -218,10 +221,26 @@ class IrControl(private val context: Context) {
                     return com.andene.spectra.modules.ir.protocols.SamsungCodec.encodeFromPacked(code)
                 IrProtocol.LG ->
                     return com.andene.spectra.modules.ir.protocols.LgCodec.encodeFromPacked(code)
+                IrProtocol.SIRC_12 ->
+                    return com.andene.spectra.modules.ir.protocols.SonyCodec.encodeFromPacked(code)
                 else -> Unit
             }
         }
         return command.rawTimings
+    }
+
+    /**
+     * Per-protocol carrier-frequency override. Sony SIRC remotes use
+     * 40 kHz; everyone else in our codec set uses 38 kHz. The user's
+     * IrProfile.carrierFrequency is kept as the primary hint, but for
+     * protocols with a fixed standard we trust the spec — emitting a
+     * 38 kHz Sony burst at the device's expected 40 kHz pin is the
+     * single most-common reason "I learned the code but it doesn't
+     * work" reports surface in IR remote apps.
+     */
+    private fun protocolCarrier(command: IrCommand): Int? = when (command.protocol) {
+        IrProtocol.SIRC_12, IrProtocol.SIRC_15, IrProtocol.SIRC_20 -> 40000
+        else -> null
     }
 
     object Commands {
