@@ -114,6 +114,194 @@
         "input":    { "address": 0, "command": 4 },
         "menu":     { "address": 0, "command": 32 }
       }
+    },
+    {
+      "brand": "Samsung",
+      "model": "TV (Native SAMSUNG protocol)",
+      "deviceType": "TV",
+      "protocol": "SAMSUNG",
+      "carrierFrequency": 38000,
+      "commands": {
+        "power":    { "address": 7, "command": 2 },
+        "vol_up":   { "address": 7, "command": 7 },
+        "vol_down": { "address": 7, "command": 11 },
+        "ch_up":    { "address": 7, "command": 18 },
+        "ch_down":  { "address": 7, "command": 16 },
+        "mute":     { "address": 7, "command": 15 },
+        "input":    { "address": 7, "command": 1 }
+      }
+    },
+    {
+      "brand": "Samsung",
+      "model": "Soundbar (HW-Q series)",
+      "deviceType": "SPEAKER",
+      "protocol": "SAMSUNG",
+      "carrierFrequency": 38000,
+      "commands": {
+        "power":    { "address": 1, "command": 2 },
+        "vol_up":   { "address": 1, "command": 7 },
+        "vol_down": { "address": 1, "command": 11 },
+        "mute":     { "address": 1, "command": 15 },
+        "input":    { "address": 1, "command": 1 }
+      }
+    },
+    {
+      "brand": "Sony",
+      "model": "Blu-ray Player (SIRC, dev 26)",
+      "deviceType": "SET_TOP_BOX",
+      "protocol": "SIRC_12",
+      "carrierFrequency": 40000,
+      "commands": {
+        "power":    { "address": 26, "command": 21 },
+        "play":     { "address": 26, "command": 50 },
+        "pause":    { "address": 26, "command": 57 },
+        "stop":     { "address": 26, "command": 56 },
+        "ok":       { "address": 26, "command": 101 },
+        "up":       { "address": 26, "command": 116 },
+        "down":     { "address": 26, "command": 117 },
+        "left":     { "address": 26, "command": 52 },
+        "right":    { "address": 26, "command": 51 },
+        "menu":     { "address": 26, "command": 96 },
+        "back":     { "address": 26, "command": 99 }
+      }
+    },
+    {
+      "brand": "Sony",
+      "model": "AV Receiver (SIRC, dev 16)",
+      "deviceType": "SPEAKER",
+      "protocol": "SIRC_12",
+      "carrierFrequency": 40000,
+      "commands": {
+        "power":    { "address": 16, "command": 21 },
+        "vol_up":   { "address": 16, "command": 18 },
+        "vol_down": { "address": 16, "command": 19 },
+        "mute":     { "address": 16, "command": 20 },
+        "input":    { "address": 16, "command": 37 }
+      }
+    },
+    {
+      "brand": "LG",
+      "model": "Soundbar (NEC, addr 4)",
+      "deviceType": "SPEAKER",
+      "protocol": "NEC",
+      "carrierFrequency": 38000,
+      "commands": {
+        "power":    { "address": 4, "command": 211 },
+        "vol_up":   { "address": 4, "command": 2 },
+        "vol_down": { "address": 4, "command": 3 },
+        "mute":     { "address": 4, "command": 9 },
+        "input":    { "address": 4, "command": 11 }
+      }
+    },
+    {
+      "brand": "Roku",
+      "model": "Streaming Box (NEC, addr 87)",
+      "deviceType": "SET_TOP_BOX",
+      "protocol": "NEC",
+      "carrierFrequency": 38000,
+      "commands": {
+        "power":    { "address": 87, "command": 2 },
+        "ok":       { "address": 87, "command": 13 },
+        "up":       { "address": 87, "command": 9 },
+        "down":     { "address": 87, "command": 10 },
+        "left":     { "address": 87, "command": 11 },
+        "right":    { "address": 87, "command": 12 },
+        "back":     { "address": 87, "command": 14 },
+        "home":     { "address": 87, "command": 15 },
+        "play":     { "address": 87, "command": 19 },
+        "pause":    { "address": 87, "command": 19 }
+      }
+    },
+    {
+      "brand": "Yamaha",
+      "model": "AV Receiver (NEC, addr 122)",
+      "deviceType": "SPEAKER",
+      "protocol": "NEC",
+      "carrierFrequency": 38000,
+      "commands": {
+        "power":    { "address": 122, "command": 30 },
+        "vol_up":   { "address": 122, "command": 26 },
+        "vol_down": { "address": 122, "command": 27 },
+        "mute":     { "address": 122, "command": 156 },
+        "input":    { "address": 122, "command": 78 }
+      }
+    },
+    {
+      "brand": "Onkyo",
+      "model": "AV Receiver (NEC, addr 4)",
+      "deviceType": "SPEAKER",
+      "protocol": "NEC",
+      "carrierFrequency": 38000,
+      "commands": {
+        "power":    { "address": 4, "command": 211 },
+        "vol_up":   { "address": 4, "command": 64 },
+        "vol_down": { "address": 4, "command": 65 },
+        "mute":     { "address": 4, "command": 38 },
+        "input":    { "address": 4, "command": 32 }
+      }
+    },
+    {
+      "brand": "Panasonic",
+      "model": "TV (Kaseikyo, prebaked power)",
+      "deviceType": "TV",
+      "protocol": "PANASONIC",
+      "carrierFrequency": 38000,
+      "commands": {
+        "power": {
+          "timings": [
+            3500, 1750,
+            502, 390, 502, 390, 502, 1244, 502, 390,
+            502, 390, 502, 390, 502, 390, 502, 390,
+            502, 390, 502, 390, 502, 390, 502, 390,
+            502, 1244, 502, 390, 502, 390, 502, 390,
+            502, 390, 502, 390, 502, 1244, 502, 390,
+            502, 390, 502, 390, 502, 390, 502, 390,
+            502, 1244, 502, 1244, 502, 1244, 502, 1244,
+            502, 1244, 502, 1244, 502, 390, 502, 390,
+            502, 390, 502, 390, 502, 390, 502, 390,
+            502, 390, 502, 390, 502, 1244, 502, 1244,
+            502
+          ]
+        }
+      }
+    },
+    {
+      "brand": "Sharp",
+      "model": "TV (prebaked power)",
+      "deviceType": "TV",
+      "protocol": "SHARP",
+      "carrierFrequency": 38000,
+      "commands": {
+        "power": {
+          "timings": [
+            320, 680, 320, 1680, 320, 680, 320, 680,
+            320, 680, 320, 1680, 320, 680, 320, 1680,
+            320, 680, 320, 680, 320, 680, 320, 680,
+            320, 1680, 320, 680, 320, 43000,
+            320, 680, 320, 1680, 320, 680, 320, 680,
+            320, 680, 320, 1680, 320, 1680, 320, 680,
+            320, 1680, 320, 1680, 320, 1680, 320, 1680,
+            320, 680, 320, 1680, 320
+          ]
+        }
+      }
+    },
+    {
+      "brand": "Apple",
+      "model": "Apple TV (Aluminum NEC, addr 238)",
+      "deviceType": "SET_TOP_BOX",
+      "protocol": "NEC",
+      "carrierFrequency": 38000,
+      "commands": {
+        "power":    { "address": 238, "command": 95 },
+        "ok":       { "address": 238, "command": 92 },
+        "up":       { "address": 238, "command": 80 },
+        "down":     { "address": 238, "command": 48 },
+        "left":     { "address": 238, "command": 16 },
+        "right":    { "address": 238, "command": 224 },
+        "menu":     { "address": 238, "command": 64 },
+        "play":     { "address": 238, "command": 250 }
+      }
     }
   ]
 }
