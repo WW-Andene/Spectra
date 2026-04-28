@@ -29,12 +29,10 @@ camera capture, RF discovery currently dead-ending in the matcher).
 
 | ID | Feature | Phase | Status | Notes |
 |----|---------|-------|--------|-------|
-| B-207 | Brute-force whole-remote | 1 | TODO | after POWER hit, sweep VOL/CH/etc. on same protocol |
+| B-207 | Brute-force whole-remote | DEFERRED | bundled-DB picker covers the same need without per-button sweep |
 | B-211 | BLE smart-bulb control | 1 | TODO | GATT write for common smart-bulb services |
-| B-212 | NFC P2P profile share | 1 | TODO | tap two phones to exchange device profiles |
+| B-212 | NFC P2P profile share | DEFERRED | Android Beam removed in API 33+; NFC tag capacity (~500 bytes) too small for typical IR-with-rawTimings profile; clipboard share covers the device-to-device path |
 | B-213 | Custom remote layouts | 1 | TODO | drag-drop button arrangement, per-device JSON |
-| B-214 | Onboarding tutorial | 1 | TODO | first-launch contextual hints |
-| B-215 | Rooms / zones | 1 | TODO | flat list → grouped library |
 | B-101 | Brute-force smart ordering + auto-confirm | 2 — category-hint ordering + bulk-test option | TODO | adds category metadata to POWER_CODES |
 | B-002 | Home screen widget | 4 — macro chips on multi-cell widget | TODO | bigger scope: multi-tile RemoteViews |
 | B-004 | Smart-home control over RF | 1 — BLE write to discovered devices | TODO | leverages existing RfFingerprint |
@@ -75,7 +73,8 @@ camera capture, RF discovery currently dead-ending in the matcher).
 | B-205 | Panasonic codec (Kaseikyo, 48-bit, vendor-aware) | `2c6c218` |
 | B-206 | RC6 mode 0 codec (Manchester) | `9926af9` |
 | B-208 | Acoustic+EM matcher tiebreakers | `08c3f48` |
-| B-209 / B-210 | Network control architecture: Roku ECP + LAN IR bridge | (this commit) |
+| B-209 / B-210 | Network control architecture: Roku ECP + LAN IR bridge | `216e357` |
+| B-214 + B-215 | First-launch onboarding + room labels with filter chips | (this commit) |
 
 ---
 

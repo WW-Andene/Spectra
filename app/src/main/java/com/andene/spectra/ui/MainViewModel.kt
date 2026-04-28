@@ -330,6 +330,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     /** B-209/B-210: set or clear the device's non-IR control endpoint.
      *  Pass null to clear and revert to IR-only. */
+    /** B-215: set or clear a device's room label. */
+    fun setRoom(deviceId: String, room: String?) {
+        val device = _savedDevices.value.firstOrNull { it.id == deviceId } ?: return
+        val updated = device.copy(room = room?.takeIf { it.isNotBlank() })
+        orchestrator.control.saveDevice(updated)
+        viewModelScope.launch {
+            saveDeviceWithFeedback(updated)
+            loadSavedDevices()
+        }
+    }
+
+    /** Currently-applied room filter on the home device list (B-215).
+     *  Null = "All rooms". */
+    private val _roomFilter = MutableStateFlow<String?>(null)
+    val roomFilter: StateFlow<String?> = _roomFilter
+
+    fun selectRoomFilter(room: String?) {
+        _roomFilter.value = room
+    }
+
     fun setControlEndpoint(deviceId: String, endpoint: String?) {
         val device = _savedDevices.value.firstOrNull { it.id == deviceId } ?: return
         val updated = device.copy(controlEndpoint = endpoint?.takeIf { it.isNotBlank() })

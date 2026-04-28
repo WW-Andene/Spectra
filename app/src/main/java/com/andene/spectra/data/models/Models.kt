@@ -23,6 +23,11 @@ data class DeviceProfile(
      *  Free-form so future protocols can be added without a model
      *  schema migration. The control facade parses the prefix. */
     val controlEndpoint: String? = null,
+    /** Optional room / zone label (B-215). Devices with the same
+     *  string group together in the Home device list and macro
+     *  pickers. Null means "Unassigned". Free-form so users can
+     *  write whatever ("Living Room", "Bedroom", "Kids", etc.). */
+    val room: String? = null,
     val confidence: Float = 0f, // 0.0 - 1.0 combined confidence
     val discoveredAt: Long = System.currentTimeMillis()
 )

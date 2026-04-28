@@ -163,6 +163,18 @@
     <string name="endpoint_hint">e.g. roku:http://192.168.1.42:8060</string>
     <string name="endpoint_help">Lets the app control this device over LAN instead of IR.\n\nFormats:\n• roku:http://&lt;ip&gt;:8060 — Roku ECP\n• bridge:http://&lt;ip&gt;:8080/ir — Spectra IR bridge\n\nLeave blank to use IR only.</string>
     <string name="endpoint_clear">Clear</string>
+
+    <!-- First-launch onboarding (B-214) -->
+    <string name="onboarding_title">Welcome to Spectra</string>
+    <string name="onboarding_message">Spectra identifies and controls electronic devices using four signals at once:\n\n• IR — sends infrared remote codes via your phone\'s blaster, learns codes by pointing a remote at the front camera\n• MIC — listens for coil whine and other acoustic fingerprints\n• RF — finds Wi-Fi / Bluetooth / mDNS devices nearby\n• EM — reads the magnetic field around the device\n\nTap SCAN NEARBY DEVICE while holding your phone 5–30 cm from the target. After a scan you can name the device, learn its remote, or pick a layout from the bundled database.</string>
+    <string name="onboarding_got_it">Got it</string>
+    <string name="onboarding_show_later">Show later</string>
+
+    <!-- Rooms / zones (B-215) -->
+    <string name="action_set_room">Set room</string>
+    <string name="room_dialog_title">Room</string>
+    <string name="room_hint">e.g. Living Room, Bedroom</string>
+    <string name="room_filter_all">All</string>
     <string name="macro_discard_changes_message">Discard unsaved changes to this macro?</string>
     <string name="action_discard">Discard</string>
     <string name="action_keep_editing">Keep editing</string>

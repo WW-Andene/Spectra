@@ -256,7 +256,24 @@
         android:textSize="13sp"
         android:textAllCaps="true"
         android:letterSpacing="0.1"
-        android:layout_marginBottom="12dp" />
+        android:layout_marginBottom="8dp" />
+
+    <!-- Room filter chips (B-215). Only visible when ≥2 distinct
+         rooms exist among saved devices. -->
+    <HorizontalScrollView
+        android:id="@+id/roomFilterScroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="none"
+        android:layout_marginBottom="8dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:id="@+id/roomFilterChips"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" />
+    </HorizontalScrollView>
 
     <!-- Device list -->
     <androidx.recyclerview.widget.RecyclerView

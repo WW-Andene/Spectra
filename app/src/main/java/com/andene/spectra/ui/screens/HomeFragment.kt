@@ -86,6 +86,33 @@ class HomeFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, c: ViewGroup?, s: Bundle?): View =
         inflater.inflate(R.layout.fragment_home, c, false)
 
+    /**
+     * B-214 onboarding: show a welcome dialog on the first launch
+     * explaining what the app does and how to use it. Stored under
+     * a SharedPreferences flag so subsequent launches stay clean.
+     * Triggered once after onViewCreated runs, deferred via post()
+     * so the home screen's status dots and device list have rendered
+     * underneath the dialog.
+     */
+    private fun maybeShowOnboarding(view: View) {
+        val prefs = requireContext().getSharedPreferences(PREFS_ONBOARDING, android.content.Context.MODE_PRIVATE)
+        if (prefs.getBoolean(KEY_ONBOARDED, false)) return
+        view.post {
+            // Re-check inside post() — fragment may have been torn down
+            // between onViewCreated and the post running.
+            if (!isAdded) return@post
+            AlertDialog.Builder(requireContext())
+                .setTitle(R.string.onboarding_title)
+                .setMessage(R.string.onboarding_message)
+                .setPositiveButton(R.string.onboarding_got_it) { _, _ ->
+                    prefs.edit().putBoolean(KEY_ONBOARDED, true).apply()
+                }
+                .setNegativeButton(R.string.onboarding_show_later, null)
+                .setCancelable(false)
+                .show()
+        }
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val btnScan = view.findViewById<Button>(R.id.btnScan)
         val deviceList = view.findViewById<RecyclerView>(R.id.deviceList)
@@ -115,13 +142,15 @@ class HomeFragment : Fragment() {
                     .setTitle(device.name ?: getString(R.string.device_default_label))
                     .setItems(arrayOf(
                         getString(R.string.action_open_remote_short),
+                        getString(R.string.action_set_room),
                         getString(R.string.action_set_network_endpoint),
                         getString(R.string.action_delete),
                     )) { _, which ->
                         when (which) {
                             0 -> vm.selectDevice(device)
-                            1 -> showNetworkEndpointDialog(device)
-                            2 -> vm.deleteDevice(device.id)
+                            1 -> showRoomDialog(device)
+                            2 -> showNetworkEndpointDialog(device)
+                            3 -> vm.deleteDevice(device.id)
                         }
                     }
                     .show()
@@ -131,12 +160,24 @@ class HomeFragment : Fragment() {
         deviceList.layoutManager = LinearLayoutManager(requireContext())
         deviceList.adapter = adapter
 
+        // B-215: combine devices + room filter so the list re-renders
+        // when either changes. Filter chips above the list let the user
+        // limit display to one room.
+        val roomFilterScroll = view.findViewById<View>(R.id.roomFilterScroll)
+        val roomFilterChips = view.findViewById<LinearLayout>(R.id.roomFilterChips)
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                vm.savedDevices.collect { devices ->
-                    adapter.submitList(devices)
-                    emptyState.visibility = if (devices.isEmpty()) View.VISIBLE else View.GONE
-                    deviceList.visibility = if (devices.isEmpty()) View.GONE else View.VISIBLE
+                kotlinx.coroutines.flow.combine(vm.savedDevices, vm.roomFilter) { d, r -> d to r }
+                    .collect { (devices, roomFilter) ->
+                        val rooms = devices.mapNotNull { it.room }.distinct().sorted()
+                        renderRoomFilterChips(roomFilterChips, rooms, roomFilter)
+                        roomFilterScroll.visibility =
+                            if (rooms.size >= 2) View.VISIBLE else View.GONE
+                        val filtered = if (roomFilter == null) devices
+                            else devices.filter { it.room == roomFilter }
+                        adapter.submitList(filtered)
+                        emptyState.visibility = if (filtered.isEmpty()) View.VISIBLE else View.GONE
+                        deviceList.visibility = if (filtered.isEmpty()) View.GONE else View.VISIBLE
                 }
             }
         }
@@ -306,6 +347,8 @@ class HomeFragment : Fragment() {
                 }
             }
         }
+
+        maybeShowOnboarding(view)
     }
 
     private fun hasPermission(name: String) =
@@ -604,6 +647,83 @@ class HomeFragment : Fragment() {
             .show()
     }
 
+    /**
+     * B-215: render room filter chips. Always includes an "All" chip
+     * that clears the filter; one chip per distinct non-null room.
+     * Selected chip gets the accent fill; others stay subdued.
+     */
+    private fun renderRoomFilterChips(
+        container: LinearLayout,
+        rooms: List<String>,
+        selected: String?,
+    ) {
+        container.removeAllViews()
+        val pad = (12 * resources.displayMetrics.density).toInt()
+        val gap = (4 * resources.displayMetrics.density).toInt()
+        val ctx = requireContext()
+        val accentBg = androidx.core.content.ContextCompat.getColor(ctx, R.color.accent_primary)
+        val mutedBg = androidx.core.content.ContextCompat.getColor(ctx, R.color.bg_card_elevated)
+        val textOn = androidx.core.content.ContextCompat.getColor(ctx, R.color.bg_primary)
+        val textOff = androidx.core.content.ContextCompat.getColor(ctx, R.color.text_secondary)
+
+        fun addChip(label: String, isSelected: Boolean, onTap: () -> Unit) {
+            val chip = TextView(ctx).apply {
+                text = label
+                textSize = 12f
+                setPadding(pad, pad / 2, pad, pad / 2)
+                setBackgroundColor(if (isSelected) accentBg else mutedBg)
+                setTextColor(if (isSelected) textOn else textOff)
+                setOnClickListener { onTap() }
+            }
+            val lp = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+            ).apply { rightMargin = gap }
+            chip.layoutParams = lp
+            container.addView(chip)
+        }
+
+        addChip(getString(R.string.room_filter_all), selected == null) {
+            vm.selectRoomFilter(null)
+        }
+        for (room in rooms) {
+            addChip(room, selected == room) { vm.selectRoomFilter(room) }
+        }
+    }
+
+    /**
+     * B-215: dialog for assigning a device to a room (or clearing).
+     * Free-form text input; existing rooms surface as
+     * suggestions via setSingleChoiceItems on a future enhancement.
+     */
+    private fun showRoomDialog(device: com.andene.spectra.data.models.DeviceProfile) {
+        val ctx = requireContext()
+        val container = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            val pad = (16 * resources.displayMetrics.density).toInt()
+            setPadding(pad, pad, pad, 0)
+        }
+        val input = com.google.android.material.textfield.TextInputEditText(ctx).apply {
+            hint = getString(R.string.room_hint)
+            setText(device.room ?: "")
+        }
+        container.addView(input, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+        ))
+        AlertDialog.Builder(ctx)
+            .setTitle(R.string.room_dialog_title)
+            .setView(container)
+            .setPositiveButton(R.string.action_save_button) { _, _ ->
+                vm.setRoom(device.id, input.text?.toString())
+            }
+            .setNeutralButton(R.string.endpoint_clear) { _, _ ->
+                vm.setRoom(device.id, null)
+            }
+            .setNegativeButton(R.string.action_cancel_dialog, null)
+            .show()
+    }
+
     private fun toast(msg: String) {
         android.widget.Toast.makeText(requireContext(), msg, android.widget.Toast.LENGTH_LONG).show()
     }
@@ -841,5 +961,9 @@ class HomeFragment : Fragment() {
         private const val MENU_QS_TILE_TARGET = 3
         private const val MENU_BACKUP = 4
         private const val MENU_RESTORE = 5
+
+        // B-214 onboarding state.
+        private const val PREFS_ONBOARDING = "spectra_onboarding"
+        private const val KEY_ONBOARDED = "completed"
     }
 }

@@ -176,6 +176,8 @@ class DeviceRepository(private val context: Context) {
         val rfBle: List<SerializableBle> = emptyList(),
         // B-209: non-IR control endpoint (Roku ECP HTTP, LAN IR bridge, BLE GATT)
         val controlEndpoint: String? = null,
+        // B-215: room / zone label
+        val room: String? = null,
     )
 
     @Serializable
@@ -236,6 +238,7 @@ class DeviceRepository(private val context: Context) {
             )
         } ?: emptyList(),
         controlEndpoint = controlEndpoint,
+        room = room,
     )
 
     private fun SerializableDeviceProfile.toModel() = DeviceProfile(
@@ -278,5 +281,6 @@ class DeviceRepository(private val context: Context) {
         ),
         discoveredAt = discoveredAt,
         controlEndpoint = controlEndpoint,
+        room = room,
     )
 }
