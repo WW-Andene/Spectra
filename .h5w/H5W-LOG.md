@@ -225,4 +225,50 @@ fixes; 15 total findings closed. Anti-exhaustion mandate satisfied
 with concrete output, not ceremony. Branch pushed.
 ──────────────────────────────────────────────────
 
+## Session: 2026-04-28 (cycle 5) — Mode: §AUTO Full + always-loop
+
+User upgraded CLAUDE.md to 'always loop when cycle end' — termination
+on 'queue empty' is now explicitly forbidden. Cycle 5 starts the
+moment cycle 4's checkpoint is written.
+
+### Phase 4 (cycle 5): execute fresh sweep + cross-cycle micro-H5W
+
+- [ts] F-067 FIXED T1 [HomeFragment.kt] — stale-macro chip ⚠ badge with combine() — Verified: yes
+- [ts] F-068 FIXED T1 [AndroidManifest.xml + xml/backup_rules.xml + xml/data_extraction_rules.xml] — explicit backup includes — Verified: yes
+- [ts] F-069 FIXED T1 [build.gradle.kts] — lint disable MissingTranslation, abortOnError default — Verified: yes
+- [ts] F-070 FIXED T1 [SpectraOrchestrator.kt] — synchronized appendLog against concurrent module callbacks — Verified: yes
+- [ts] F-073 FIXED T1 [AcousticFingerprint.kt] — chunk-based audio collection, no per-sample boxing (~3MB→~264KB) — Verified: yes
+- [ts] F-074 FIXED T1 [EmFingerprint.kt] — same chunk fix in captureEmiAudio — Verified: yes
+- [ts] F-076 FIXED T1 [MacroRepositoryTest.kt (new)] — 6 round-trip tests for macros — Verified: yes
+- [ts] F-077 FIXED T0 [DeviceRepositoryTest.kt + MacroRepositoryTest.kt] — Robolectric @Config(sdk=[26,34]) — Verified: yes
+- [ts] F-078 FIXED T1 [MainViewModel.kt] — DB install MERGES instead of overwriting captured commands (data-loss bug) — Verified: yes
+
+### Phase 5: Verify + Expansion (cycle 5)
+
+- Cross-cycle micro-H5W on cycle 4 commits: F-002 cancel revealed
+  cancellation leaks (caught last cycle). No new bugs from cycle 4
+  surface this cycle.
+- Cycle 5 batch 1 micro-H5W: F-073/074 audio perf + F-078 DB merge
+  data loss were the real prizes. F-070 was a latent race that hadn't
+  bitten yet.
+- Cycle 5 batch 2 micro-H5W on F-067 (chip warning): no new findings;
+  F-067 + F-066 (run validation) are now the comprehensive guard.
+- Anti-exhaustion sweep again: remaining items genuinely architectural
+  (Compose, deep links, predictive back, edge-to-edge, repeatOnLifecycle,
+  PII redaction in Log.d).
+
+### Phase 6: Evolve (cycle 5)
+
+──── AUTO CHECKPOINT 7 (CYCLE 5 LOOP-POINT) ────
+Cycle: 7 | Cycle-5 fixes: 9
+Total session fixes: 61 (cycles 1–4) + 9 (cycle 5) = 70
+Real bugs surfaced: F-070 (log race), F-073/074 (boxing perf),
+  F-078 (data loss in DB install)
+Test count: 58 (host JVM, Robolectric included)
+Context health: heavy
+Decision: writing checkpoint and continuing into cycle 6 per CLAUDE.md
+'always loop when cycle end' — termination on 'queue empty' no longer
+permitted. Pushing cycle 5 results before cycle 6 begins.
+──────────────────────────────────────────────────
+
 ### Handoff Log

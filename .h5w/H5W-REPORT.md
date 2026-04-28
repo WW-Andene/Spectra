@@ -314,3 +314,50 @@ user input on direction. Branch up to date on origin.
 ══════════════════════════════════════════
 SESSION END (CYCLE 4) — 61 total fixes, queue empty per §SIM.6, pushed.
 ══════════════════════════════════════════
+
+---
+
+# Cycle 5 Addendum — 2026-04-28 (always-loop directive)
+
+User upgraded CLAUDE.md: 'always loop when cycle end' — voluntary
+termination on 'queue empty' is now explicitly forbidden. Cycle 5
+started immediately after cycle 4's checkpoint.
+
+## Cycle 5 fixes (9)
+
+| ID | Sev | Tier | Summary |
+|----|-----|------|---------|
+| F-067 | low | T1 | Macro chips warn (⚠) when steps reference deleted devices |
+| F-068 | low | T1 | Explicit backup_rules.xml + data_extraction_rules.xml; only devices/ + macros.json included |
+| F-069 | low | T1 | Lint config: disable MissingTranslation (en-only), keep abortOnError, drop too-strict warningsAsErrors |
+| **F-070** | **low** | T1 | **Synchronized appendLog against concurrent module callbacks** (latent race) |
+| **F-073** | **med** | T1 | **AcousticFingerprint chunk-based audio buffer** (~3MB → ~264KB heap pressure) |
+| **F-074** | **med** | T1 | **Same boxing-avoidance fix in EmFingerprint.captureEmiAudio** |
+| F-076 | low | T1 | MacroRepositoryTest: 6 round-trip tests |
+| F-077 | low | T0 | Robolectric @Config(sdk=[26,34]) — runs each test at minSdk + targetSdk |
+| **F-078** | **low** | T1 | **DB install MERGES with existing commands** (was silently dropping captured/learned commands — data loss) |
+
+The headline finds this cycle:
+- **F-073/F-074** — boxing every Short in a 132K-sample audio capture
+  produced ~3 MB of GC pressure per scan. Replaced with raw ShortArray
+  chunks and a single concat at end. ~10× memory + GC reduction.
+- **F-078** — silently overwrote captured POWER patterns when the user
+  later installed a DB layout. Real data-loss bug. Now merges, with
+  DB precedence on name collision.
+- **F-070** — concurrent appendLog calls could lose log lines. Latent
+  but real; fix is one synchronized block.
+
+## Total across the session
+
+- **70 fixes applied** (cycle 1: 22 + cycle 2: 5 + cycle 3: 19 + cycle 4: 15 + cycle 5: 9)
+- **58 host-JVM tests** (rolling-shutter, IR encoders, OUI, JSON schema,
+  brand match, matcher logic, device repo round-trip, macro repo round-trip)
+- **2 T3 still pending** (F-004, F-039)
+- **0 T2 actionable** — remaining T2 candidates are architectural pivots
+  needing user direction (Compose, deep links, predictive back, edge-to-edge,
+  repeatOnLifecycle, PII redaction)
+
+## Termination policy update
+
+Per CLAUDE.md cycle-5 update: **the loop never voluntarily ends.**
+Cycle 6 starts the moment this report is committed.
