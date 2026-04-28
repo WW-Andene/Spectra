@@ -7,7 +7,10 @@ import android.bluetooth.le.BluetoothLeScanner
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.net.wifi.WifiManager
@@ -38,6 +41,7 @@ class RfFingerprint(private val context: Context) {
         private const val TAG = "RfFingerprint"
         private const val BLE_SCAN_DURATION_MS = 5000L
         private const val MDNS_SCAN_DURATION_MS = 4000L
+        private const val WIFI_SCAN_TIMEOUT_MS = 6000L
 
         // Common OUI prefixes → manufacturer
         // Full database: https://standards-oui.ieee.org/
@@ -147,12 +151,19 @@ class RfFingerprint(private val context: Context) {
 
     /**
      * Scan WiFi networks, extract manufacturer from MAC prefix.
+     *
+     * Triggers a fresh scan via startScan() and waits for the
+     * SCAN_RESULTS_AVAILABLE broadcast. On Android 9+ startScan is
+     * throttled (4 scans per 2 minutes for foreground apps); when
+     * throttled or on timeout we fall back to the cached results that
+     * the system has from prior scans.
      */
     @RequiresPermission(allOf = [
         Manifest.permission.ACCESS_FINE_LOCATION,
         Manifest.permission.ACCESS_WIFI_STATE
     ])
-    private fun scanWifi(): List<WifiDeviceInfo> {
+    private suspend fun scanWifi(): List<WifiDeviceInfo> {
+        triggerWifiScanAndWait()
         val results = wifiManager.scanResults ?: return emptyList()
         return results.map { result ->
             val macPrefix = result.BSSID?.take(8)?.uppercase() ?: ""
@@ -166,6 +177,44 @@ class RfFingerprint(private val context: Context) {
                 modelHint = manufacturer
             )
         }.sortedByDescending { it.signalStrength } // Closest first
+    }
+
+    /**
+     * Kick off a fresh WiFi scan and suspend until results arrive (or timeout).
+     * Returns whether a fresh scan completed; the caller reads scanResults
+     * regardless, since the cache is the only fallback.
+     */
+    private suspend fun triggerWifiScanAndWait(): Boolean {
+        val deferred = CompletableDeferred<Unit>()
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                val updated = intent?.getBooleanExtra(
+                    WifiManager.EXTRA_RESULTS_UPDATED,
+                    true
+                ) ?: true
+                if (updated && !deferred.isCompleted) deferred.complete(Unit)
+            }
+        }
+
+        return try {
+            context.registerReceiver(
+                receiver,
+                IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION)
+            )
+            @Suppress("DEPRECATION")
+            val started = try {
+                wifiManager.startScan()
+            } catch (e: SecurityException) {
+                Log.w(TAG, "startScan denied", e); false
+            }
+            if (!started) {
+                Log.d(TAG, "WiFi scan throttled — using cached results")
+                return false
+            }
+            withTimeoutOrNull(WIFI_SCAN_TIMEOUT_MS) { deferred.await() } != null
+        } finally {
+            try { context.unregisterReceiver(receiver) } catch (_: Exception) {}
+        }
     }
 
     /**
