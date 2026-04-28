@@ -45,7 +45,7 @@ class LearnFragment : Fragment() {
         val btnNo = view.findViewById<Button>(R.id.btnNo)
         val btnStartBrute = view.findViewById<Button>(R.id.btnStartBrute)
         val btnStopBrute = view.findViewById<Button>(R.id.btnStopBrute)
-        val learnedCommands = view.findViewById<TextView>(R.id.learnedCommands)
+        val learnedCommands = view.findViewById<LinearLayout>(R.id.learnedCommands)
         val btnBackLearn = view.findViewById<Button>(R.id.btnBackLearn)
         val btnOpenRemote = view.findViewById<Button>(R.id.btnOpenRemote)
 
@@ -127,8 +127,11 @@ class LearnFragment : Fragment() {
         btnBackLearn.setOnClickListener { vm.navigate(MainViewModel.Screen.RESULTS) }
         btnOpenRemote.setOnClickListener { vm.navigate(MainViewModel.Screen.REMOTE) }
 
-        // Initial learned list
-        updateLearnedList(learnedCommands)
+        // Re-render the learned-commands list whenever the active device changes
+        // (rename/delete/install all flow through activeDevice).
+        viewLifecycleOwner.lifecycleScope.launch {
+            vm.activeDevice.collect { updateLearnedList(learnedCommands) }
+        }
     }
 
     private fun showBrandPicker() {
@@ -182,16 +185,82 @@ class LearnFragment : Fragment() {
             .show()
     }
 
-    private fun updateLearnedList(textView: TextView) {
+    private fun updateLearnedList(container: LinearLayout) {
+        container.removeAllViews()
         val device = vm.activeDevice.value
         val commands = device?.irProfile?.commands
+
         if (commands.isNullOrEmpty()) {
-            textView.text = "No commands learned yet"
-        } else {
-            textView.text = commands.entries.joinToString("\n") { (name, cmd) ->
-                "$name — ${cmd.protocol} (${cmd.rawTimings.size} pulses)"
+            val empty = TextView(requireContext()).apply {
+                text = "No commands learned yet"
+                setTextColor(resources.getColor(R.color.text_tertiary, null))
+                textSize = 12f
             }
+            container.addView(empty)
+            return
         }
+
+        val padding = (8 * resources.displayMetrics.density).toInt()
+        for ((name, cmd) in commands.entries.sortedBy { it.key }) {
+            val row = TextView(requireContext()).apply {
+                text = "$name  ·  ${cmd.protocol} (${cmd.rawTimings.size} pulses)"
+                setTextColor(resources.getColor(R.color.text_primary, null))
+                textSize = 13f
+                setPadding(padding, padding, padding, padding)
+                isClickable = true
+                isFocusable = true
+                setBackgroundResource(android.R.drawable.list_selector_background)
+                setOnClickListener {
+                    vm.testCommand(name)
+                }
+                setOnLongClickListener {
+                    showCommandActions(name, container)
+                    true
+                }
+            }
+            container.addView(row)
+        }
+    }
+
+    private fun showCommandActions(name: String, container: LinearLayout) {
+        AlertDialog.Builder(requireContext())
+            .setTitle(name)
+            .setItems(arrayOf("Test", "Rename", "Delete")) { _, which ->
+                when (which) {
+                    0 -> vm.testCommand(name)
+                    1 -> showRenameDialog(name, container)
+                    2 -> {
+                        AlertDialog.Builder(requireContext())
+                            .setMessage("Delete '$name'?")
+                            .setPositiveButton("Delete") { _, _ ->
+                                vm.deleteCommand(name)
+                                updateLearnedList(container)
+                            }
+                            .setNegativeButton("Cancel", null)
+                            .show()
+                    }
+                }
+            }
+            .show()
+    }
+
+    private fun showRenameDialog(oldName: String, container: LinearLayout) {
+        val input = android.widget.EditText(requireContext()).apply {
+            setText(oldName)
+            setSelection(oldName.length)
+        }
+        AlertDialog.Builder(requireContext())
+            .setTitle("Rename command")
+            .setView(input)
+            .setPositiveButton("Save") { _, _ ->
+                val newName = input.text.toString().trim()
+                if (newName.isNotEmpty() && newName != oldName) {
+                    vm.renameCommand(oldName, newName)
+                    updateLearnedList(container)
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun setupCamera(previewView: PreviewView) {

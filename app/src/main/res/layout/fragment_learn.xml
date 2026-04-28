@@ -253,14 +253,21 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <TextView
+        <LinearLayout
             android:id="@+id/learnedCommands"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/text_secondary"
-            android:textSize="12sp"
-            android:fontFamily="monospace" />
+            android:orientation="vertical" />
     </ScrollView>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Tap a command to test, long-press to rename or delete."
+        android:textColor="@color/text_tertiary"
+        android:textSize="11sp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp" />
 
     <!-- Bottom nav -->
     <LinearLayout

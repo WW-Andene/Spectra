@@ -243,6 +243,47 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // ── Per-command edits ────────────────────────────────────
+
+    fun renameCommand(oldName: String, newName: String) {
+        if (newName.isBlank() || oldName == newName) return
+        val device = _activeDevice.value ?: return
+        val profile = device.irProfile ?: return
+        val command = profile.commands[oldName] ?: return
+        val updatedCommands = profile.commands.toMutableMap().apply {
+            remove(oldName)
+            put(newName, command.copy(name = newName))
+        }
+        val updated = device.copy(irProfile = profile.copy(commands = updatedCommands))
+        _activeDevice.value = updated
+        orchestrator.control.saveDevice(updated)
+        viewModelScope.launch {
+            repository.save(updated)
+            loadSavedDevices()
+        }
+    }
+
+    fun deleteCommand(name: String) {
+        val device = _activeDevice.value ?: return
+        val profile = device.irProfile ?: return
+        if (profile.commands[name] == null) return
+        val updatedCommands = profile.commands.toMutableMap().apply { remove(name) }
+        val updated = device.copy(irProfile = profile.copy(commands = updatedCommands))
+        _activeDevice.value = updated
+        orchestrator.control.saveDevice(updated)
+        viewModelScope.launch {
+            repository.save(updated)
+            loadSavedDevices()
+        }
+    }
+
+    fun testCommand(name: String) {
+        val deviceId = _activeDevice.value?.id ?: return
+        viewModelScope.launch {
+            orchestrator.control.sendCommand(deviceId, name)
+        }
+    }
+
     // ── Code database install ────────────────────────────────
 
     /**
