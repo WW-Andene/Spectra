@@ -1,8 +1,98 @@
 # H5W Autonomous Run Report
 
 Branch: `claude/understand-project-ATKHd`
-Mode: `§AUTO-UNCHAINED + §BRAINSTORM`
-Gate: user-passed ("i accept full responsibility" + "this is my sandbox")
+Mode (current): `§AUTO-UNCHAINED + §BRAINSTORM + §BUILD-LOOP`
+Gate: user-passed ("i accept full responsibility" + "this is my sandbox" + "ship features")
+
+---
+
+## §BUILD-LOOP run — feature shipping (skill v1.4.0)
+
+Audit + queue published in `.h5w/H5W-BUILD.md` covering 11 build
+targets across three tiers (user value → competitivity → innovation).
+Six targets shipped at least one phase; remaining phases stay queued.
+
+### B-001 — Library backup / restore (closed)
+
+**Commits:** `74ee4df`, `3712eff`
+
+Whole-library JSON envelope (devices + macros) export via SAF
+CreateDocument with date-stamped filename; merge import via
+OpenDocument, devices get fresh ids, macros merge by id with
+replace-on-collision semantics. Per-entry parse failures count as
+skipped, not propagated, so partial restores still succeed. UI
+lives in a new overflow menu in the Home header (icon, popup
+menu — first overflow affordance in the app).
+
+### B-002 phase 1 — Home-screen widget (1×1 power tile)
+
+**Commit:** `1dc241e`
+
+AppWidgetProvider that renders the user's primary device (most-recent
+with POWER bound) and a single tap target. Tap → BroadcastReceiver
+that re-hydrates the device into IrControl (cold-process safe) and
+fires POWER via the existing serialised transmit path. Refreshed
+on every save/delete/import via `loadSavedDevices`.
+
+### B-003 phase 1 — Quick Settings tile
+
+**Commit:** `10a76b5`
+
+TileService firing POWER on the same primary device the widget
+targets — both routes through new `widget/QuickPowerKit` so they
+agree on selection. STATE_INACTIVE flicker during transmit gives
+visual feedback even on a phone where the IR burst is silent.
+STATE_UNAVAILABLE when no eligible device exists.
+
+### B-008 — Universal "all off" (closed)
+
+**Commit:** `0050d3d`
+
+Overflow menu action that synthesizes an in-memory power-off macro
+from every saved device with POWER bound and runs it via the
+existing macro runner. 250 ms inter-step delay (small enough to
+feel instant, large enough that close-together IR receivers don't
+collapse bursts inside their internal debounce). Refactored
+`runMacro` to share `executeMacro(macro)` so the synthetic path
+inherits the existing stale-step validation, single-active-macro
+guard, and progress surface.
+
+### B-007 phase 1 — NFC tag triggers
+
+**Commit:** `57178f4`
+
+Three URI authorities under `spectra://`: `device/<id>`,
+`macro/<id>`, `command/<deviceId>/<commandName>`. Manifest
+NDEF_DISCOVERED filter scoped to scheme=spectra so taps on encoded
+tags route to MainActivity with priority over apps registered for
+broader URI scopes. New `MainViewModel.sendCommandTo` for the
+command path so an NFC tap doesn't drag the user into the Remote
+screen. Phase 2 (in-app foreground-dispatch tag write) deferred
+in favour of a clipboard-write affordance: macro long-press →
+"Copy NFC trigger URI" copies `spectra://macro/<id>` for paste
+into any existing NFC writer app.
+
+### B-005 phase 1 — Sleep timer
+
+**Commit:** `aa308f9`
+
+Pick a saved macro + duration (15/30/45/60/90/120 min preset),
+schedule via `AlarmManager.setAndAllowWhileIdle` — inexact, runs
+through Doze, no SCHEDULE_EXACT_ALARM permission. New
+`scheduling/ScheduledFireReceiver` re-hydrates the macro's devices
+into IrControl and runs the macro from the persisted form.
+`SleepTimer` facade keeps the active-timer record in
+SharedPreferences for the home banner (queued for phase 2). Single-
+slot semantics: re-scheduling replaces via FLAG_UPDATE_CURRENT.
+
+### Remaining queue
+
+10 phases still TODO across B-002 (config activity, multi-cell
+macro chips), B-003 (per-tile macro picker), B-004 (smart-home
+control over RF), B-005 (boot-survives reschedule, repeating
+schedule), B-006 (custom remote layouts), B-007 (in-app tag
+write), B-009 (community fingerprint share), B-010 (auto-discover-
+and-control), B-011 (voice / Assistant). See `H5W-BUILD.md`.
 
 ---
 
