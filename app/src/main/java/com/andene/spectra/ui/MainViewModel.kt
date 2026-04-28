@@ -143,12 +143,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch { saveMacrosWithFeedback(updated) }
     }
 
-    fun deleteMacro(id: String) {
-        val updated = _macros.value.filterNot { it.id == id }
-        _macros.value = updated
-        viewModelScope.launch { saveMacrosWithFeedback(updated) }
-    }
-
     /**
      * Walk a macro's steps, sending each command via IrControl with the
      * configured delay before each step. Cancellable; cancelling stops at
@@ -225,14 +219,57 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun deleteDevice(deviceId: String) {
+        // Snapshot the profile before deletion so an undo emit can restore
+        // it byte-for-byte. JSON is the canonical form so we round-trip
+        // through it instead of holding a Kotlin reference (which a future
+        // model change could break).
+        val snapshot = _savedDevices.value.firstOrNull { it.id == deviceId }
         viewModelScope.launch {
             repository.delete(deviceId)
             orchestrator.forgetDevice(deviceId)
             if (_activeDevice.value?.id == deviceId) _activeDevice.value = null
             loadSavedDevices()
             _screen.value = Screen.HOME
+            if (snapshot != null) {
+                _undoActions.tryEmit(UndoAction.Device(snapshot))
+            }
         }
     }
+
+    fun deleteMacro(id: String) {
+        val snapshot = _macros.value.firstOrNull { it.id == id }
+        val updated = _macros.value.filterNot { it.id == id }
+        _macros.value = updated
+        viewModelScope.launch { saveMacrosWithFeedback(updated) }
+        if (snapshot != null) _undoActions.tryEmit(UndoAction.Macro(snapshot))
+    }
+
+    /** Restore the most-recently-deleted item. UI consumes [undoActions]
+     *  to know what to offer; this call is the actual restore. */
+    fun undoDelete(action: UndoAction) {
+        when (action) {
+            is UndoAction.Device -> {
+                orchestrator.registerKnownDevice(action.profile)
+                _activeDevice.value = action.profile
+                viewModelScope.launch { saveDeviceWithFeedback(action.profile); loadSavedDevices() }
+            }
+            is UndoAction.Macro -> {
+                val updated = _macros.value.toMutableList().apply { add(action.macro) }
+                _macros.value = updated
+                viewModelScope.launch { saveMacrosWithFeedback(updated) }
+            }
+        }
+    }
+
+    sealed class UndoAction {
+        data class Device(val profile: DeviceProfile) : UndoAction()
+        data class Macro(val macro: com.andene.spectra.data.models.Macro) : UndoAction()
+    }
+
+    private val _undoActions = MutableSharedFlow<UndoAction>(
+        replay = 0, extraBufferCapacity = 4, onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
+    val undoActions: SharedFlow<UndoAction> = _undoActions.asSharedFlow()
 
     // ── Passive Scan ──────────────────────────────────────────
 
@@ -254,9 +291,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 // wherever they navigated to.
                 throw e
             } catch (e: SecurityException) {
-                _scanLog.value = _scanLog.value + "Permission denied: ${e.message}"
+                // Tell the user how to recover, not just what failed.
+                _scanLog.value = _scanLog.value +
+                    "Permission denied (${e.message?.take(80) ?: "unknown"}). " +
+                    "Open Settings → Apps → Spectra → Permissions to grant the missing access, then tap Scan again."
             } catch (e: Exception) {
-                _scanLog.value = _scanLog.value + "Scan failed: ${e.message}"
+                _scanLog.value = _scanLog.value +
+                    "Scan failed (${e.message?.take(80) ?: "unknown"}). " +
+                    "Make sure WiFi, Bluetooth, and Location are turned on, then retry."
             } finally {
                 _isScanning.value = false
             }

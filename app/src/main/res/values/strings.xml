@@ -30,6 +30,9 @@
     <string name="perm_label_bluetooth">Bluetooth</string>
     <string name="perm_label_ir">infrared</string>
     <string name="camera_permission_required">Camera permission is required to learn IR commands by pointing a remote at the front camera.</string>
+    <string name="undo_deleted_device">Deleted %1$s</string>
+    <string name="undo_deleted_macro">Deleted macro %1$s</string>
+    <string name="action_undo">UNDO</string>
 
     <!-- Scanning -->
     <string name="scan_title">Scanning…</string>

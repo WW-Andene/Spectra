@@ -56,6 +56,11 @@ class IrCodeDatabase(private val context: Context) {
 
     /**
      * Load + parse the bundled JSON. Cached on first call.
+     *
+     * Synchronous; on first call this does ~10 KB of asset I/O + JSON
+     * parse on whichever thread invoked it. Call [preload] on a background
+     * dispatcher at app start to guarantee the UI thread never pays this
+     * cost.
      */
     fun all(): List<RemoteEntry> {
         cache?.let { return it }
@@ -70,6 +75,12 @@ class IrCodeDatabase(private val context: Context) {
         }
         cache = parsed
         return parsed
+    }
+
+    /** Prime the cache off the main thread. Idempotent. */
+    suspend fun preload(): Unit = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        all()
+        Unit
     }
 
     /**

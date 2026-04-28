@@ -42,6 +42,10 @@ class SpectraApp : Application() {
             val saved = repository.loadAll()
             if (saved.isNotEmpty()) orchestrator.loadKnownDevices(saved)
         }
+
+        // Prime the IR code database off the main thread so the brand
+        // picker on Learn doesn't stall the first time the user opens it.
+        appScope.launch { codeDatabase.preload() }
     }
 
     override fun onTerminate() {

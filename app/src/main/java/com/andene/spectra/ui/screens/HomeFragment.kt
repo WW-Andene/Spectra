@@ -115,6 +115,24 @@ class HomeFragment : Fragment() {
             }
         }
 
+        // Undo affordance for delete actions. The viewmodel snapshots the
+        // deleted item before removing it; this collector shows a Snackbar
+        // with UNDO that restores the item if tapped.
+        viewLifecycleOwner.lifecycleScope.launch {
+            vm.undoActions.collect { action ->
+                val label = when (action) {
+                    is MainViewModel.UndoAction.Device ->
+                        getString(R.string.undo_deleted_device, action.profile.name ?: "device")
+                    is MainViewModel.UndoAction.Macro ->
+                        getString(R.string.undo_deleted_macro, action.macro.name)
+                }
+                com.google.android.material.snackbar.Snackbar
+                    .make(requireView(), label, com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
+                    .setAction(R.string.action_undo) { vm.undoDelete(action) }
+                    .show()
+            }
+        }
+
         // ── Macros ────────────────────────────────────────────
         val macroChips = view.findViewById<LinearLayout>(R.id.macroChips)
         val macroRunning = view.findViewById<TextView>(R.id.macroRunning)
