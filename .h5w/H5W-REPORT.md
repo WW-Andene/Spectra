@@ -72,6 +72,74 @@ in favour of a clipboard-write affordance: macro long-press →
 "Copy NFC trigger URI" copies `spectra://macro/<id>` for paste
 into any existing NFC writer app.
 
+## §BUILD-LOOP — core-feature run (user pivot: "focus on improving main feature")
+
+The audit had been climbing through Tier 1/2 convenience features
+(widgets, scheduling, NFC). User redirected the loop toward the
+actual main feature: IR camera capture + universal remote control.
+Six commits, all aimed at the headline modules.
+
+### B-100 phase 1 — NEC1 codec end-to-end
+
+**Commit:** `de9539a`
+
+Wakes up the dormant `IrCommand.code` field. NecCodec decodes 32
+bits with full inverted-byte checksum, encodes canonical timings
+on transmit. Captured commands now store a 16-bit packed code that
+re-synthesizes cleanly on any phone, replacing rolling-shutter-
+jittered raw timing replay.
+
+### B-100 phase 2 — Samsung + LG codecs (shared PulseDistance)
+
+**Commit:** `608009a`
+
+Refactored NEC's core into shared `PulseDistance` impl; added
+SamsungCodec (4500+4500 header) and LgCodec (8500+4250 header).
+Tightened `attemptProtocolDecode` NEC window to fix a pre-existing
+bug where LG signals were always tagged as NEC.
+
+### B-100 phase 3 — Multi-press averaging + per-press vote
+
+**Commit:** `4ad0c58`
+
+Capture-side reliability: split the timeline at any inter-press
+gap ≥ 50 ms, decode each press independently, vote on the
+(protocol, packed code) signature. Three clean presses of the
+same button win 3/3 vs single-press fragility.
+
+### B-100 phase 4 — Sony SIRC codec + 40 kHz protocol carrier
+
+**Commit:** `cf03b2c`
+
+Closes the four big-coverage IR families. Sony differs from NEC
+on every layer (timings, bit count, layout, no closing mark, 40
+kHz carrier) so it's a standalone codec. Per-protocol carrier
+override at transmit fixes the "I learned the code but it doesn't
+work on Sony" bug class.
+
+### B-101 phase 1 — Brute-force acoustic auto-confirm
+
+**Commit:** `f6d62c4`
+
+Mic-based reaction detection eliminates the per-attempt YES/NO
+prompt for the bulk of a brute-force sweep. Captures a 1-sec
+quiet baseline, listens for 1.5 sec post-fire, compares RMS
+ratio against conservative confirm/reject thresholds. UNCERTAIN
+falls through to the existing user prompt. With mic permission
+and near-field placement, a 50-code sweep typically yields 0-1
+prompts instead of 50.
+
+### B-102 phase 1 — Multi-device disambiguation in scan results
+
+**Commit:** `884626a`
+
+`matchTopN` returns the top 3 plausible matches; ResultsFragment
+shows a warning-coloured banner with the alternates when there's
+real ambiguity (≥1 alternate above threshold). Tap opens a picker
+with confidence percentages. Single-match scans stay unchanged.
+
+---
+
 ### B-002 phase 2 — Pinned-widget config activity
 
 **Commit:** `e4c9b1b`
