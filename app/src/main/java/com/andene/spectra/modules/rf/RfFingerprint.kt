@@ -11,11 +11,13 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.location.LocationManager
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.net.wifi.WifiManager
 import android.util.Log
 import androidx.annotation.RequiresPermission
+import androidx.core.location.LocationManagerCompat
 import com.andene.spectra.data.models.BleDeviceInfo
 import com.andene.spectra.data.models.RfSignature
 import com.andene.spectra.data.models.WifiDeviceInfo
@@ -163,6 +165,16 @@ class RfFingerprint(private val context: Context) {
         Manifest.permission.ACCESS_WIFI_STATE
     ])
     private suspend fun scanWifi(): List<WifiDeviceInfo> {
+        // Android requires location services to be ON system-wide for WiFi
+        // scan results to populate, even with permission granted. If it's
+        // off, scanResults is empty silently — log a hint so the
+        // orchestrator surfaces it in the scan log.
+        val locManager = context.getSystemService(Context.LOCATION_SERVICE)
+            as? LocationManager
+        val locationOn = locManager?.let { LocationManagerCompat.isLocationEnabled(it) } ?: true
+        if (!locationOn) {
+            Log.w(TAG, "Location services disabled — WiFi scan will return no results")
+        }
         triggerWifiScanAndWait()
         val results = wifiManager.scanResults ?: return emptyList()
         return results.map { result ->

@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import com.andene.spectra.R
 import com.andene.spectra.ui.MainViewModel
 import com.google.android.material.textfield.TextInputEditText
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class ResultsFragment : Fragment() {
@@ -32,11 +33,14 @@ class ResultsFragment : Fragment() {
         val btnSave = view.findViewById<Button>(R.id.btnSaveDevice)
         val btnBack = view.findViewById<Button>(R.id.btnBack)
 
+        // Combine device + phase so the status text updates on either side
+        // changing — particularly when phase flips from DEVICE_UNKNOWN to
+        // READY after the brute force finishes from this screen.
         viewLifecycleOwner.lifecycleScope.launch {
-            vm.activeDevice.collect { device ->
+            combine(vm.activeDevice, vm.orchestrator.phase) { device, phase -> device to phase }
+                .collect { (device, phase) ->
                 if (device == null) return@collect
 
-                val phase = vm.orchestrator.phase.value
                 deviceStatus.text = when (phase) {
                     com.andene.spectra.core.SpectraOrchestrator.Phase.DEVICE_IDENTIFIED ->
                         "Known device: ${device.name ?: "Unnamed"}"
