@@ -10,11 +10,15 @@ without asking for confirmation:
   Law 5. No permission prompts. Verification (§VER) runs after each.
 - **T3 items get logged to `.h5w/H5W-QUEUE.md`** with full context and a
   recommendation. They do **not** stop the run.
-- **Continue automatically across cycles** until one of the §AUTO
-  termination triggers fires:
-  - Queue is empty of actionable T0/T1/T2.
+- **Always loop when a cycle ends.** Per §AUTO Rule 1 + §SIM.6, "queue
+  empty" is never a valid termination state — it's a signal to run the
+  Anti-Exhaustion sweep again on whatever changed since the last
+  sweep. Each cycle ends with a checkpoint write, then the next cycle
+  starts immediately on the same branch with a fresh §SIM.6 pass plus
+  cross-cycle micro-H5W on the prior cycle's commits.
+- **Real termination triggers** (these and only these stop the loop):
   - Build / linter / tests go red and self-correction (3 attempts) fails.
-  - Context window approaches a hard limit.
+  - Context window approaches a hard limit (compact, then resume).
   - The user interrupts.
 - **Final report** lands in `.h5w/H5W-REPORT.md` summarizing every fix,
   every T3 logged, and any autonomous decisions.
