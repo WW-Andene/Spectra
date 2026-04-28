@@ -80,7 +80,9 @@ class AcousticFingerprint {
                 bufferSize
             )
 
-            val allSamples = mutableListOf<Short>()
+            // Collect chunks instead of a List<Short> — boxing each sample
+            // would blow ~3 MB on a 3-second 44.1 kHz mono recording.
+            val chunks = mutableListOf<ShortArray>()
             val buffer = ShortArray(FFT_SIZE)
 
             audioRecord?.startRecording()
@@ -89,9 +91,7 @@ class AcousticFingerprint {
             try {
                 while (System.currentTimeMillis() - startTime < CAPTURE_DURATION_MS) {
                     val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
-                    if (read > 0) {
-                        allSamples.addAll(buffer.take(read).toList())
-                    }
+                    if (read > 0) chunks.add(buffer.copyOf(read))
                 }
             } finally {
                 // Release the mic regardless of how we exit (timeout, throw,
@@ -103,7 +103,7 @@ class AcousticFingerprint {
             }
 
             _state.value = State.ANALYZING
-            val sig = analyzeAudio(allSamples.toShortArray())
+            val sig = analyzeAudio(concatChunks(chunks))
             _signature.value = sig
             _state.value = State.COMPLETE
             sig
@@ -263,5 +263,17 @@ class AcousticFingerprint {
     fun release() {
         audioRecord?.release()
         audioRecord = null
+    }
+
+    /** Flatten a list of partial chunks into one contiguous ShortArray. */
+    private fun concatChunks(chunks: List<ShortArray>): ShortArray {
+        val total = chunks.sumOf { it.size }
+        val out = ShortArray(total)
+        var offset = 0
+        for (chunk in chunks) {
+            System.arraycopy(chunk, 0, out, offset, chunk.size)
+            offset += chunk.size
+        }
+        return out
     }
 }

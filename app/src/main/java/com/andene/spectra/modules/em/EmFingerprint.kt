@@ -182,7 +182,9 @@ class EmFingerprint(private val context: Context) {
             bufferSize
         )
 
-        val allSamples = mutableListOf<Short>()
+        // Same boxing-avoidance approach as AcousticFingerprint: collect
+        // raw ShortArray chunks, concat at the end, never per-sample box.
+        val chunks = mutableListOf<ShortArray>()
         val buffer = ShortArray(FFT_SIZE)
 
         recorder.startRecording()
@@ -191,7 +193,7 @@ class EmFingerprint(private val context: Context) {
         try {
             while (System.currentTimeMillis() - startTime < MAG_SAMPLE_DURATION_MS) {
                 val read = recorder.read(buffer, 0, buffer.size)
-                if (read > 0) allSamples.addAll(buffer.take(read))
+                if (read > 0) chunks.add(buffer.copyOf(read))
             }
         } finally {
             // Same release-on-cancel guard as AcousticFingerprint.
@@ -199,7 +201,15 @@ class EmFingerprint(private val context: Context) {
             try { recorder.release() } catch (_: Exception) {}
         }
 
-        return extractPeaks(allSamples.toShortArray(), AUDIO_SAMPLE_RATE)
+        // Concat chunks into a single ShortArray once at the end.
+        val total = chunks.sumOf { it.size }
+        val flat = ShortArray(total)
+        var offset = 0
+        for (chunk in chunks) {
+            System.arraycopy(chunk, 0, flat, offset, chunk.size)
+            offset += chunk.size
+        }
+        return extractPeaks(flat, AUDIO_SAMPLE_RATE)
     }
 
     /**
