@@ -29,9 +29,17 @@ camera capture, RF discovery currently dead-ending in the matcher).
 
 | ID | Feature | Phase | Status | Notes |
 |----|---------|-------|--------|-------|
-| B-100 | IR camera capture decode upgrade | 3 — RC6, JVC, Panasonic, NEC2 | TODO | wider protocol coverage |
-| B-100 | IR camera capture decode upgrade | 5 — Panasonic codec | TODO | NEC-family but 48-bit; needs PulseDistance bit-count param |
-| B-100 | IR camera capture decode upgrade | 7 — RC6 codec (Manchester encoding) | TODO | different wire family |
+| B-205 | Panasonic codec | 1 | TODO | 48-bit pulse-distance, custom layout — PulseDistance.decodeRaw refactor |
+| B-206 | RC6 codec | 1 | TODO | Manchester encoding, separate codec impl |
+| B-207 | Brute-force whole-remote | 1 | TODO | after POWER hit, sweep VOL/CH/etc. on same protocol |
+| B-208 | Acoustic+EM matcher tiebreakers | 1 | TODO | break RF-score ties via signature similarity |
+| B-209 | Roku ECP control over mDNS | 1 | TODO | discovered Roku → HTTP ECP keypress |
+| B-210 | HTTP IR-blaster bridge | 1 | TODO | blaster-less phones hand off to network bridge |
+| B-211 | BLE smart-bulb control | 1 | TODO | GATT write for common smart-bulb services |
+| B-212 | NFC P2P profile share | 1 | TODO | tap two phones to exchange device profiles |
+| B-213 | Custom remote layouts | 1 | TODO | drag-drop button arrangement, per-device JSON |
+| B-214 | Onboarding tutorial | 1 | TODO | first-launch contextual hints |
+| B-215 | Rooms / zones | 1 | TODO | flat list → grouped library |
 | B-101 | Brute-force smart ordering + auto-confirm | 2 — category-hint ordering + bulk-test option | TODO | adds category metadata to POWER_CODES |
 | B-002 | Home screen widget | 4 — macro chips on multi-cell widget | TODO | bigger scope: multi-tile RemoteViews |
 | B-004 | Smart-home control over RF | 1 — BLE write to discovered devices | TODO | leverages existing RfFingerprint |
@@ -67,7 +75,8 @@ camera capture, RF discovery currently dead-ending in the matcher).
 | B-101 | Brute-force smart ordering + auto-confirm | 1 — acoustic auto-confirm via mic delta | `f6d62c4` |
 | B-102 | Multi-device disambiguation | 1 — top-N matcher + Results picker | `884626a` |
 | B-100 | IR camera capture decode upgrade | 6 — surface multi-press agreement in Learn UI | `49aec89` |
-| B-100 | IR camera capture decode upgrade | 8 — NEC press-and-hold via spec-compliant repeat frames | (this commit) |
+| B-100 | IR camera capture decode upgrade | 8 — NEC press-and-hold via spec-compliant repeat frames | `cced38d` |
+| B-200 | Carrier auto-tune retry + B-201 atomic device save + B-202 hold-to-repeat + B-203 anonymised export | small-fix bundle | (this commit) |
 
 ---
 

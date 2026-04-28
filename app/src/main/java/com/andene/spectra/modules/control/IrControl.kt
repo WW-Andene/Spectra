@@ -113,6 +113,53 @@ class IrControl(private val context: Context) {
     }
 
     /**
+     * Hold-to-repeat: fire a command continuously until cancelled
+     * (via coroutine cancellation). NEC commands transmit a single
+     * full data frame then 11ms repeat frames every 110ms — same wire
+     * shape a real NEC remote produces. Other protocols retransmit
+     * the full frame at REPEAT_DELAY_MS intervals.
+     *
+     * Holds the IR mutex for the whole hold duration so the burst
+     * train stays coherent. Cancellation through the cooperative
+     * yield in `delay` releases promptly.
+     *
+     * Used by the remote-pad's volume / channel / cursor buttons —
+     * ACTION_DOWN starts this, ACTION_UP cancels its job.
+     */
+    suspend fun sendHeld(deviceId: String, commandName: String) = withContext(Dispatchers.IO) {
+        val device = _devices.value[deviceId]
+        val command = device?.irProfile?.commands?.get(commandName) ?: return@withContext
+        val carrier = nearestSupportedCarrier(
+            protocolCarrier(command)
+                ?: device.irProfile?.carrierFrequency
+                ?: DEFAULT_CARRIER
+        ) ?: DEFAULT_CARRIER
+
+        val timings = synthesizeOrFallback(command)
+        val useNecRepeat = command.protocol == IrProtocol.NEC && command.code != null
+        val repeatTimings = if (useNecRepeat)
+            com.andene.spectra.modules.ir.protocols.NecCodec.encodeRepeat() else null
+        val gapMs = if (useNecRepeat) 99L else REPEAT_DELAY_MS
+
+        txMutex.withLock {
+            try {
+                irManager?.transmit(carrier, timings)
+                _lastTransmitResult.value = TransmitResult(true, deviceId, commandName)
+                while (true) {
+                    delay(gapMs)
+                    val burst = repeatTimings ?: timings
+                    irManager?.transmit(carrier, burst)
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e  // Let the caller's job cancellation unwind cleanly.
+            } catch (e: Exception) {
+                Log.e(TAG, "Held transmit failed", e)
+                _lastTransmitResult.value = TransmitResult(false, deviceId, commandName)
+            }
+        }
+    }
+
+    /**
      * Send a command with repeat (for volume/channel hold).
      */
     suspend fun sendRepeated(
@@ -142,15 +189,20 @@ class IrControl(private val context: Context) {
         } else null
         val NEC_REPEAT_GAP_MS = 99L  // 110 ms NEC period − 11 ms repeat duration
 
+        // Resolve carrier once for the whole repeat sequence. If the
+        // hardware doesn't support the requested carrier we drop down
+        // to the nearest supported one (B-200) so a held button at
+        // 40 kHz on a 38 kHz-only blaster doesn't fail every burst.
+        val effectiveCarrier = nearestSupportedCarrier(carrier) ?: carrier
         val success = txMutex.withLock {
             var ok = true
             for (i in 0 until repeatCount) {
                 try {
                     val burst = if (i == 0 || repeatTimings == null) timings else repeatTimings
-                    irManager?.transmit(carrier, burst)
+                    irManager?.transmit(effectiveCarrier, burst)
                     delay(if (useNecRepeat) NEC_REPEAT_GAP_MS else REPEAT_DELAY_MS)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Repeated transmit failed at iteration $i", e)
+                    Log.e(TAG, "Repeated transmit failed at iteration $i @ ${effectiveCarrier}Hz", e)
                     ok = false
                     break
                 }
@@ -192,17 +244,87 @@ class IrControl(private val context: Context) {
         // OEM implementations. A waiter just queues — pleasant from the
         // caller's perspective since suspendable.
         txMutex.withLock {
-            try {
-                irManager.transmit(carrier, timings)
-                _lastTransmitResult.value = TransmitResult(true, deviceId, commandName)
-                Log.d(TAG, "Transmitted '$commandName' to $deviceId @ ${carrier}Hz")
-                true
-            } catch (e: Exception) {
-                Log.e(TAG, "Transmit failed", e)
-                _lastTransmitResult.value = TransmitResult(false, deviceId, commandName)
-                false
+            transmitWithCarrierFallback(deviceId, commandName, carrier, timings)
+        }
+    }
+
+    /**
+     * Transmit a burst at the requested [carrier], falling back to the
+     * blaster's nearest supported carrier if the hardware refuses the
+     * requested one (B-200). Some OEM blasters only emit at 38 kHz —
+     * a SIRC code synthesized at 40 kHz then transmitted gets a
+     * silent rejection instead of a clean failure-with-recovery. The
+     * fallback walks ConsumerIrManager.carrierFrequencies for the
+     * closest supported value and retries once.
+     *
+     * Returns true iff a burst made it onto the wire (at any carrier).
+     */
+    private fun transmitWithCarrierFallback(
+        deviceId: String,
+        commandName: String,
+        carrier: Int,
+        timings: IntArray,
+    ): Boolean {
+        val mgr = irManager ?: return false
+        try {
+            mgr.transmit(carrier, timings)
+            _lastTransmitResult.value = TransmitResult(true, deviceId, commandName)
+            Log.d(TAG, "Transmitted '$commandName' to $deviceId @ ${carrier}Hz")
+            return true
+        } catch (e: Exception) {
+            // Hardware rejected the carrier (unsupported frequency,
+            // out-of-range timings array on this blaster, etc.). Pick
+            // the nearest supported carrier and retry once. Any
+            // failure on the retry is the final answer — we don't
+            // unbounded-loop.
+            Log.w(TAG, "Transmit failed at ${carrier}Hz: ${e.message} — trying fallback")
+            val fallback = nearestSupportedCarrier(carrier)
+            if (fallback != null && fallback != carrier) {
+                try {
+                    mgr.transmit(fallback, timings)
+                    _lastTransmitResult.value = TransmitResult(true, deviceId, commandName)
+                    Log.i(TAG, "Transmitted '$commandName' to $deviceId @ ${fallback}Hz (fallback from $carrier)")
+                    return true
+                } catch (e2: Exception) {
+                    Log.e(TAG, "Transmit failed at fallback ${fallback}Hz too", e2)
+                }
+            }
+            _lastTransmitResult.value = TransmitResult(false, deviceId, commandName)
+            return false
+        }
+    }
+
+    /**
+     * Pick the carrier the hardware will accept that's closest to
+     * [requested]. Walks ConsumerIrManager.carrierFrequencies (an
+     * array of [min..max] ranges per supported band) and finds the
+     * frequency inside the union of those ranges with the smallest
+     * absolute distance to [requested]. Returns null when the blaster
+     * doesn't expose a frequency table or can't accept anything close.
+     */
+    private fun nearestSupportedCarrier(requested: Int): Int? {
+        val ranges = irManager?.carrierFrequencies ?: return null
+        if (ranges.isEmpty()) return null
+        // Already supported? No-op.
+        for (range in ranges) {
+            if (requested in range.minFrequency..range.maxFrequency) return requested
+        }
+        // Pick the boundary frequency of the closest range.
+        var bestCarrier: Int? = null
+        var bestDistance = Int.MAX_VALUE
+        for (range in ranges) {
+            val candidate = when {
+                requested < range.minFrequency -> range.minFrequency
+                requested > range.maxFrequency -> range.maxFrequency
+                else -> requested
+            }
+            val distance = kotlin.math.abs(requested - candidate)
+            if (distance < bestDistance) {
+                bestDistance = distance
+                bestCarrier = candidate
             }
         }
+        return bestCarrier
     }
 
     // ── Standard Remote Layouts ───────────────────────────────

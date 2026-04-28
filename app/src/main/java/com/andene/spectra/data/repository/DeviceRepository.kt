@@ -43,7 +43,31 @@ class DeviceRepository(private val context: Context) {
         try {
             val serializable = profile.toSerializable()
             val jsonStr = json.encodeToString(serializable)
-            File(devicesDir, "${profile.id}.json").writeText(jsonStr)
+            // B-201: atomic write via temp-file + Files.move(ATOMIC_MOVE,
+            // REPLACE_EXISTING). The previous direct writeText left a
+            // window where a process kill mid-write could corrupt the
+            // canonical profile file (silently dropped on next load by
+            // the per-file try/catch in loadAll). Atomic rename means
+            // the on-disk state is always either the previous-good or
+            // the new file, never partial.
+            val target = File(devicesDir, "${profile.id}.json")
+            val tmp = File(devicesDir, "${profile.id}.json.tmp")
+            tmp.writeText(jsonStr)
+            try {
+                java.nio.file.Files.move(
+                    tmp.toPath(),
+                    target.toPath(),
+                    java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+                )
+            } catch (_: java.nio.file.AtomicMoveNotSupportedException) {
+                // FUSE / SAF mounts that reject atomic moves — fall
+                // back to delete+rename. Small window of corruption
+                // possible only on these exotic mounts; the app's
+                // private files dir is vanilla ext4/f2fs in practice.
+                if (target.exists()) target.delete()
+                tmp.renameTo(target)
+            }
             Log.d(TAG, "Saved device ${profile.id}")
             true
         } catch (e: Exception) {

@@ -445,10 +445,34 @@ class HomeFragment : Fragment() {
     // ── Library backup / restore ──────────────────────────────────
 
     private fun startBackupExport() {
+        // B-203: ask up-front whether to anonymise. Public-share
+        // backups (forum posts, shared groups) should strip BSSID +
+        // BLE addresses; backups for the user's own re-import keep
+        // them so cross-session matching still works.
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.backup_export_anonymise_title)
+            .setMessage(R.string.backup_export_anonymise_message)
+            .setPositiveButton(R.string.backup_export_anonymise_yes) { _, _ ->
+                pendingExportAnonymize = true
+                launchExportPicker()
+            }
+            .setNegativeButton(R.string.backup_export_anonymise_no) { _, _ ->
+                pendingExportAnonymize = false
+                launchExportPicker()
+            }
+            .show()
+    }
+
+    private var pendingExportAnonymize = false
+
+    private fun launchExportPicker() {
         // Pre-fill the picker with a date-stamped filename so users
         // building a rolling history don't have to retype every time.
         val stamp = SimpleDateFormat("yyyyMMdd-HHmm", Locale.US).format(Date())
-        backupExportLauncher.launch(getString(R.string.backup_filename_format, stamp))
+        val suffix = if (pendingExportAnonymize) "-anon" else ""
+        backupExportLauncher.launch(
+            getString(R.string.backup_filename_format, "$stamp$suffix"),
+        )
     }
 
     private fun startBackupImport() {
@@ -459,7 +483,7 @@ class HomeFragment : Fragment() {
     }
 
     private fun writeBackupTo(uri: Uri) {
-        vm.exportLibrary { jsonText ->
+        vm.exportLibrary(anonymize = pendingExportAnonymize) { jsonText ->
             if (jsonText == null) {
                 toast(getString(R.string.backup_export_failed))
                 return@exportLibrary

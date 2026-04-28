@@ -82,9 +82,21 @@ class BackupRepository(
         val macrosSkipped: Int,
     )
 
-    /** Build a JSON string holding every saved device + macro. */
-    suspend fun exportLibrary(): String = withContext(Dispatchers.IO) {
-        val devices = deviceRepository.loadAll()
+    /**
+     * Build a JSON string holding every saved device + macro.
+     *
+     * @param anonymize when true (B-203), strips BSSID, BLE addresses,
+     *   and MAC OUI prefixes from each device's RF signature before
+     *   serialising. The device names + IR profiles round-trip
+     *   unchanged. Use for backups posted publicly or shared with
+     *   strangers — the un-anonymised export retains identifiers
+     *   needed for cross-session re-matching, so device-to-device
+     *   transfer between known phones should leave it false.
+     */
+    suspend fun exportLibrary(anonymize: Boolean = false): String = withContext(Dispatchers.IO) {
+        val devices = deviceRepository.loadAll().let {
+            if (anonymize) it.map(::anonymiseProfile) else it
+        }
         val macros = macroRepository.loadAll()
         val envelope = LibraryBackup(
             version = CURRENT_VERSION,
@@ -94,6 +106,53 @@ class BackupRepository(
             macros = macros.map { it.toBackupForm() },
         )
         json.encodeToString(envelope)
+    }
+
+    /**
+     * Strip identifying RF data from a device profile while keeping
+     * everything cross-session matchers can reasonably reconstruct.
+     * Removes:
+     *   - WiFi BSSIDs (router MAC) and SSIDs (sometimes contain
+     *     personal names)
+     *   - BLE peripheral addresses (some are stable per-device)
+     *   - MAC OUI prefixes (vendor lookup re-derivable from the rest
+     *     of the rfSignature on import)
+     * Keeps:
+     *   - manufacturer + category labels (for matching hints)
+     *   - mDNS hints stripped of the unique device id but keeping
+     *     the service-type prefix (so "_googlecast._tcp" stays as
+     *     a category indicator)
+     *   - the full IR profile (commands, codes, carrier)
+     *   - acoustic / EM signatures (those are too unstable to
+     *     identify a specific household anyway)
+     */
+    private fun anonymiseProfile(device: com.andene.spectra.data.models.DeviceProfile):
+        com.andene.spectra.data.models.DeviceProfile {
+        val rf = device.rfSignature ?: return device
+        val anonRf = rf.copy(
+            wifiDevices = rf.wifiDevices.map {
+                it.copy(
+                    bssid = "",
+                    ssid = null,
+                    macPrefix = "",
+                    // modelHint is the OUI lookup result (vendor name,
+                    // mDNS service type) — it's already non-PII and
+                    // useful for matching, so we keep it.
+                )
+            },
+            bleDevices = rf.bleDevices.map {
+                it.copy(
+                    address = "",
+                    name = it.name?.takeIf { n ->
+                        // Keep service-type-ish names ("Sonos", "Bose")
+                        // but drop names that look like serial numbers
+                        // or user-customised labels.
+                        n.length <= 20 && !n.any { c -> c.isDigit() && n.count(Char::isDigit) > 4 }
+                    },
+                )
+            },
+        )
+        return device.copy(rfSignature = anonRf)
     }
 
     /**

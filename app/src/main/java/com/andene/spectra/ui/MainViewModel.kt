@@ -643,6 +643,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private var holdJob: kotlinx.coroutines.Job? = null
+
+    /** B-202: start a hold-to-repeat transmit. Cancel any prior hold so
+     *  rapid down/up events don't pile up overlapping IR streams. */
+    fun startHold(commandName: String) {
+        val deviceId = _activeDevice.value?.id ?: return
+        holdJob?.cancel()
+        holdJob = viewModelScope.launch {
+            orchestrator.control.sendHeld(deviceId, commandName)
+        }
+    }
+
+    /** Cancel the active hold (ACTION_UP / ACTION_CANCEL). */
+    fun stopHold() {
+        holdJob?.cancel()
+        holdJob = null
+    }
+
     // ── Save discovered device ────────────────────────────────
 
     fun saveDiscoveredDevice(name: String) {
@@ -767,9 +785,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * a SAF createDocument result handler) is on a coroutine scope.
      * Returns null if the export fails.
      */
-    fun exportLibrary(onResult: (String?) -> Unit) {
+    fun exportLibrary(anonymize: Boolean = false, onResult: (String?) -> Unit) {
         viewModelScope.launch {
-            val text = try { backupRepository.exportLibrary() } catch (e: Exception) {
+            val text = try {
+                backupRepository.exportLibrary(anonymize = anonymize)
+            } catch (e: Exception) {
                 emitToast("Couldn't build backup")
                 null
             }

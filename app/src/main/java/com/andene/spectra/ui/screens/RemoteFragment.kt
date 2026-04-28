@@ -16,28 +16,17 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.andene.spectra.R
 import com.andene.spectra.modules.control.IrControl
 import com.andene.spectra.ui.MainViewModel
-import kotlinx.coroutines.*
+import kotlinx.coroutines.launch
 
 class RemoteFragment : Fragment() {
 
     companion object {
-        /** Time the user has to keep a hold-to-repeat button down before
-         *  the auto-repeat kicks in. Tuned so a single tap stays a single
-         *  send. */
-        private const val REPEAT_INITIAL_DELAY_MS = 400L
-
-        /** Interval between auto-repeats once held longer than the initial
-         *  delay. ~150 ms maps to ~6 sends/sec, comparable to a real
-         *  remote's volume rocker. */
-        private const val REPEAT_INTERVAL_MS = 150L
-
         /** Duration of the success/failure tint flash on a transmitted
          *  button so the user can tell the press registered. */
         private const val TINT_FLASH_MS = 150L
     }
 
     private val vm: MainViewModel by activityViewModels()
-    private var repeatJob: Job? = null
 
     override fun onCreateView(inflater: LayoutInflater, c: ViewGroup?, s: Bundle?): View =
         inflater.inflate(R.layout.fragment_remote, c, false)
@@ -122,19 +111,16 @@ class RemoteFragment : Fragment() {
             }?.setOnTouchListener { v, event ->
                 when (event.action) {
                     MotionEvent.ACTION_DOWN -> {
-                        vm.sendCommand(command)
-                        repeatJob = viewLifecycleOwner.lifecycleScope.launch {
-                            delay(REPEAT_INITIAL_DELAY_MS)
-                            while (isActive) {
-                                vm.sendCommand(command)
-                                delay(REPEAT_INTERVAL_MS)
-                            }
-                        }
+                        // B-202: route through vm.startHold so the IR
+                        // path uses spec-compliant NEC repeat frames
+                        // (or full-frame retransmit for non-NEC) for
+                        // the entire duration of the press, instead of
+                        // a polling loop firing single full frames.
+                        vm.startHold(command)
                         true
                     }
                     MotionEvent.ACTION_UP -> {
-                        repeatJob?.cancel()
-                        repeatJob = null
+                        vm.stopHold()
                         // Synthesize a click for accessibility services (TalkBack)
                         // — without this, touch-explore users never get a click
                         // event for the volume/channel buttons.
@@ -142,8 +128,7 @@ class RemoteFragment : Fragment() {
                         true
                     }
                     MotionEvent.ACTION_CANCEL -> {
-                        repeatJob?.cancel()
-                        repeatJob = null
+                        vm.stopHold()
                         true
                     }
                     else -> false
@@ -178,7 +163,11 @@ class RemoteFragment : Fragment() {
     }
 
     override fun onDestroyView() {
-        repeatJob?.cancel()
+        // B-202: stopHold cancels the IrControl-side coroutine that
+        // owns the IR mutex during a press-and-hold. Without this an
+        // active hold could outlive the fragment for ~1 transmit-
+        // burst worth of time.
+        vm.stopHold()
         super.onDestroyView()
     }
 

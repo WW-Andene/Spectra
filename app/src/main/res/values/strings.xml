@@ -48,6 +48,10 @@
     <string name="restore_summary_format">Restored %1$d device(s) and %2$d macro(s).</string>
     <string name="restore_summary_with_skips_format">Restored %1$d device(s) and %2$d macro(s). %3$d entry(ies) skipped.</string>
     <string name="restore_nothing_imported">Backup parsed, but nothing was imported.</string>
+    <string name="backup_export_anonymise_title">Anonymise this backup?</string>
+    <string name="backup_export_anonymise_message">Strip Wi-Fi BSSIDs, Bluetooth addresses, and other identifiers before saving. Recommended when sharing publicly.\n\nKeep them when the backup is for your own re-import on another phone — without them cross-session re-identification doesn\'t work.</string>
+    <string name="backup_export_anonymise_yes">Anonymise</string>
+    <string name="backup_export_anonymise_no">Keep identifiers</string>
 
     <!-- Home-screen widget (B-002) -->
     <string name="widget_label">Spectra Quick Power</string>
