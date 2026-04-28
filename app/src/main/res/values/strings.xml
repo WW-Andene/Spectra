@@ -19,6 +19,16 @@
     <string name="clipboard_not_json">Clipboard doesn\'t look like a Spectra profile (expected JSON).</string>
     <string name="clipboard_parse_failed">Could not parse clipboard contents</string>
     <string name="scan_permissions_required">Scanning needs mic, location, and Bluetooth. Grant them in Settings to continue.</string>
+    <string name="cap_ir">IR — infrared blaster for sending remote codes. Disabled if your phone has no IR transmitter.</string>
+    <string name="cap_em">EM — magnetometer for electromagnetic-field fingerprinting. Disabled if your phone has no compass sensor.</string>
+    <string name="cap_mic">MIC — microphone for acoustic + EM-induced fingerprinting. Disabled until microphone permission is granted.</string>
+    <string name="cap_rf">RF — WiFi / BLE / mDNS scanning for nearby smart devices. Disabled until location permission is granted.</string>
+    <string name="permission_denial_message">Missing permissions: %1$s. You can grant them in app settings.</string>
+    <string name="perm_label_camera">camera</string>
+    <string name="perm_label_microphone">microphone</string>
+    <string name="perm_label_location">location</string>
+    <string name="perm_label_bluetooth">Bluetooth</string>
+    <string name="perm_label_ir">infrared</string>
 
     <!-- Scanning -->
     <string name="scan_title">Scanning…</string>

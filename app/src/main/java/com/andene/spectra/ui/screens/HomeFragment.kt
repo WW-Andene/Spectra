@@ -51,10 +51,20 @@ class HomeFragment : Fragment() {
         val emptyState = view.findViewById<TextView>(R.id.emptyState)
         val statusIr = view.findViewById<TextView>(R.id.statusIr)
         val statusEm = view.findViewById<TextView>(R.id.statusEm)
+        val statusMic = view.findViewById<TextView>(R.id.statusMic)
+        val statusRf = view.findViewById<TextView>(R.id.statusRf)
 
-        // Hardware status
+        // Hardware / permission status — dim the dot when its capability isn't
+        // available. Mic and RF dim based on runtime grant; IR and EM dim based
+        // on hardware presence. Long-press for an explanation.
         statusIr.alpha = if (vm.hasIrBlaster()) 1f else 0.3f
         statusEm.alpha = if (vm.hasMagnetometer()) 1f else 0.3f
+        statusMic.alpha = if (hasPermission(Manifest.permission.RECORD_AUDIO)) 1f else 0.3f
+        statusRf.alpha = if (hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)) 1f else 0.3f
+        statusIr.setOnLongClickListener { explainCapability(R.string.cap_ir); true }
+        statusEm.setOnLongClickListener { explainCapability(R.string.cap_em); true }
+        statusMic.setOnLongClickListener { explainCapability(R.string.cap_mic); true }
+        statusRf.setOnLongClickListener { explainCapability(R.string.cap_rf); true }
 
         // Device list
         val adapter = DeviceAdapter(
@@ -113,6 +123,17 @@ class HomeFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun hasPermission(name: String) =
+        ContextCompat.checkSelfPermission(requireContext(), name) == PackageManager.PERMISSION_GRANTED
+
+    private fun explainCapability(stringRes: Int) {
+        android.widget.Toast.makeText(
+            requireContext(),
+            getString(stringRes),
+            android.widget.Toast.LENGTH_LONG,
+        ).show()
     }
 
     /**

@@ -27,13 +27,27 @@ class MainActivity : AppCompatActivity() {
     ) { results ->
         val allGranted = results.all { it.value }
         if (!allGranted) {
-            val denied = results.filter { !it.value }.keys
+            val deniedLabels = results.filter { !it.value }.keys
+                .map { humanizePermission(it) }
+                .distinct()
             android.widget.Toast.makeText(
                 this,
-                "Missing permissions: ${denied.joinToString(", ") { it.substringAfterLast('.') }}",
+                getString(R.string.permission_denial_message, deniedLabels.joinToString(", ")),
                 android.widget.Toast.LENGTH_LONG
             ).show()
         }
+    }
+
+    private fun humanizePermission(name: String): String = when (name) {
+        Manifest.permission.CAMERA -> getString(R.string.perm_label_camera)
+        Manifest.permission.RECORD_AUDIO -> getString(R.string.perm_label_microphone)
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_COARSE_LOCATION,
+        Manifest.permission.NEARBY_WIFI_DEVICES -> getString(R.string.perm_label_location)
+        Manifest.permission.BLUETOOTH_SCAN,
+        Manifest.permission.BLUETOOTH_CONNECT -> getString(R.string.perm_label_bluetooth)
+        Manifest.permission.TRANSMIT_IR -> getString(R.string.perm_label_ir)
+        else -> name.substringAfterLast('.').lowercase().replace('_', ' ')
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
