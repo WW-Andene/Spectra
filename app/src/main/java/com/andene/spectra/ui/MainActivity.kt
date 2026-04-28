@@ -51,6 +51,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Install the SplashScreen compat shim BEFORE super.onCreate so the
+        // platform splash takes over during the cold-start window.
+        // androidx.core.splashscreen handles Android 12+ natively and
+        // back-fills earlier API levels with the same theme attributes.
+        androidx.core.splashscreen.SplashScreen.installSplashScreen(this)
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 

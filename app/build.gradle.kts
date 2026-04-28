@@ -76,6 +76,9 @@ dependencies {
     // Serialization (for device profile persistence)
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
 
+    // SplashScreen compat (Android 12+ native, polyfilled below)
+    implementation("androidx.core:core-splashscreen:1.0.1")
+
     // NSD/mDNS — included in Android SDK, no extra dep
 
     // Unit tests (host JVM)

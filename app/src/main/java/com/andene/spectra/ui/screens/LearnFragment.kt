@@ -262,7 +262,11 @@ class LearnFragment : Fragment() {
     private fun showCommandActions(name: String, container: LinearLayout) {
         AlertDialog.Builder(requireContext())
             .setTitle(name)
-            .setItems(arrayOf("Test", "Rename", "Delete")) { _, which ->
+            .setItems(arrayOf(
+                getString(R.string.action_test),
+                getString(R.string.action_rename),
+                getString(R.string.action_delete),
+            )) { _, which ->
                 when (which) {
                     0 -> vm.testCommand(name)
                     1 -> showRenameDialog(name, container)

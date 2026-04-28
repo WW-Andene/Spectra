@@ -44,6 +44,12 @@ jobs:
       - name: Run unit tests
         run: ./gradlew :app:testDebugUnitTest --stacktrace
 
+      - name: Lint (debug variant)
+        # Lint runs after tests so a flake in lint doesn't mask a real test
+        # failure. continue-on-error is intentionally absent — we want
+        # critical lint issues to fail the build the moment they land.
+        run: ./gradlew :app:lintDebug --stacktrace
+
       - name: Assemble debug APK
         run: ./gradlew :app:assembleDebug --stacktrace
 
@@ -61,5 +67,14 @@ jobs:
         with:
           name: test-reports
           path: app/build/reports/tests/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload lint report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-report
+          path: app/build/reports/lint-results-debug.html
           if-no-files-found: ignore
           retention-days: 7
