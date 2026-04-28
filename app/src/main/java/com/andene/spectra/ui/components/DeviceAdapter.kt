@@ -44,7 +44,7 @@ class DeviceAdapter(
                 DeviceCategory.UNKNOWN -> "📡"
             }
 
-            name.text = device.name ?: "Unnamed Device"
+            name.text = device.name ?: itemView.context.getString(R.string.device_unnamed_label)
 
             val parts = mutableListOf<String>()
             device.manufacturer?.let { parts.add(it) }

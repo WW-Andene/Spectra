@@ -71,8 +71,11 @@ class HomeFragment : Fragment() {
             onDeviceClick = { vm.selectDevice(it) },
             onDeviceLongClick = { device ->
                 android.app.AlertDialog.Builder(requireContext())
-                    .setTitle(device.name ?: "Device")
-                    .setItems(arrayOf("Open Remote", "Delete")) { _, which ->
+                    .setTitle(device.name ?: getString(R.string.device_default_label))
+                    .setItems(arrayOf(
+                        getString(R.string.action_open_remote_short),
+                        getString(R.string.action_delete),
+                    )) { _, which ->
                         when (which) {
                             0 -> vm.selectDevice(device)
                             1 -> vm.deleteDevice(device.id)
@@ -147,7 +150,10 @@ class HomeFragment : Fragment() {
             vm.runningMacro.collect { running ->
                 if (running != null) {
                     macroRunning.visibility = View.VISIBLE
-                    macroRunning.text = "Running '${running.name}': step ${running.currentStep}/${running.totalSteps} — ${running.currentLabel}"
+                    macroRunning.text = getString(
+                        R.string.macro_running_format,
+                        running.name, running.currentStep, running.totalSteps, running.currentLabel,
+                    )
                 } else {
                     macroRunning.visibility = View.GONE
                 }

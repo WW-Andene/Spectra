@@ -43,10 +43,10 @@ class RemoteFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             vm.activeDevice.collect { device ->
                 if (device == null) return@collect
-                deviceName.text = device.name ?: "Device"
+                deviceName.text = device.name ?: getString(R.string.device_default_label)
                 val cmdCount = device.irProfile?.commands?.size ?: 0
                 val protocol = device.irProfile?.protocol?.name ?: "Unknown"
-                deviceInfo.text = "$protocol · $cmdCount commands"
+                deviceInfo.text = getString(R.string.device_info_format, protocol, cmdCount)
             }
         }
 

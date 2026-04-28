@@ -90,13 +90,13 @@ class MacroEditFragment : Fragment() {
         btnSave.setOnClickListener {
             val name = nameInput.text?.toString()?.trim().orEmpty()
             if (name.isEmpty()) {
-                nameInput.error = "Name required"
+                nameInput.error = getString(R.string.macro_name_required)
                 return@setOnClickListener
             }
             if (workingSteps.isEmpty()) {
                 AlertDialog.Builder(requireContext())
-                    .setMessage("Add at least one step before saving.")
-                    .setPositiveButton("OK", null)
+                    .setMessage(R.string.add_step_first_message)
+                    .setPositiveButton(android.R.string.ok, null)
                     .show()
                 return@setOnClickListener
             }
@@ -165,8 +165,12 @@ class MacroEditFragment : Fragment() {
                 setBackgroundResource(android.R.drawable.list_selector_background)
                 setOnLongClickListener {
                     AlertDialog.Builder(requireContext())
-                        .setTitle("Step ${index + 1}")
-                        .setItems(arrayOf("Move up", "Move down", "Remove")) { _, which ->
+                        .setTitle(getString(R.string.step_index_title_format, index + 1))
+                        .setItems(arrayOf(
+                            getString(R.string.action_move_up),
+                            getString(R.string.action_move_down),
+                            getString(R.string.action_remove),
+                        )) { _, which ->
                             when (which) {
                                 0 -> if (index > 0) {
                                     val s = workingSteps.removeAt(index); workingSteps.add(index - 1, s)

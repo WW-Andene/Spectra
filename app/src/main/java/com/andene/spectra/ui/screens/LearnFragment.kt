@@ -68,8 +68,8 @@ class LearnFragment : Fragment() {
         val btnBackLearn = view.findViewById<Button>(R.id.btnBackLearn)
         val btnOpenRemote = view.findViewById<Button>(R.id.btnOpenRemote)
 
-        val deviceName = vm.activeDevice.value?.name ?: "Device"
-        learnTitle.text = "Learn: $deviceName"
+        val deviceName = vm.activeDevice.value?.name ?: getString(R.string.device_default_label)
+        learnTitle.text = getString(R.string.learn_title_with_device, deviceName)
 
         // Database picker — fastest path
         view.findViewById<Button>(R.id.btnPickFromDb).setOnClickListener {
@@ -85,7 +85,7 @@ class LearnFragment : Fragment() {
             vm.startCameraCapture()
             btnStartCapture.isEnabled = false
             btnStopCapture.isEnabled = true
-            captureStatus.text = "Recording... point remote at camera"
+            captureStatus.text = getString(R.string.recording_hint)
         }
 
         btnStopCapture.setOnClickListener {
@@ -99,20 +99,20 @@ class LearnFragment : Fragment() {
         // Camera capture state
         viewLifecycleOwner.lifecycleScope.launch {
             vm.captureState.collect { state ->
-                captureStatus.text = when (state) {
-                    IrCameraCapture.CaptureState.IDLE -> "Ready"
-                    IrCameraCapture.CaptureState.CAPTURING -> "Recording..."
-                    IrCameraCapture.CaptureState.PROCESSING -> "Analyzing..."
-                    IrCameraCapture.CaptureState.DECODED -> "Command captured!"
-                    IrCameraCapture.CaptureState.ERROR -> "No IR signal detected"
-                }
+                captureStatus.text = getString(when (state) {
+                    IrCameraCapture.CaptureState.IDLE -> R.string.device_capture_status_ready
+                    IrCameraCapture.CaptureState.CAPTURING -> R.string.device_capture_status_recording
+                    IrCameraCapture.CaptureState.PROCESSING -> R.string.device_capture_status_analyzing
+                    IrCameraCapture.CaptureState.DECODED -> R.string.device_capture_status_decoded
+                    IrCameraCapture.CaptureState.ERROR -> R.string.device_capture_status_no_signal
+                })
             }
         }
 
         // Brute force controls
         if (!vm.hasIrBlaster()) {
             btnStartBrute.isEnabled = false
-            bruteForceStatus.text = "IR blaster not available on this device"
+            bruteForceStatus.text = getString(R.string.ir_blaster_unavailable)
         }
 
         btnStartBrute.setOnClickListener {
@@ -132,7 +132,10 @@ class LearnFragment : Fragment() {
             vm.bruteForcePrompt.collect { prompt ->
                 if (prompt != null) {
                     bruteForcePrompt.visibility = View.VISIBLE
-                    promptText.text = "Attempt #${prompt.attemptNum}: ${prompt.manufacturer} (${prompt.protocol})\nDid the device react?"
+                    promptText.text = getString(
+                        R.string.brute_force_attempt_format,
+                        prompt.attemptNum, prompt.manufacturer, prompt.protocol.name,
+                    )
                 } else {
                     bruteForcePrompt.visibility = View.GONE
                 }
@@ -171,15 +174,15 @@ class LearnFragment : Fragment() {
         }
         if (brands.isEmpty()) {
             AlertDialog.Builder(requireContext())
-                .setTitle("No remotes available")
-                .setMessage("The bundled IR database is empty.")
-                .setPositiveButton("OK", null)
+                .setTitle(R.string.db_no_remotes_title)
+                .setMessage(R.string.db_no_remotes_message)
+                .setPositiveButton(android.R.string.ok, null)
                 .show()
             return
         }
 
         AlertDialog.Builder(requireContext())
-            .setTitle("Pick a brand")
+            .setTitle(R.string.db_pick_brand)
             .setItems(brands.toTypedArray()) { _, which ->
                 showRemotePicker(brands[which])
             }
@@ -194,20 +197,23 @@ class LearnFragment : Fragment() {
         if (entries.isEmpty()) {
             AlertDialog.Builder(requireContext())
                 .setTitle(brand)
-                .setMessage("No remotes available for this brand.")
-                .setPositiveButton("OK", null)
+                .setMessage(R.string.db_no_remotes_for_brand)
+                .setPositiveButton(android.R.string.ok, null)
                 .show()
             return
         }
         val labels = entries.map { "${it.model} · ${it.commands.size} cmds" }.toTypedArray()
         AlertDialog.Builder(requireContext())
-            .setTitle("$brand — most-complete layout first")
+            .setTitle(getString(R.string.db_brand_layout_title_format, brand))
             .setItems(labels) { _, which ->
                 vm.installRemoteFromDatabase(entries[which])
                 AlertDialog.Builder(requireContext())
-                    .setTitle("Installed")
-                    .setMessage("${entries[which].model} loaded with ${entries[which].commands.size} commands.")
-                    .setPositiveButton("Open Remote") { _, _ ->
+                    .setTitle(R.string.db_installed_title)
+                    .setMessage(getString(
+                        R.string.db_installed_message_format,
+                        entries[which].model, entries[which].commands.size,
+                    ))
+                    .setPositiveButton(R.string.action_open_remote) { _, _ ->
                         vm.navigate(com.andene.spectra.ui.MainViewModel.Screen.REMOTE)
                     }
                     .setNegativeButton("Stay", null)
@@ -223,7 +229,7 @@ class LearnFragment : Fragment() {
 
         if (commands.isNullOrEmpty()) {
             val empty = TextView(requireContext()).apply {
-                text = "No commands learned yet"
+                text = getString(R.string.learn_no_commands)
                 setTextColor(ContextCompat.getColor(requireContext(), R.color.text_tertiary))
                 textSize = 12f
             }
@@ -262,12 +268,12 @@ class LearnFragment : Fragment() {
                     1 -> showRenameDialog(name, container)
                     2 -> {
                         AlertDialog.Builder(requireContext())
-                            .setMessage("Delete '$name'?")
-                            .setPositiveButton("Delete") { _, _ ->
+                            .setMessage(getString(R.string.confirm_delete_command_format, name))
+                            .setPositiveButton(R.string.action_delete) { _, _ ->
                                 vm.deleteCommand(name)
                                 updateLearnedList(container)
                             }
-                            .setNegativeButton("Cancel", null)
+                            .setNegativeButton(R.string.action_cancel_dialog, null)
                             .show()
                     }
                 }
@@ -281,16 +287,16 @@ class LearnFragment : Fragment() {
             setSelection(oldName.length)
         }
         AlertDialog.Builder(requireContext())
-            .setTitle("Rename command")
+            .setTitle(R.string.rename_command_title)
             .setView(input)
-            .setPositiveButton("Save") { _, _ ->
+            .setPositiveButton(R.string.action_save_button) { _, _ ->
                 val newName = input.text.toString().trim()
                 if (newName.isNotEmpty() && newName != oldName) {
                     vm.renameCommand(oldName, newName)
                     updateLearnedList(container)
                 }
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(R.string.action_cancel_dialog, null)
             .show()
     }
 

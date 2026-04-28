@@ -43,10 +43,11 @@ class ResultsFragment : Fragment() {
 
                 deviceStatus.text = when (phase) {
                     com.andene.spectra.core.SpectraOrchestrator.Phase.DEVICE_IDENTIFIED ->
-                        "Known device: ${device.name ?: "Unnamed"}"
+                        getString(R.string.results_known_device_format,
+                            device.name ?: getString(R.string.device_unnamed_label))
                     com.andene.spectra.core.SpectraOrchestrator.Phase.READY ->
-                        "Ready to control"
-                    else -> "New device detected"
+                        getString(R.string.results_ready_to_control)
+                    else -> getString(R.string.results_new_device_detected)
                 }
 
                 // Acoustic details
@@ -54,8 +55,8 @@ class ResultsFragment : Fragment() {
                 detailAcoustic.text = if (acoustic != null) {
                     val peakCount = acoustic.dominantFrequencies.size
                     val topFreq = acoustic.dominantFrequencies.firstOrNull()?.frequencyHz?.toInt() ?: 0
-                    "Acoustic: $peakCount peaks, dominant ${topFreq}Hz"
-                } else "Acoustic: no data"
+                    getString(R.string.acoustic_detail_format, peakCount, topFreq)
+                } else getString(R.string.acoustic_no_data)
 
                 // RF details
                 val rf = device.rfSignature
@@ -63,14 +64,15 @@ class ResultsFragment : Fragment() {
                     val wifi = rf.wifiDevices.size
                     val ble = rf.bleDevices.size
                     val manufacturer = rf.wifiDevices.firstOrNull()?.modelHint
-                    "RF: $wifi WiFi, $ble BLE${manufacturer?.let { " ($it)" } ?: ""}"
-                } else "RF: no data"
+                    if (manufacturer != null) getString(R.string.rf_detail_with_manufacturer_format, wifi, ble, manufacturer)
+                    else getString(R.string.rf_detail_format, wifi, ble)
+                } else getString(R.string.rf_no_data)
 
                 // EM details
                 val em = device.emSignature
                 detailEm.text = if (em != null) {
-                    "EM: ${em.fieldStrength.toInt()} µT, ${em.emiAudioFrequencies.size} EMI peaks"
-                } else "EM: no data"
+                    getString(R.string.em_detail_format, em.fieldStrength.toInt(), em.emiAudioFrequencies.size)
+                } else getString(R.string.em_no_data)
 
                 // Pre-fill name from RF if available
                 if (inputName.text.isNullOrEmpty()) {
@@ -84,7 +86,7 @@ class ResultsFragment : Fragment() {
         // Disable IR buttons if no blaster
         if (!vm.hasIrBlaster()) {
             btnBruteForce.isEnabled = false
-            btnBruteForce.text = "NO IR BLASTER"
+            btnBruteForce.text = getString(R.string.brute_force_no_blaster)
         }
 
         btnLearnCamera.setOnClickListener {
@@ -100,7 +102,8 @@ class ResultsFragment : Fragment() {
         }
 
         btnSave.setOnClickListener {
-            val name = inputName.text?.toString()?.ifBlank { "Device" } ?: "Device"
+            val fallback = getString(R.string.default_device_name)
+            val name = inputName.text?.toString()?.ifBlank { fallback } ?: fallback
             vm.saveDiscoveredDevice(name)
             vm.navigate(MainViewModel.Screen.HOME)
         }

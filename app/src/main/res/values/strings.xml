@@ -34,6 +34,48 @@
     <string name="undo_deleted_macro">Deleted macro %1$s</string>
     <string name="action_undo">UNDO</string>
 
+    <!-- Runtime-formatted strings — moved out of Kotlin code -->
+    <string name="device_default_label">Device</string>
+    <string name="device_unnamed_label">Unnamed Device</string>
+    <string name="learn_title_with_device">Learn: %1$s</string>
+    <string name="recording_hint">Recording… point remote at camera</string>
+    <string name="brute_force_attempt_format">Attempt #%1$d: %2$s (%3$s)\nDid the device react?</string>
+    <string name="db_no_remotes_title">No remotes available</string>
+    <string name="db_no_remotes_message">The bundled IR database is empty.</string>
+    <string name="db_no_remotes_for_brand">No remotes available for this brand.</string>
+    <string name="db_pick_brand">Pick a brand</string>
+    <string name="db_brand_layout_title_format">%1$s — most-complete layout first</string>
+    <string name="db_installed_title">Installed</string>
+    <string name="db_installed_message_format">%1$s loaded with %2$d commands.</string>
+    <string name="learn_no_commands">No commands learned yet</string>
+    <string name="confirm_delete_command_format">Delete \'%1$s\'?</string>
+    <string name="rename_command_title">Rename command</string>
+    <string name="action_save_button">Save</string>
+    <string name="step_index_title_format">Step %1$d</string>
+    <string name="add_step_first_message">Add at least one step before saving.</string>
+    <string name="macro_name_required">Name required</string>
+    <string name="macro_running_format">Running \'%1$s\': step %2$d/%3$d — %4$s</string>
+    <string name="device_capture_status_recording">Recording…</string>
+    <string name="device_capture_status_analyzing">Analyzing…</string>
+    <string name="device_capture_status_decoded">Command captured!</string>
+    <string name="device_capture_status_no_signal">No IR signal detected</string>
+    <string name="device_capture_status_ready">Ready</string>
+    <string name="ir_blaster_unavailable">IR blaster not available on this device</string>
+    <string name="brute_force_no_blaster">NO IR BLASTER</string>
+    <string name="results_known_device_format">Known device: %1$s</string>
+    <string name="results_ready_to_control">Ready to control</string>
+    <string name="results_new_device_detected">New device detected</string>
+    <string name="device_info_format">%1$s · %2$d commands</string>
+    <string name="acoustic_detail_format">Acoustic: %1$d peaks, dominant %2$dHz</string>
+    <string name="acoustic_no_data">Acoustic: no data</string>
+    <string name="rf_detail_format">RF: %1$d WiFi, %2$d BLE</string>
+    <string name="rf_detail_with_manufacturer_format">RF: %1$d WiFi, %2$d BLE (%3$s)</string>
+    <string name="rf_no_data">RF: no data</string>
+    <string name="em_detail_format">EM: %1$d µT, %2$d EMI peaks</string>
+    <string name="em_no_data">EM: no data</string>
+    <string name="default_device_name">Device</string>
+    <string name="action_open_remote_short">Open Remote</string>
+
     <!-- Scanning -->
     <string name="scan_title">Scanning…</string>
     <string name="scan_hint">Hold phone 5–30 cm from device</string>
