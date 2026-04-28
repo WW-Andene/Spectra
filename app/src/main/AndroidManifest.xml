@@ -101,6 +101,25 @@
             </intent-filter>
         </receiver>
 
+        <!-- Quick Settings tile (B-003): tap from the notification shade
+             (or lock screen) to fire POWER on the primary device. The
+             BIND_QUICK_SETTINGS_TILE permission is mandatory and must
+             match android:exported="true" — TileService is invoked by
+             the system, so it has to be reachable. -->
+        <service
+            android:name=".widget.SpectraQuickTile"
+            android:label="@string/qs_tile_label"
+            android:icon="@drawable/ic_qs_power"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.quicksettings.ACTIVE_TILE"
+                android:value="false" />
+        </service>
+
     </application>
 
 </manifest>

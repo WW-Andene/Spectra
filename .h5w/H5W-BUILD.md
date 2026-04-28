@@ -31,7 +31,6 @@ camera capture, RF discovery currently dead-ending in the matcher).
 |----|---------|-------|--------|-------|
 | B-002 | Home screen widget | 2 — config activity (pick device + command) | TODO | per-widget instance config |
 | B-002 | Home screen widget | 3 — macro chips on multi-cell widget | TODO | requires phase 2 first |
-| B-003 | Quick Settings tile | 1 — TileService scaffold | TODO | API 24+ |
 | B-003 | Quick Settings tile | 2 — top-macro picker | TODO | persist user pick in DataStore |
 | B-004 | Smart-home control over RF | 1 — BLE write to discovered devices | TODO | leverages existing RfFingerprint |
 | B-004 | Smart-home control over RF | 2 — mDNS HTTP control (Roku, etc.) | TODO | extends existing inferIdentity hints |
@@ -54,7 +53,8 @@ camera capture, RF discovery currently dead-ending in the matcher).
 | ID | Feature | Phases shipped | Commits |
 |----|---------|----------------|---------|
 | B-001 | Library backup / restore | 1 (repo + viewmodel) + 2+3 (UI + SAF + dialog/toast) | `74ee4df`, `3712eff` |
-| B-002 | Home screen widget | 1 — 1×1 power tile | (this commit) |
+| B-002 | Home screen widget | 1 — 1×1 power tile | `1dc241e` |
+| B-003 | Quick Settings tile | 1 — POWER on primary device | (this commit) |
 
 ---
 

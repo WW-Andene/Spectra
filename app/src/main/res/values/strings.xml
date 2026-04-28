@@ -55,6 +55,10 @@
     <string name="widget_no_device">No device</string>
     <string name="widget_open_app">Open Spectra</string>
 
+    <!-- Quick Settings tile (B-003) -->
+    <string name="qs_tile_label">Spectra Power</string>
+    <string name="qs_tile_content_description_format">Send POWER to %1$s</string>
+
     <!-- Runtime-formatted strings — moved out of Kotlin code -->
     <string name="device_default_label">Device</string>
     <string name="device_unnamed_label">Unnamed Device</string>

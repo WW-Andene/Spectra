@@ -58,13 +58,9 @@ class SpectraQuickWidget : AppWidgetProvider() {
         scope.launch {
             val app = context.applicationContext as? SpectraApp ?: return@launch
             val devices = app.repository.loadAll()
-            // Pick the most-recently-discovered device that has a
-            // POWER command. Falls through to first-with-power, then
-            // first-overall.
-            val primary = devices
-                .filter { it.irProfile?.commands?.containsKey(IrControl.Commands.POWER) == true }
-                .maxByOrNull { it.discoveredAt }
-                ?: devices.firstOrNull()
+            // QuickPowerKit centralises the "primary device" definition so
+            // the widget label and the QS tile target the same device.
+            val primary = QuickPowerKit.selectPrimary(devices) ?: devices.firstOrNull()
 
             for (id in appWidgetIds) {
                 val views = buildViews(context, primary)

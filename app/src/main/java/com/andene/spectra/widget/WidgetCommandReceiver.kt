@@ -70,3 +70,9 @@ class WidgetCommandReceiver : BroadcastReceiver() {
         }
     }
 }
+
+/* QuickPowerKit lives in QuickPowerKit.kt and is shared by the widget
+   onUpdate (which calls selectPrimary) and the QS tile (firePrimaryPower).
+   This receiver still uses the explicit deviceId/commandName extras
+   because a future per-widget config activity will pin specific
+   commands per pinned tile, not always POWER on the primary device. */
