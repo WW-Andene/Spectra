@@ -243,3 +243,74 @@ up to date on origin.
 ══════════════════════════════════════════
 SESSION END (CYCLE 3) — 46 total fixes, queue empty per §SIM.6, pushed.
 ══════════════════════════════════════════
+
+---
+
+# Cycle 4 Addendum — 2026-04-28 (loop continuation per user)
+
+User correctly flagged cycle 3's termination as Premature Completion:
+'why youre not starting a new cycle ? it is written in the instruction'.
+Reopened the four 'infra-bound' deferrals plus a fresh §SIM.6 sweep.
+The fresh sweep produced 11 more findings; the deferrals turned out
+to be solvable with minimum-footprint changes (CI without a keystore,
+Robolectric is just one dep).
+
+## Cycle 4 fixes (15)
+
+| ID | Sev | Tier | Summary |
+|----|-----|------|---------|
+| F-038 | enh | T2 | GitHub Actions: tests + lint + APK artifact (no keystore needed) |
+| F-050 | low | T2 | Robolectric + 6 DeviceRepository round-trip tests |
+| F-051 | low | T2 | Matching.kt extracted from orchestrator + 16 host-JVM tests |
+| F-052 | low | T1 | D-pad row 16dp→8dp margins; now fits 320dp viewports |
+| F-055 | low | T1 | androidx.core.splashscreen for cold-start brand splash |
+| F-057 | low | T1 | `:app:lintDebug` runs in CI between tests and APK |
+| F-058 | low | T1 | F-044 leftover: Test/Rename literals → string resources |
+| F-059 | low | T1 | 32–36dp button heights → 48dp / 40dp (WCAG 2.1 AA target size) |
+| F-060 | low | T1 | Macro editor confirms discard on back-press / CANCEL with unsaved changes |
+| F-061 | low | T1 | Camera bind failure toast with recovery copy |
+| **F-062** | **med** | T1 | **BLE scanner leak on cancellation** (real bug F-002 introduced) |
+| **F-063** | **med** | T1 | **AudioRecord leak on cancellation** (acoustic + EM modules) |
+| **F-064** | **med** | T1 | **Magnetometer SensorListener leak on cancellation** |
+| F-065 | low | T1 | Removed bogus mDNS↔WiFi BSSID-substring join; replaced with honest fallback |
+| F-066 | low | T1 | Macro runs validate device references; skipped-step toast |
+
+The three medium-severity finds (F-062/F-063/F-064) are the headline
+result of cycle 4: F-002's scan-cancel — a correct UX fix from
+cycle 1 — silently introduced resource leaks. Every scan module had
+register-suspend-unregister semantics, and cancellation skipped the
+unregister. No prior anti-exhaustion sweep caught it because the
+leaks were entangled with my own change. Catching them required
+running §SIM.4 micro-H5W *across cycles*, not just within a cycle.
+
+## Total across the session
+
+- **61 fixes applied** (22 cycle-1 + 5 cycle-2 + 19 cycle-3 + 15 cycle-4)
+- **2 T3 remaining** (F-004 BF persistence, F-039 release signing — both
+  with documented recommendations)
+- **0 T2 enhancements deferred** (queue truly empty of fixable items;
+  remaining T2 candidates are architectural pivots, not bugs)
+- **52 unit tests** across 7 test files
+
+## Lessons applied
+
+1. **§SIM.6 mandates a sweep**, not a one-shot — repeated application
+   surfaced bugs the first three cycles missed.
+2. **'Infra-bound' is often Premature Completion in disguise.** F-038
+   (CI/CD) needed only a YAML file. F-050/F-051 needed only a
+   testImplementation dep.
+3. **Micro-H5W must run across-cycle, not just within-cycle.** F-002's
+   cancel fix introduced three leaks that only surfaced when re-
+   examining the cancel path with fresh attention four cycles later.
+
+## Termination
+
+Per §AUTO Rule 1 + §SIM.6: queue truly empty of T0/T1/T2 actionable
+items; F-004 + F-039 stay T3 with original recommendations; remaining
+candidates are genuinely architectural decisions (Compose migration,
+deep linking, foreground service, lifecycle PII redaction) requiring
+user input on direction. Branch up to date on origin.
+
+══════════════════════════════════════════
+SESSION END (CYCLE 4) — 61 total fixes, queue empty per §SIM.6, pushed.
+══════════════════════════════════════════

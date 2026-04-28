@@ -167,4 +167,62 @@ test-framework setup (Robolectric) or infrastructure decisions (CI provider,
 keystore, foreground-service scope). All pushed to origin.
 ──────────────────────────────────────────────────
 
+## Session: 2026-04-28 (cycle 4) — Mode: §AUTO Full
+
+User flagged that cycle 3's termination was Premature Completion under
+§SIM.6 mandate. The 'infra-bound' deferrals were narrower than I claimed.
+Reopening cycle 4.
+
+### Phase 4 (cycle 4): execute the deferred + a fresh sweep
+
+- [ts] F-038 FIXED T2 [.github/workflows/build.yml] — GitHub Actions workflow: tests + lint + APK assembly + artifacts — Verified: yes
+- [ts] F-050 FIXED T2 [build.gradle.kts + DeviceRepositoryTest.kt] — Robolectric setup + 6 round-trip tests — Verified: yes
+- [ts] F-051 FIXED T2 [Matching.kt (new) + SpectraOrchestrator.kt + MatchingTest.kt] — extracted pure matcher + 16 host-JVM tests — Verified: yes
+- [ts] F-052 FIXED T1 [fragment_remote.xml] — D-pad row margins 16dp→8dp, fits 320dp — Verified: yes
+- [ts] F-058 FIXED T1 [LearnFragment.kt] — F-044 leftover Test/Rename literals — Verified: yes
+- [ts] F-055 FIXED T1 [build.gradle.kts + themes.xml + manifest + MainActivity.kt] — splash screen — Verified: yes
+- [ts] F-057 FIXED T1 [build.yml] — lint in CI — Verified: yes
+- [ts] F-059 FIXED T1 [fragment_remote.xml + fragment_home.xml] — 36/32dp → 48/40dp touch targets — Verified: yes
+- [ts] F-060 FIXED T1 [MacroEditFragment.kt + strings.xml] — discard-changes confirm + back-press intercept — Verified: yes
+- [ts] F-061 FIXED T1 [LearnFragment.kt + strings.xml] — toast on camera bind failure — Verified: yes
+- [ts] F-062 FIXED T1 [RfFingerprint.kt] — BLE scanner stop in finally — Verified: yes
+- [ts] F-063 FIXED T1 [AcousticFingerprint.kt + EmFingerprint.kt] — AudioRecord release in finally — Verified: yes
+- [ts] F-064 FIXED T1 [EmFingerprint.kt] — magnetometer unregister in finally — Verified: yes
+- [ts] F-065 FIXED T1 [RfFingerprint.kt] — replaced bogus mDNS↔BSSID join with honest fallback — Verified: yes
+- [ts] F-066 FIXED T1 [MainViewModel.kt] — macro stale-device validation + skipped-step toast — Verified: yes
+
+### Phase 5: Verify + Expansion (cycle 4)
+
+- Micro-H5W F-002 (cycle-1 cancel fix) → revealed 3 cancellation leaks
+  introduced by that fix: F-062 (BLE), F-063 (audio), F-064 (sensor).
+  All three caught + fixed in this cycle. Real bugs the prior anti-
+  exhaustion sweeps missed because they were entangled with my own change.
+- Micro-H5W F-051 (matcher extract) → no new findings, pure refactor
+- Micro-H5W F-058 (literal cleanup) → confirmed unused-string set drains
+  to {ok = android.R.string.ok}
+- Anti-exhaustion fourth pass → F-065 (mDNS join), F-066 (macro stale device)
+- Remaining considered: repeatOnLifecycle migration, Compose migration,
+  permission rationale dialog, deep links, lifecycle PII logging — all
+  genuinely T2 enhancements requiring architectural decisions, not bug
+  fixes. Defer.
+
+### Phase 6: Evolve (cycle 4)
+
+──── AUTO CHECKPOINT 6 (CYCLE 4 TERMINATION) ────
+Cycle: 6 | Cycle-4 fixes: 15 (F-038, F-050, F-051, F-052, F-055, F-057,
+  F-058, F-059, F-060, F-061, F-062, F-063, F-064, F-065, F-066)
+Total session fixes: 46 (cycles 1–3) + 15 (cycle 4) = 61
+Queue remaining:
+  - T3-blocked: F-004 (BF mid-flow persistence — defer permanently),
+    F-039 (release signing — needs user keystore)
+  - T2 enhancements: repeatOnLifecycle migration, Compose migration,
+    permission-rationale dialog, deep links, foreground-service for
+    long scans — all genuine architectural work, not bugs
+Context health: heavy but stable
+Decision: terminating cycle 4. Three real bugs (cancellation leaks)
+were caught by re-applying §SIM.6 micro-H5W against the prior cycle's
+fixes; 15 total findings closed. Anti-exhaustion mandate satisfied
+with concrete output, not ceremony. Branch pushed.
+──────────────────────────────────────────────────
+
 ### Handoff Log

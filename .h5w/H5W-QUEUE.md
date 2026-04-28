@@ -58,14 +58,31 @@ entire delivery-infrastructure dimension.
 | - | F-038 | Configure CI/CD pipeline? | **Defer** — requires choice of provider (GitHub Actions, GitLab, etc.) and a working secret store for signing. Out of scope without user infrastructure decisions. | Infrastructure / external account |
 | - | F-039 | Configure release signing? | **Defer** — requires user keystore + a secret-management plan. Cannot generate a real signing key autonomously without leaking it. | Cryptographic key material |
 
-### T2 enhancements deferred from cycle 3 (no current victims, infra-level)
+### Cycle 4 (2026-04-28, post-Premature-Completion correction)
 
-| # | ID | Sev | Source | Rationale |
-|---|----|-----|--------|-----------|
-| - | F-050 | low | §SIM.6 L3.Q29 | Repository JSON round-trip tests — needs Robolectric or a Context-mock framework. Repo conversions exercised at runtime; failure modes would surface immediately on first save. |
-| - | F-051 | low | §SIM.6 L5.Q43 | Tests for SpectraOrchestrator.matchKnownDevice / inferIdentity — same Robolectric requirement. The pure subset is testable but requires a refactor that's not minimum-footprint. |
-| - | F-052 | low | §SIM.6 L1.Q6 | fragment_remote.xml D-pad row exceeds 320dp width. No real device under 360dp ships modern Android. Cosmetic. |
-| - | F-053 | low | §SIM.6 L2.Q15 | Long BLE/passive scans should ideally run in a foreground service for Android 14+ background reliability. Current scans ≤6s and bound to UI session; refactor would touch lifecycle architecture. |
+User caught the cycle-3 termination as Premature Completion. Re-opened
+the queue. F-038 / F-050 / F-051 / F-052 closed (none required
+infrastructure decisions after all). Anti-exhaustion sweep produced
+11 more findings — including F-062/063/064 cancellation leaks F-002
+had introduced.
+
+| # | ID | Status | Commit |
+|---|------|--------|--------|
+| 31 | F-038 | FIXED T2 | GitHub Actions workflow |
+| 32 | F-050 | FIXED T2 | Robolectric + repo round-trip tests |
+| 33 | F-051 | FIXED T2 | Matching.kt extraction + 16 unit tests |
+| 34 | F-052 | FIXED T1 | D-pad row 320dp viewport fix |
+| 35 | F-055 | FIXED T1 | Splash screen on cold start |
+| 36 | F-057 | FIXED T1 | Lint runs in CI |
+| 37 | F-058 | FIXED T1 | Test/Rename literal cleanup |
+| 38 | F-059 | FIXED T1 | 36/32dp → 48dp touch targets |
+| 39 | F-060 | FIXED T1 | Macro editor unsaved-changes confirm |
+| 40 | F-061 | FIXED T1 | Camera bind failure toast |
+| 41 | **F-062** | **FIXED T1** | **BLE scanner leak on cancellation** |
+| 42 | **F-063** | **FIXED T1** | **AudioRecord leak on cancellation (×2)** |
+| 43 | **F-064** | **FIXED T1** | **Magnetometer listener leak on cancellation** |
+| 44 | F-065 | FIXED T1 | Removed bogus mDNS↔BSSID join |
+| 45 | F-066 | FIXED T1 | Macro stale-device validation |
 
 ### Cycle 3 fixes applied (19)
 
