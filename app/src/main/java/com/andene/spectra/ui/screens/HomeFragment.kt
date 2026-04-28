@@ -33,7 +33,17 @@ class HomeFragment : Fragment() {
     private val scanPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { results ->
-        if (results.values.all { it }) {
+        // Essential permissions block the scan. Optional ones (currently just
+        // POST_NOTIFICATIONS — the foreground notification is nice-to-have,
+        // not required for scanning) don't block: a user who denied notifs
+        // can still run a perfectly functional scan, they just won't see the
+        // ongoing-scan banner. The previous all-or-nothing check refused to
+        // start scanning whenever any permission was denied which gated
+        // scanning behind cosmetic notification approval on Android 13+.
+        val essentialDenied = results.filter { (perm, granted) ->
+            !granted && perm != Manifest.permission.POST_NOTIFICATIONS
+        }
+        if (essentialDenied.isEmpty()) {
             vm.startPassiveScan()
         } else {
             android.widget.Toast.makeText(
