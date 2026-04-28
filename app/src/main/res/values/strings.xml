@@ -35,6 +35,20 @@
     <string name="undo_deleted_macro">Deleted macro %1$s</string>
     <string name="action_undo">UNDO</string>
 
+    <!-- Library backup / restore (B-001) -->
+    <string name="action_more_options">More options</string>
+    <string name="action_backup_library">Back up library</string>
+    <string name="action_restore_library">Restore library</string>
+    <string name="backup_filename_format">spectra-backup-%1$s.json</string>
+    <string name="backup_export_failed">Couldn\'t write backup file</string>
+    <string name="backup_export_success_format">Backup saved (%1$d device(s), %2$d macro(s))</string>
+    <string name="restore_confirm_title">Restore from backup?</string>
+    <string name="restore_confirm_message">Imported devices will be added alongside your existing library (no overwrite). Macros with the same id will be replaced. Continue?</string>
+    <string name="restore_failed_invalid">Couldn\'t read that file — not a Spectra backup, or the file is corrupted.</string>
+    <string name="restore_summary_format">Restored %1$d device(s) and %2$d macro(s).</string>
+    <string name="restore_summary_with_skips_format">Restored %1$d device(s) and %2$d macro(s). %3$d entry(ies) skipped.</string>
+    <string name="restore_nothing_imported">Backup parsed, but nothing was imported.</string>
+
     <!-- Runtime-formatted strings — moved out of Kotlin code -->
     <string name="device_default_label">Device</string>
     <string name="device_unnamed_label">Unnamed Device</string>

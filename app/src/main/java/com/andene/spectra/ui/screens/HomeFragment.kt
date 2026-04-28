@@ -3,13 +3,16 @@ package com.andene.spectra.ui.screens
 import android.Manifest
 import android.app.AlertDialog
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.LinearLayout
+import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
@@ -24,7 +27,12 @@ import com.andene.spectra.R
 import com.andene.spectra.data.models.Macro
 import com.andene.spectra.ui.MainViewModel
 import com.andene.spectra.ui.components.DeviceAdapter
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class HomeFragment : Fragment() {
 
@@ -52,6 +60,27 @@ class HomeFragment : Fragment() {
                 android.widget.Toast.LENGTH_LONG,
             ).show()
         }
+    }
+
+    // SAF: user picks where to write the backup. We use CreateDocument so
+    // the system file-picker takes care of the directory choice + filename
+    // confirmation; no WRITE_EXTERNAL_STORAGE permission needed because the
+    // resulting URI grants persistent write to that one document. The
+    // pre-filled filename is set via launcher.launch(initialName).
+    private val backupExportLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri == null) return@registerForActivityResult
+        writeBackupTo(uri)
+    }
+
+    // SAF: user picks an existing backup file. Pulled bytes off the IO
+    // dispatcher so a large library doesn't jank the UI.
+    private val backupImportLauncher = registerForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri == null) return@registerForActivityResult
+        confirmAndRestoreFrom(uri)
     }
 
     override fun onCreateView(inflater: LayoutInflater, c: ViewGroup?, s: Bundle?): View =
@@ -118,6 +147,25 @@ class HomeFragment : Fragment() {
 
         view.findViewById<Button>(R.id.btnImportClipboard).setOnClickListener {
             importFromClipboard()
+        }
+
+        // Overflow menu: backup / restore. Hosted in the header next to
+        // the title rather than buried in a settings screen because the
+        // app has no settings screen yet and these two actions are the
+        // primary "library management" affordances.
+        view.findViewById<ImageButton>(R.id.btnOverflow).setOnClickListener { anchor ->
+            PopupMenu(requireContext(), anchor).apply {
+                menu.add(0, MENU_BACKUP, 0, R.string.action_backup_library)
+                menu.add(0, MENU_RESTORE, 1, R.string.action_restore_library)
+                setOnMenuItemClickListener { item ->
+                    when (item.itemId) {
+                        MENU_BACKUP -> { startBackupExport(); true }
+                        MENU_RESTORE -> { startBackupImport(); true }
+                        else -> false
+                    }
+                }
+                show()
+            }
         }
 
         // Resumable brute-force banner: shows when a previous sweep was
@@ -348,5 +396,134 @@ class HomeFragment : Fragment() {
             }
             container.addView(chip)
         }
+    }
+
+    // ── Library backup / restore ──────────────────────────────────
+
+    private fun startBackupExport() {
+        // Pre-fill the picker with a date-stamped filename so users
+        // building a rolling history don't have to retype every time.
+        val stamp = SimpleDateFormat("yyyyMMdd-HHmm", Locale.US).format(Date())
+        backupExportLauncher.launch(getString(R.string.backup_filename_format, stamp))
+    }
+
+    private fun startBackupImport() {
+        // application/json is the canonical type but some file managers
+        // hand spectra-backup-*.json files as octet-stream — accept both
+        // so the picker doesn't filter out a valid backup.
+        backupImportLauncher.launch(arrayOf("application/json", "application/octet-stream", "*/*"))
+    }
+
+    private fun writeBackupTo(uri: Uri) {
+        vm.exportLibrary { jsonText ->
+            if (jsonText == null) {
+                toast(getString(R.string.backup_export_failed))
+                return@exportLibrary
+            }
+            viewLifecycleOwner.lifecycleScope.launch {
+                val (devices, macros) = withContext(Dispatchers.IO) {
+                    try {
+                        // Open with "wt" — truncate-then-write — so re-using
+                        // an existing backup filename doesn't append garbage
+                        // onto the end of the prior file.
+                        requireContext().contentResolver.openOutputStream(uri, "wt")?.use { out ->
+                            out.write(jsonText.toByteArray(Charsets.UTF_8))
+                        } ?: return@withContext null
+                        // Quick parse-back to count what we just wrote, so
+                        // the success toast actually reflects the saved
+                        // contents instead of advertising "0 device(s)" if
+                        // the export round-tripped through an empty library.
+                        val deviceCount = countTopLevelArray(jsonText, "devices")
+                        val macroCount = countTopLevelArray(jsonText, "macros")
+                        deviceCount to macroCount
+                    } catch (_: Exception) { null }
+                } ?: run {
+                    toast(getString(R.string.backup_export_failed))
+                    return@launch
+                }
+                toast(getString(R.string.backup_export_success_format, devices, macros))
+            }
+        }
+    }
+
+    private fun confirmAndRestoreFrom(uri: Uri) {
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.restore_confirm_title)
+            .setMessage(R.string.restore_confirm_message)
+            .setPositiveButton(R.string.action_restore_library) { _, _ -> performRestore(uri) }
+            .setNegativeButton(R.string.action_cancel_dialog, null)
+            .show()
+    }
+
+    private fun performRestore(uri: Uri) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val text = withContext(Dispatchers.IO) {
+                try {
+                    requireContext().contentResolver.openInputStream(uri)?.use { input ->
+                        input.readBytes().toString(Charsets.UTF_8)
+                    }
+                } catch (_: Exception) { null }
+            }
+            if (text.isNullOrBlank()) {
+                toast(getString(R.string.restore_failed_invalid))
+                return@launch
+            }
+            vm.importLibrary(text) { result ->
+                if (result == null) {
+                    toast(getString(R.string.restore_failed_invalid))
+                    return@importLibrary
+                }
+                val skips = result.devicesSkipped + result.macrosSkipped
+                val msg = when {
+                    result.devicesImported == 0 && result.macrosImported == 0 ->
+                        getString(R.string.restore_nothing_imported)
+                    skips > 0 -> getString(
+                        R.string.restore_summary_with_skips_format,
+                        result.devicesImported, result.macrosImported, skips,
+                    )
+                    else -> getString(
+                        R.string.restore_summary_format,
+                        result.devicesImported, result.macrosImported,
+                    )
+                }
+                toast(msg)
+            }
+        }
+    }
+
+    private fun toast(msg: String) {
+        android.widget.Toast.makeText(requireContext(), msg, android.widget.Toast.LENGTH_LONG).show()
+    }
+
+    /**
+     * Lightweight count of the entries in a top-level JSON array named
+     * [key]. We only need a coarse number for the success toast — full
+     * deserialization would parse the whole library twice. Looks for
+     * `"<key>": [` then counts `{` at brace-depth 1 inside that array.
+     * Returns 0 when the key isn't found.
+     */
+    private fun countTopLevelArray(jsonText: String, key: String): Int {
+        val anchor = "\"$key\""
+        val anchorIdx = jsonText.indexOf(anchor)
+        if (anchorIdx < 0) return 0
+        val openIdx = jsonText.indexOf('[', startIndex = anchorIdx)
+        if (openIdx < 0) return 0
+        var depth = 0
+        var count = 0
+        var i = openIdx
+        while (i < jsonText.length) {
+            when (jsonText[i]) {
+                '[' -> depth++
+                ']' -> { depth--; if (depth == 0) return count }
+                '{' -> if (depth == 1) count++
+            }
+            i++
+        }
+        return count
+    }
+
+    companion object {
+        private const val MENU_BACKUP = 1
+        private const val MENU_RESTORE = 2
     }
 }
