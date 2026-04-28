@@ -267,13 +267,17 @@ class IrCameraCapture(private val context: Context) {
         // it succeeds we store the protocol code on the IrCommand —
         // smaller, canonical, and re-synthesizable on any IR blaster
         // regardless of the original capture's per-row jitter. The raw
-        // timings stay populated as a fallback for IrControl.transmit
-        // until B-100 phase 3 wires the encode path.
+        // timings stay populated as a fallback for protocols we don't
+        // codec yet.
         val packedCode: Long? = when (protocol) {
             IrProtocol.NEC ->
                 com.andene.spectra.modules.ir.protocols.NecCodec.decode(timings)?.let {
                     if (it.isRepeat) null else it.packed()
                 }
+            IrProtocol.SAMSUNG ->
+                com.andene.spectra.modules.ir.protocols.SamsungCodec.decode(timings)?.packed()
+            IrProtocol.LG ->
+                com.andene.spectra.modules.ir.protocols.LgCodec.decode(timings)?.packed()
             else -> null
         }
 
@@ -295,6 +299,13 @@ class IrCameraCapture(private val context: Context) {
      * Header-pulse based protocol guess. Tolerances are wide because rolling-
      * shutter timestamps have ~per-row jitter; the goal is to bucket the
      * remote's family, not pin down the exact protocol variant.
+     *
+     * Order matters: NEC and LG share the same family so their windows
+     * touch (NEC 9000+4500, LG 8500+4250 — only 500us / 250us apart).
+     * Previously NEC's 8000..10000 mark window swallowed every LG
+     * signal because NEC was checked first. The tightened NEC window
+     * here (8800..10000) lets LG's mark fall through cleanly while
+     * still catching jittery NEC captures down to 8800us.
      */
     private fun attemptProtocolDecode(timings: List<Int>): IrProtocol? {
         if (timings.size < 4) return null
@@ -302,9 +313,9 @@ class IrCameraCapture(private val context: Context) {
         val headerMark = timings[0]
         val headerSpace = timings[1]
 
-        if (headerMark in 8000..10000 && headerSpace in 4000..5000) return IrProtocol.NEC
+        if (headerMark in 8800..10000 && headerSpace in 4300..5000) return IrProtocol.NEC
         if (headerMark in 4000..5000 && headerSpace in 4000..5000) return IrProtocol.SAMSUNG
-        if (headerMark in 7500..9500 && headerSpace in 3800..4700) return IrProtocol.LG
+        if (headerMark in 7500..8800 && headerSpace in 3800..4500) return IrProtocol.LG
         if (headerMark in 2200..2600 && headerSpace in 400..800) return IrProtocol.SIRC_12
         if (headerMark in 200..450) return IrProtocol.SHARP
 

@@ -212,7 +212,12 @@ class IrControl(private val context: Context) {
         val code = command.code
         if (code != null) {
             when (command.protocol) {
-                IrProtocol.NEC -> return com.andene.spectra.modules.ir.protocols.NecCodec.encodeFromPacked(code)
+                IrProtocol.NEC ->
+                    return com.andene.spectra.modules.ir.protocols.NecCodec.encodeFromPacked(code)
+                IrProtocol.SAMSUNG ->
+                    return com.andene.spectra.modules.ir.protocols.SamsungCodec.encodeFromPacked(code)
+                IrProtocol.LG ->
+                    return com.andene.spectra.modules.ir.protocols.LgCodec.encodeFromPacked(code)
                 else -> Unit
             }
         }
