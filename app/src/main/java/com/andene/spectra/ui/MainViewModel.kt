@@ -350,15 +350,32 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 kotlinx.coroutines.withTimeoutOrNull(10_000) {
                     orchestrator.phase.first { it == SpectraOrchestrator.Phase.SCANNING_PASSIVE }
                 } ?: run {
-                    // Service never entered SCANNING_PASSIVE — drop back to Home
-                    // and surface a hint. Stays user-recoverable.
+                    // Service never entered SCANNING_PASSIVE — tell the
+                    // service to stop (in case it eventually did spin up)
+                    // and drop back to Home with a recoverable hint. Without
+                    // the stop dispatch the foreground service would leak:
+                    // a slow orchestrator startup that produces SCANNING_PASSIVE
+                    // a moment after our timeout fires would otherwise run
+                    // unobserved with no UI tracking it.
+                    ctx.startService(com.andene.spectra.services.ScanService.stopIntent(ctx))
                     emitToast("Scan didn't start. Try again, or check that Bluetooth and Location are on.")
                     _screen.value = Screen.HOME
                     return@launch
                 }
                 orchestrator.phase.first { it != SpectraOrchestrator.Phase.SCANNING_PASSIVE }
-                _activeDevice.value = orchestrator.discoveredDevice.value
-                _screen.value = Screen.RESULTS
+                // Distinguish a natural completion from a cancellation: the
+                // orchestrator now clears _discoveredDevice at scan start
+                // and only writes it on the success branches, so a null here
+                // means the user (or the OS) cancelled the scan before any
+                // result was produced. Pushing them to RESULTS in that case
+                // would show an empty / stale-data screen.
+                val discovered = orchestrator.discoveredDevice.value
+                if (discovered == null) {
+                    _screen.value = Screen.HOME
+                } else {
+                    _activeDevice.value = discovered
+                    _screen.value = Screen.RESULTS
+                }
             } finally {
                 _isScanning.value = false
             }
