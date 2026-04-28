@@ -78,6 +78,60 @@
         android:backgroundTint="@color/accent_primary"
         android:layout_marginBottom="24dp" />
 
+    <!-- Macros section -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Macros"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
+            android:textAllCaps="true"
+            android:letterSpacing="0.1" />
+
+        <Button
+            android:id="@+id/btnNewMacro"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:text="+ NEW"
+            android:textSize="11sp"
+            android:backgroundTint="@color/bg_card_elevated"
+            android:textColor="@color/accent_secondary"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:minWidth="0dp" />
+    </LinearLayout>
+
+    <HorizontalScrollView
+        android:id="@+id/macroScroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="none"
+        android:layout_marginBottom="8dp">
+
+        <LinearLayout
+            android:id="@+id/macroChips"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" />
+    </HorizontalScrollView>
+
+    <TextView
+        android:id="@+id/macroRunning"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/accent_secondary"
+        android:textSize="12sp"
+        android:visibility="gone"
+        android:layout_marginBottom="12dp" />
+
     <!-- Saved devices label -->
     <TextView
         android:id="@+id/labelSaved"

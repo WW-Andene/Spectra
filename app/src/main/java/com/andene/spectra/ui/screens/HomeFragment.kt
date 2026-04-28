@@ -1,10 +1,12 @@
 package com.andene.spectra.ui.screens
 
+import android.app.AlertDialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -12,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.andene.spectra.R
+import com.andene.spectra.data.models.Macro
 import com.andene.spectra.ui.MainViewModel
 import com.andene.spectra.ui.components.DeviceAdapter
 import kotlinx.coroutines.launch
@@ -63,6 +66,79 @@ class HomeFragment : Fragment() {
 
         btnScan.setOnClickListener {
             vm.startPassiveScan()
+        }
+
+        // ── Macros ────────────────────────────────────────────
+        val macroChips = view.findViewById<LinearLayout>(R.id.macroChips)
+        val macroRunning = view.findViewById<TextView>(R.id.macroRunning)
+        view.findViewById<Button>(R.id.btnNewMacro).setOnClickListener {
+            vm.openMacroEditor(null)
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            vm.macros.collect { macros -> renderMacroChips(macroChips, macros) }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            vm.runningMacro.collect { running ->
+                if (running != null) {
+                    macroRunning.visibility = View.VISIBLE
+                    macroRunning.text = "Running '${running.name}': step ${running.currentStep}/${running.totalSteps} — ${running.currentLabel}"
+                } else {
+                    macroRunning.visibility = View.GONE
+                }
+            }
+        }
+    }
+
+    private fun renderMacroChips(container: LinearLayout, macros: List<Macro>) {
+        container.removeAllViews()
+        if (macros.isEmpty()) {
+            val empty = TextView(requireContext()).apply {
+                text = "No macros yet."
+                setTextColor(resources.getColor(R.color.text_tertiary, null))
+                textSize = 12f
+                setPadding(0, 0, 0, 0)
+            }
+            container.addView(empty)
+            return
+        }
+        val pad = (12 * resources.displayMetrics.density).toInt()
+        for (macro in macros) {
+            val chip = TextView(requireContext()).apply {
+                text = macro.name
+                setTextColor(resources.getColor(R.color.text_primary, null))
+                textSize = 13f
+                setPadding(pad, pad / 2, pad, pad / 2)
+                setBackgroundResource(android.R.drawable.list_selector_background)
+                isClickable = true
+                isFocusable = true
+                val lp = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                ).apply { rightMargin = pad / 2 }
+                layoutParams = lp
+                setOnClickListener { vm.runMacro(macro.id) }
+                setOnLongClickListener {
+                    AlertDialog.Builder(requireContext())
+                        .setTitle(macro.name)
+                        .setItems(arrayOf("Run", "Edit", "Delete")) { _, which ->
+                            when (which) {
+                                0 -> vm.runMacro(macro.id)
+                                1 -> vm.openMacroEditor(macro)
+                                2 -> AlertDialog.Builder(requireContext())
+                                    .setMessage("Delete macro '${macro.name}'?")
+                                    .setPositiveButton("Delete") { _, _ -> vm.deleteMacro(macro.id) }
+                                    .setNegativeButton("Cancel", null)
+                                    .show()
+                            }
+                        }
+                        .show()
+                    true
+                }
+            }
+            // Wrap chip in a card-style background
+            chip.setBackgroundColor(resources.getColor(R.color.bg_card_elevated, null))
+            container.addView(chip)
         }
     }
 }

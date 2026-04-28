@@ -49,6 +49,7 @@ class MainActivity : AppCompatActivity() {
                     MainViewModel.Screen.LEARN -> LearnFragment()
                     MainViewModel.Screen.REMOTE -> RemoteFragment()
                     MainViewModel.Screen.DEVICE_EDIT -> ResultsFragment() // Reuse results for now
+                    MainViewModel.Screen.MACRO_EDIT -> MacroEditFragment()
                 }
 
                 supportFragmentManager.beginTransaction()
@@ -101,6 +102,7 @@ class MainActivity : AppCompatActivity() {
             MainViewModel.Screen.LEARN -> vm.navigate(MainViewModel.Screen.RESULTS)
             MainViewModel.Screen.REMOTE -> vm.navigate(MainViewModel.Screen.HOME)
             MainViewModel.Screen.DEVICE_EDIT -> vm.navigate(MainViewModel.Screen.HOME)
+            MainViewModel.Screen.MACRO_EDIT -> vm.navigate(MainViewModel.Screen.HOME)
         }
     }
 }

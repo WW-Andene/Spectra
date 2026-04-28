@@ -52,12 +52,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     )
 
     enum class Screen {
-        HOME,       // Device list + scan button
-        SCANNING,   // Passive scan in progress
-        RESULTS,    // Scan results + next steps
-        LEARN,      // IR learning (camera or brute force)
-        REMOTE,     // Universal remote control pad
-        DEVICE_EDIT // Edit device name/category
+        HOME,        // Device list + scan button
+        SCANNING,    // Passive scan in progress
+        RESULTS,     // Scan results + next steps
+        LEARN,       // IR learning (camera or brute force)
+        REMOTE,      // Universal remote control pad
+        DEVICE_EDIT, // Edit device name/category
+        MACRO_EDIT,  // Create / edit a macro
+    }
+
+    /** The macro currently being edited; null means we're creating a new one. */
+    private val _editingMacro = MutableStateFlow<Macro?>(null)
+    val editingMacro: StateFlow<Macro?> = _editingMacro
+
+    fun openMacroEditor(macro: Macro?) {
+        _editingMacro.value = macro
+        _screen.value = Screen.MACRO_EDIT
     }
 
     // ── Macros ────────────────────────────────────────────────
