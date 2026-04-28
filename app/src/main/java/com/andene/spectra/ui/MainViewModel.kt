@@ -105,7 +105,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun deleteDevice(deviceId: String) {
         viewModelScope.launch {
             repository.delete(deviceId)
-            orchestrator.control.removeDevice(deviceId)
+            orchestrator.forgetDevice(deviceId)
             if (_activeDevice.value?.id == deviceId) _activeDevice.value = null
             loadSavedDevices()
             _screen.value = Screen.HOME

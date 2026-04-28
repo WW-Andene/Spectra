@@ -211,7 +211,8 @@ class SpectraOrchestrator(private val context: Context) {
         var bestMatch: DeviceProfile? = null
         var bestScore = 0f
 
-        for (known in knownSignatures) {
+        val snapshot = synchronized(knownSignatures) { knownSignatures.toList() }
+        for (known in snapshot) {
             var score = 0f
             var weights = 0f
 
@@ -285,8 +286,31 @@ class SpectraOrchestrator(private val context: Context) {
     // ── Persistence Hooks ─────────────────────────────────────
 
     fun registerKnownDevice(profile: DeviceProfile) {
-        knownSignatures.add(profile)
+        synchronized(knownSignatures) {
+            knownSignatures.removeAll { it.id == profile.id }
+            knownSignatures.add(profile)
+        }
         control.saveDevice(profile)
+    }
+
+    /**
+     * Seed the matcher with previously saved devices.
+     * Call once on app startup, after the repository has loaded from disk.
+     */
+    fun loadKnownDevices(profiles: List<DeviceProfile>) {
+        synchronized(knownSignatures) {
+            knownSignatures.clear()
+            knownSignatures.addAll(profiles)
+        }
+        profiles.forEach { control.saveDevice(it) }
+        appendLog("Loaded ${profiles.size} known device(s)")
+    }
+
+    fun forgetDevice(deviceId: String) {
+        synchronized(knownSignatures) {
+            knownSignatures.removeAll { it.id == deviceId }
+        }
+        control.removeDevice(deviceId)
     }
 
     // ── Utilities ─────────────────────────────────────────────

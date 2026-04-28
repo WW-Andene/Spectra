@@ -104,7 +104,12 @@ class DeviceRepository(private val context: Context) {
         val irCommands: Map<String, SerializableIrCommand> = emptyMap(),
         val carrierFrequency: Int = 38000,
         val protocol: String = "RAW",
-        val discoveredAt: Long = 0
+        val discoveredAt: Long = 0,
+        // RF fingerprint — persisted so we can re-identify a device on a later scan.
+        // Acoustic / EM signatures aren't stored: in practice they shift too much
+        // with device state and ambient noise to be reliable cross-session anchors.
+        val rfWifi: List<SerializableWifi> = emptyList(),
+        val rfBle: List<SerializableBle> = emptyList(),
     )
 
     @Serializable
@@ -114,6 +119,21 @@ class DeviceRepository(private val context: Context) {
         val protocol: String = "RAW",
         val code: Long? = null,
         val capturedVia: String = "MANUAL"
+    )
+
+    @Serializable
+    data class SerializableWifi(
+        val ssid: String? = null,
+        val bssid: String,
+        val macPrefix: String = "",
+        val modelHint: String? = null,
+    )
+
+    @Serializable
+    data class SerializableBle(
+        val name: String? = null,
+        val address: String,
+        val serviceUuids: List<String> = emptyList(),
     )
 
     private fun DeviceProfile.toSerializable() = SerializableDeviceProfile(
@@ -133,7 +153,22 @@ class DeviceRepository(private val context: Context) {
         } ?: emptyMap(),
         carrierFrequency = irProfile?.carrierFrequency ?: 38000,
         protocol = irProfile?.protocol?.name ?: "RAW",
-        discoveredAt = discoveredAt
+        discoveredAt = discoveredAt,
+        rfWifi = rfSignature?.wifiDevices?.map {
+            SerializableWifi(
+                ssid = it.ssid,
+                bssid = it.bssid,
+                macPrefix = it.macPrefix,
+                modelHint = it.modelHint,
+            )
+        } ?: emptyList(),
+        rfBle = rfSignature?.bleDevices?.map {
+            SerializableBle(
+                name = it.name,
+                address = it.address,
+                serviceUuids = it.serviceUuids,
+            )
+        } ?: emptyList(),
     )
 
     private fun SerializableDeviceProfile.toModel() = DeviceProfile(
@@ -154,6 +189,25 @@ class DeviceRepository(private val context: Context) {
                     capturedVia = try { CaptureMethod.valueOf(cmd.capturedVia) } catch (_: Exception) { CaptureMethod.MANUAL }
                 )
             }.toMutableMap()
+        ),
+        rfSignature = if (rfWifi.isEmpty() && rfBle.isEmpty()) null else RfSignature(
+            wifiDevices = rfWifi.map {
+                WifiDeviceInfo(
+                    ssid = it.ssid,
+                    bssid = it.bssid,
+                    macPrefix = it.macPrefix,
+                    signalStrength = 0,
+                    modelHint = it.modelHint,
+                )
+            },
+            bleDevices = rfBle.map {
+                BleDeviceInfo(
+                    name = it.name,
+                    address = it.address,
+                    serviceUuids = it.serviceUuids,
+                    rssi = 0,
+                )
+            },
         ),
         discoveredAt = discoveredAt
     )
