@@ -17,7 +17,9 @@ import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.andene.spectra.R
 import com.andene.spectra.modules.bruteforce.IrBruteForce.Companion.brandTokens
 import com.andene.spectra.modules.bruteforce.IrBruteForce.Companion.matchesBrand
@@ -98,14 +100,16 @@ class LearnFragment : Fragment() {
 
         // Camera capture state
         viewLifecycleOwner.lifecycleScope.launch {
-            vm.captureState.collect { state ->
-                captureStatus.text = getString(when (state) {
-                    IrCameraCapture.CaptureState.IDLE -> R.string.device_capture_status_ready
-                    IrCameraCapture.CaptureState.CAPTURING -> R.string.device_capture_status_recording
-                    IrCameraCapture.CaptureState.PROCESSING -> R.string.device_capture_status_analyzing
-                    IrCameraCapture.CaptureState.DECODED -> R.string.device_capture_status_decoded
-                    IrCameraCapture.CaptureState.ERROR -> R.string.device_capture_status_no_signal
-                })
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                vm.captureState.collect { state ->
+                    captureStatus.text = getString(when (state) {
+                        IrCameraCapture.CaptureState.IDLE -> R.string.device_capture_status_ready
+                        IrCameraCapture.CaptureState.CAPTURING -> R.string.device_capture_status_recording
+                        IrCameraCapture.CaptureState.PROCESSING -> R.string.device_capture_status_analyzing
+                        IrCameraCapture.CaptureState.DECODED -> R.string.device_capture_status_decoded
+                        IrCameraCapture.CaptureState.ERROR -> R.string.device_capture_status_no_signal
+                    })
+                }
             }
         }
 
@@ -129,15 +133,17 @@ class LearnFragment : Fragment() {
 
         // Brute force prompt
         viewLifecycleOwner.lifecycleScope.launch {
-            vm.bruteForcePrompt.collect { prompt ->
-                if (prompt != null) {
-                    bruteForcePrompt.visibility = View.VISIBLE
-                    promptText.text = getString(
-                        R.string.brute_force_attempt_format,
-                        prompt.attemptNum, prompt.manufacturer, prompt.protocol.name,
-                    )
-                } else {
-                    bruteForcePrompt.visibility = View.GONE
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                vm.bruteForcePrompt.collect { prompt ->
+                    if (prompt != null) {
+                        bruteForcePrompt.visibility = View.VISIBLE
+                        promptText.text = getString(
+                            R.string.brute_force_attempt_format,
+                            prompt.attemptNum, prompt.manufacturer, prompt.protocol.name,
+                        )
+                    } else {
+                        bruteForcePrompt.visibility = View.GONE
+                    }
                 }
             }
         }
@@ -154,11 +160,13 @@ class LearnFragment : Fragment() {
         // OPEN REMOTE until at least one command exists — clicking it before
         // installing any commands lands the user on a non-functional grid.
         viewLifecycleOwner.lifecycleScope.launch {
-            vm.activeDevice.collect { device ->
-                updateLearnedList(learnedCommands)
-                val hasCommands = device?.irProfile?.commands?.isNotEmpty() == true
-                btnOpenRemote.isEnabled = hasCommands
-                btnOpenRemote.alpha = if (hasCommands) 1f else 0.4f
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                vm.activeDevice.collect { device ->
+                    updateLearnedList(learnedCommands)
+                    val hasCommands = device?.irProfile?.commands?.isNotEmpty() == true
+                    btnOpenRemote.isEnabled = hasCommands
+                    btnOpenRemote.alpha = if (hasCommands) 1f else 0.4f
+                }
             }
         }
     }

@@ -58,6 +58,23 @@ entire delivery-infrastructure dimension.
 | - | F-038 | ✓ | (Closed in cycle 4) GitHub Actions workflow |
 | - | F-039 | ✓ | keystore.properties at repo root (gitignored) + signingConfig in build.gradle.kts that degrades gracefully when absent + README + .example schema |
 
+### Cycle 9 — T2 architectural batch closed
+
+| Item | Status | Resolution |
+|---|---|---|
+| repeatOnLifecycle migration | ✓ | 13 collector launches wrapped across 5 fragments |
+| Predictive back gesture | ✓ | `android:enableOnBackInvokedCallback="true"` + existing OnBackPressedDispatcher callbacks remain compatible |
+| Edge-to-edge | ✓ | `enableEdgeToEdge()` + system-bars padding listener on nav_host |
+| Deep linking | ✓ | `spectra://device/<id>` opens Remote; 2s cold-start wait on savedDevices |
+| ViewModelFactory hardening | ✓ | Null-safe `Application as? SpectraApp` with helpful error |
+
+### T2 still deferred (not minimum-footprint)
+
+| Item | Why deferred |
+|---|---|
+| Compose migration | Full UI refactor across every fragment — needs a dedicated cycle and a decision on whether to keep XML hybrid or commit fully |
+| Foreground service for long-running scans | Lifecycle architecture change (manifest service declaration + service binding + state hand-off). Worth doing when the scan duration grows, not as polish |
+
 ### Cycle 4 (2026-04-28, post-Premature-Completion correction)
 
 User caught the cycle-3 termination as Premature Completion. Re-opened

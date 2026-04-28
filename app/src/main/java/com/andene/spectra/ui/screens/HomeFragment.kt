@@ -15,7 +15,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.andene.spectra.R
@@ -89,10 +91,12 @@ class HomeFragment : Fragment() {
         deviceList.adapter = adapter
 
         viewLifecycleOwner.lifecycleScope.launch {
-            vm.savedDevices.collect { devices ->
-                adapter.submitList(devices)
-                emptyState.visibility = if (devices.isEmpty()) View.VISIBLE else View.GONE
-                deviceList.visibility = if (devices.isEmpty()) View.GONE else View.VISIBLE
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                vm.savedDevices.collect { devices ->
+                    adapter.submitList(devices)
+                    emptyState.visibility = if (devices.isEmpty()) View.VISIBLE else View.GONE
+                    deviceList.visibility = if (devices.isEmpty()) View.GONE else View.VISIBLE
+                }
             }
         }
 
@@ -118,16 +122,18 @@ class HomeFragment : Fragment() {
             vm.discardResumableBruteForce()
         }
         viewLifecycleOwner.lifecycleScope.launch {
-            vm.resumableBruteForce.collect { checkpoint ->
-                if (checkpoint != null) {
-                    resumeBanner.visibility = View.VISIBLE
-                    resumeBannerText.text = getString(
-                        R.string.resume_brute_force_format,
-                        checkpoint.deviceName,
-                        checkpoint.nextAttemptIndex,
-                    )
-                } else {
-                    resumeBanner.visibility = View.GONE
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                vm.resumableBruteForce.collect { checkpoint ->
+                    if (checkpoint != null) {
+                        resumeBanner.visibility = View.VISIBLE
+                        resumeBannerText.text = getString(
+                            R.string.resume_brute_force_format,
+                            checkpoint.deviceName,
+                            checkpoint.nextAttemptIndex,
+                        )
+                    } else {
+                        resumeBanner.visibility = View.GONE
+                    }
                 }
             }
         }
@@ -137,10 +143,12 @@ class HomeFragment : Fragment() {
         // user feedback for every persistence error regardless of which
         // screen the user was on when the save fired.
         viewLifecycleOwner.lifecycleScope.launch {
-            vm.toasts.collect { msg ->
-                android.widget.Toast.makeText(
-                    requireContext(), msg, android.widget.Toast.LENGTH_LONG,
-                ).show()
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                vm.toasts.collect { msg ->
+                    android.widget.Toast.makeText(
+                        requireContext(), msg, android.widget.Toast.LENGTH_LONG,
+                    ).show()
+                }
             }
         }
 
@@ -148,17 +156,19 @@ class HomeFragment : Fragment() {
         // deleted item before removing it; this collector shows a Snackbar
         // with UNDO that restores the item if tapped.
         viewLifecycleOwner.lifecycleScope.launch {
-            vm.undoActions.collect { action ->
-                val label = when (action) {
-                    is MainViewModel.UndoAction.Device ->
-                        getString(R.string.undo_deleted_device, action.profile.name ?: "device")
-                    is MainViewModel.UndoAction.Macro ->
-                        getString(R.string.undo_deleted_macro, action.macro.name)
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                vm.undoActions.collect { action ->
+                    val label = when (action) {
+                        is MainViewModel.UndoAction.Device ->
+                            getString(R.string.undo_deleted_device, action.profile.name ?: "device")
+                        is MainViewModel.UndoAction.Macro ->
+                            getString(R.string.undo_deleted_macro, action.macro.name)
+                    }
+                    com.google.android.material.snackbar.Snackbar
+                        .make(requireView(), label, com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
+                        .setAction(R.string.action_undo) { vm.undoDelete(action) }
+                        .show()
                 }
-                com.google.android.material.snackbar.Snackbar
-                    .make(requireView(), label, com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
-                    .setAction(R.string.action_undo) { vm.undoDelete(action) }
-                    .show()
             }
         }
 
@@ -172,21 +182,25 @@ class HomeFragment : Fragment() {
         // Re-render chips whenever macros OR savedDevices change, so the
         // stale-step-count badge stays accurate after a device delete.
         viewLifecycleOwner.lifecycleScope.launch {
-            kotlinx.coroutines.flow.combine(vm.macros, vm.savedDevices) { m, d -> m to d }
-                .collect { (macros, devices) ->
-                    renderMacroChips(macroChips, macros, devices.map { it.id }.toSet())
-                }
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                kotlinx.coroutines.flow.combine(vm.macros, vm.savedDevices) { m, d -> m to d }
+                    .collect { (macros, devices) ->
+                        renderMacroChips(macroChips, macros, devices.map { it.id }.toSet())
+                    }
+            }
         }
         viewLifecycleOwner.lifecycleScope.launch {
-            vm.runningMacro.collect { running ->
-                if (running != null) {
-                    macroRunning.visibility = View.VISIBLE
-                    macroRunning.text = getString(
-                        R.string.macro_running_format,
-                        running.name, running.currentStep, running.totalSteps, running.currentLabel,
-                    )
-                } else {
-                    macroRunning.visibility = View.GONE
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                vm.runningMacro.collect { running ->
+                    if (running != null) {
+                        macroRunning.visibility = View.VISIBLE
+                        macroRunning.text = getString(
+                            R.string.macro_running_format,
+                            running.name, running.currentStep, running.totalSteps, running.currentLabel,
+                        )
+                    } else {
+                        macroRunning.visibility = View.GONE
+                    }
                 }
             }
         }

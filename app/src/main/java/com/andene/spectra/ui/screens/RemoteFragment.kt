@@ -10,7 +10,9 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.andene.spectra.R
 import com.andene.spectra.modules.control.IrControl
 import com.andene.spectra.ui.MainViewModel
@@ -57,12 +59,14 @@ class RemoteFragment : Fragment() {
 
         // Device info
         viewLifecycleOwner.lifecycleScope.launch {
-            vm.activeDevice.collect { device ->
-                if (device == null) return@collect
-                deviceName.text = device.name ?: getString(R.string.device_default_label)
-                val cmdCount = device.irProfile?.commands?.size ?: 0
-                val protocol = device.irProfile?.protocol?.name ?: "Unknown"
-                deviceInfo.text = getString(R.string.device_info_format, protocol, cmdCount)
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                vm.activeDevice.collect { device ->
+                    if (device == null) return@collect
+                    deviceName.text = device.name ?: getString(R.string.device_default_label)
+                    val cmdCount = device.irProfile?.commands?.size ?: 0
+                    val protocol = device.irProfile?.protocol?.name ?: "Unknown"
+                    deviceInfo.text = getString(R.string.device_info_format, protocol, cmdCount)
+                }
             }
         }
 
@@ -160,13 +164,15 @@ class RemoteFragment : Fragment() {
         // user can tell whether the press transmitted. Catches both
         // no-blaster failures and unknown-command misses.
         viewLifecycleOwner.lifecycleScope.launch {
-            vm.lastTransmitResult.collect { result ->
-                val btn = result?.let { buttonsByCommand[it.commandName] } ?: return@collect
-                val tint = if (result.success) R.color.accent_success else R.color.accent_error
-                val original = btn.backgroundTintList
-                btn.backgroundTintList = androidx.core.content.ContextCompat
-                    .getColorStateList(requireContext(), tint)
-                btn.postDelayed({ btn.backgroundTintList = original }, TINT_FLASH_MS)
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                vm.lastTransmitResult.collect { result ->
+                    val btn = result?.let { buttonsByCommand[it.commandName] } ?: return@collect
+                    val tint = if (result.success) R.color.accent_success else R.color.accent_error
+                    val original = btn.backgroundTintList
+                    btn.backgroundTintList = androidx.core.content.ContextCompat
+                        .getColorStateList(requireContext(), tint)
+                    btn.postDelayed({ btn.backgroundTintList = original }, TINT_FLASH_MS)
+                }
             }
         }
     }

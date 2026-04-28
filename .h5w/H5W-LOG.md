@@ -346,6 +346,42 @@ ViewModelFactory hardening).
 Decision: pushing cycle 8. Loop continues per CLAUDE.md.
 ──────────────────────────────────────────────────
 
+## Session: 2026-04-28 (cycle 9) — Mode: §AUTO Full + always-loop
+
+User: "do t2". Closing 5 of 7 T2 candidates that fit minimum-footprint.
+Compose migration + foreground service stay deferred — both warrant a
+focused cycle, not a polish pass.
+
+### Phase 4 (cycle 9)
+
+- [ts] T2-A FIXED [HomeFragment + LearnFragment + RemoteFragment + ResultsFragment + ScanningFragment] — 13 collector launches wrapped with viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) so flow collection pauses when stopped — Verified: yes (5 fragments × counts confirmed)
+- [ts] T2-B FIXED [AndroidManifest.xml] — android:enableOnBackInvokedCallback="true"; predictive-back-gesture compatible — Verified: yes
+- [ts] T2-C FIXED [MainActivity.kt] — enableEdgeToEdge() + ViewCompat.setOnApplyWindowInsetsListener for system-bars padding — Verified: yes (Android 15+ ready)
+- [ts] T2-D FIXED [AndroidManifest.xml + MainViewModel.kt + MainActivity.kt] — spectra://device/<id> deep link → opens Remote with that device active; 2s wait for cold-start savedDevices load with toast on miss — Verified: yes
+- [ts] T2-E FIXED [MainViewModel.kt] — null-safe Application cast with helpful error message instead of bare ClassCastException — Verified: yes
+
+### Phase 5: Verify (cycle 9)
+
+- repeatOnLifecycle wrap counts: 6/3/2/1/1 across 5 fragments. Lifecycle
+  + repeatOnLifecycle imports added to LearnFragment, RemoteFragment,
+  ResultsFragment, ScanningFragment (HomeFragment had them already).
+- enableEdgeToEdge called BEFORE super.onCreate per the androidx.activity
+  contract; insets listener applied to nav_host so fragment content stays
+  out of system bars.
+- Deep link uses launchMode=singleTask + onNewIntent so a second tap
+  from outside the app reuses the current task.
+
+### Phase 6: Evolve (cycle 9)
+
+──── AUTO CHECKPOINT 11 (CYCLE 9 LOOP-POINT) ────
+Cycle: 11 | Cycle-9 fixes: 5
+Total session fixes: 77 + 5 = 82
+T2 queue: 2 architectural items remain (Compose migration, foreground
+service for long scans) — both genuine refactors that need a dedicated
+cycle, not a minimum-footprint pass. Documented in queue.
+Decision: pushing cycle 9. Loop continues per CLAUDE.md.
+──────────────────────────────────────────────────
+
 ──── AUTO CHECKPOINT 9 (CYCLE 7 LOOP-POINT) ────
 Cycle: 9 | Cycle-7 fixes: 2
 Total session fixes: 73 (cycles 1–6) + 2 (cycle 7) = 75

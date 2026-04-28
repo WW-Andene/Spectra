@@ -9,7 +9,9 @@ import android.widget.ScrollView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.andene.spectra.R
 import com.andene.spectra.ui.MainViewModel
 import kotlinx.coroutines.launch
@@ -27,9 +29,11 @@ class ScanningFragment : Fragment() {
         val btnCancel = view.findViewById<Button>(R.id.btnCancel)
 
         viewLifecycleOwner.lifecycleScope.launch {
-            vm.scanLog.collect { lines ->
-                logText.text = lines.joinToString("\n")
-                logScroll.post { logScroll.fullScroll(View.FOCUS_DOWN) }
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                vm.scanLog.collect { lines ->
+                    logText.text = lines.joinToString("\n")
+                    logScroll.post { logScroll.fullScroll(View.FOCUS_DOWN) }
+                }
             }
         }
 

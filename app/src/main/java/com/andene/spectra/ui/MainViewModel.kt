@@ -18,7 +18,15 @@ import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val app = application as SpectraApp
+    // Cast safely so a non-Spectra Application (Robolectric default,
+    // future test harness, etc.) gives a clear error instead of a
+    // ClassCastException buried in Android's ViewModelProvider stack.
+    private val app: SpectraApp = (application as? SpectraApp)
+        ?: error(
+            "MainViewModel requires SpectraApp as the Application. " +
+                "Got ${application.javaClass.name}. If you're testing, run " +
+                "your test under @Config(application = SpectraApp::class)."
+        )
     private val orchestrator: SpectraOrchestrator = app.orchestrator
     private val repository: DeviceRepository = app.repository
     val codeDatabase = app.codeDatabase
@@ -456,6 +464,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun discardResumableBruteForce() {
         _resumableBruteForce.value = null
         viewModelScope.launch { bfCheckpointRepository.clear() }
+    }
+
+    /**
+     * Open a saved device by id. Used by both the device list tap path
+     * and the spectra://device/<id> deep link from MainActivity.
+     * Returns true when the device exists; false (with toast) otherwise.
+     */
+    fun openDeviceById(deviceId: String): Boolean {
+        // Saved devices may not be loaded yet on cold-start deep-link;
+        // fall back to the orchestrator's matcher snapshot which seeds
+        // from the same source on app init.
+        val device = _savedDevices.value.firstOrNull { it.id == deviceId }
+        if (device == null) {
+            emitToast("Device not found")
+            return false
+        }
+        _activeDevice.value = device
+        _screen.value = Screen.REMOTE
+        return true
     }
 
     /** Resume the previously-persisted brute force from the recorded

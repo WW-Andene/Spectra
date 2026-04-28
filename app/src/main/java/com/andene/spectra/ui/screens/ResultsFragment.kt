@@ -8,7 +8,9 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.andene.spectra.R
 import com.andene.spectra.ui.MainViewModel
 import com.google.android.material.textfield.TextInputEditText
@@ -37,48 +39,50 @@ class ResultsFragment : Fragment() {
         // changing — particularly when phase flips from DEVICE_UNKNOWN to
         // READY after the brute force finishes from this screen.
         viewLifecycleOwner.lifecycleScope.launch {
-            combine(vm.activeDevice, vm.orchestratorPhase) { device, phase -> device to phase }
-                .collect { (device, phase) ->
-                if (device == null) return@collect
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                combine(vm.activeDevice, vm.orchestratorPhase) { device, phase -> device to phase }
+                    .collect { (device, phase) ->
+                    if (device == null) return@collect
 
-                deviceStatus.text = when (phase) {
-                    com.andene.spectra.core.SpectraOrchestrator.Phase.DEVICE_IDENTIFIED ->
-                        getString(R.string.results_known_device_format,
-                            device.name ?: getString(R.string.device_unnamed_label))
-                    com.andene.spectra.core.SpectraOrchestrator.Phase.READY ->
-                        getString(R.string.results_ready_to_control)
-                    else -> getString(R.string.results_new_device_detected)
-                }
+                    deviceStatus.text = when (phase) {
+                        com.andene.spectra.core.SpectraOrchestrator.Phase.DEVICE_IDENTIFIED ->
+                            getString(R.string.results_known_device_format,
+                                device.name ?: getString(R.string.device_unnamed_label))
+                        com.andene.spectra.core.SpectraOrchestrator.Phase.READY ->
+                            getString(R.string.results_ready_to_control)
+                        else -> getString(R.string.results_new_device_detected)
+                    }
 
-                // Acoustic details
-                val acoustic = device.acousticSignature
-                detailAcoustic.text = if (acoustic != null) {
-                    val peakCount = acoustic.dominantFrequencies.size
-                    val topFreq = acoustic.dominantFrequencies.firstOrNull()?.frequencyHz?.toInt() ?: 0
-                    getString(R.string.acoustic_detail_format, peakCount, topFreq)
-                } else getString(R.string.acoustic_no_data)
+                    // Acoustic details
+                    val acoustic = device.acousticSignature
+                    detailAcoustic.text = if (acoustic != null) {
+                        val peakCount = acoustic.dominantFrequencies.size
+                        val topFreq = acoustic.dominantFrequencies.firstOrNull()?.frequencyHz?.toInt() ?: 0
+                        getString(R.string.acoustic_detail_format, peakCount, topFreq)
+                    } else getString(R.string.acoustic_no_data)
 
-                // RF details
-                val rf = device.rfSignature
-                detailRf.text = if (rf != null) {
-                    val wifi = rf.wifiDevices.size
-                    val ble = rf.bleDevices.size
-                    val manufacturer = rf.wifiDevices.firstOrNull()?.modelHint
-                    if (manufacturer != null) getString(R.string.rf_detail_with_manufacturer_format, wifi, ble, manufacturer)
-                    else getString(R.string.rf_detail_format, wifi, ble)
-                } else getString(R.string.rf_no_data)
+                    // RF details
+                    val rf = device.rfSignature
+                    detailRf.text = if (rf != null) {
+                        val wifi = rf.wifiDevices.size
+                        val ble = rf.bleDevices.size
+                        val manufacturer = rf.wifiDevices.firstOrNull()?.modelHint
+                        if (manufacturer != null) getString(R.string.rf_detail_with_manufacturer_format, wifi, ble, manufacturer)
+                        else getString(R.string.rf_detail_format, wifi, ble)
+                    } else getString(R.string.rf_no_data)
 
-                // EM details
-                val em = device.emSignature
-                detailEm.text = if (em != null) {
-                    getString(R.string.em_detail_format, em.fieldStrength.toInt(), em.emiAudioFrequencies.size)
-                } else getString(R.string.em_no_data)
+                    // EM details
+                    val em = device.emSignature
+                    detailEm.text = if (em != null) {
+                        getString(R.string.em_detail_format, em.fieldStrength.toInt(), em.emiAudioFrequencies.size)
+                    } else getString(R.string.em_no_data)
 
-                // Pre-fill name from RF if available
-                if (inputName.text.isNullOrEmpty()) {
-                    val rfName = rf?.wifiDevices?.firstOrNull()?.ssid
-                        ?: rf?.bleDevices?.firstOrNull()?.name
-                    rfName?.let { inputName.setText(it) }
+                    // Pre-fill name from RF if available
+                    if (inputName.text.isNullOrEmpty()) {
+                        val rfName = rf?.wifiDevices?.firstOrNull()?.ssid
+                            ?: rf?.bleDevices?.firstOrNull()?.name
+                        rfName?.let { inputName.setText(it) }
+                    }
                 }
             }
         }
