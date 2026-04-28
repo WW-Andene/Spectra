@@ -69,6 +69,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val captureState: StateFlow<com.andene.spectra.modules.ir.IrCameraCapture.CaptureState> =
         orchestrator.irCapture.captureState
 
+    /** Quality summary for the most recent successful capture
+     *  (B-100 phase 6) — surfaced beside the capture status text so
+     *  the user knows whether their multiple presses agreed cleanly
+     *  or only a subset decoded. */
+    val lastCaptureQuality: StateFlow<com.andene.spectra.modules.ir.IrCameraCapture.CaptureQuality?> =
+        orchestrator.irCapture.lastCaptureQuality
+
     /** Other plausible matches the most recent scan turned up. The
      *  Results screen renders these so the user can correct an
      *  ambiguous auto-pick (B-102). */

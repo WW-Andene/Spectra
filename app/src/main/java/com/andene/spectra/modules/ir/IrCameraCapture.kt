@@ -154,6 +154,29 @@ class IrCameraCapture(private val context: Context) {
     private val _capturedCommand = MutableStateFlow<IrCommand?>(null)
     val capturedCommand: StateFlow<IrCommand?> = _capturedCommand
 
+    /** Quality summary for the most recent successful capture
+     *  (B-100 phase 6). Null until a decode finishes. The UI shows
+     *  this beside the capture status text so the user knows whether
+     *  their press(es) agreed cleanly or only one out of several
+     *  decoded — directly answering the "did it work?" question
+     *  without needing to test the saved command. */
+    private val _lastCaptureQuality = MutableStateFlow<CaptureQuality?>(null)
+    val lastCaptureQuality: StateFlow<CaptureQuality?> = _lastCaptureQuality
+
+    data class CaptureQuality(
+        val pressesDetected: Int,
+        val pressesAgreeing: Int,
+        val protocol: IrProtocol,
+        /** Null when no codec'd protocol was detected — IrCommand.code
+         *  is null in that case and we replay raw. */
+        val packedCode: Long?,
+    ) {
+        val isHighConfidence: Boolean get() =
+            pressesAgreeing >= 2 && pressesAgreeing == pressesDetected
+        val isMixed: Boolean get() =
+            pressesDetected >= 2 && pressesAgreeing < pressesDetected
+    }
+
     // Frames captured during a press, in order. Each frame is one column of
     // luminance values from the row position where the LED is brightest.
     private val frames = mutableListOf<Pair<Long, IntArray>>()
@@ -187,6 +210,7 @@ class IrCameraCapture(private val context: Context) {
         frames.clear()
         captureStartNanos = System.nanoTime()
         _capturedCommand.value = null
+        _lastCaptureQuality.value = null
         _captureState.value = CaptureState.CAPTURING
         Log.d(TAG, "IR capture started (rolling-shutter mode)")
     }
@@ -297,6 +321,12 @@ class IrCameraCapture(private val context: Context) {
             protocol = protocol,
             code = packedCode,
             capturedVia = CaptureMethod.CAMERA_DECODE,
+        )
+        _lastCaptureQuality.value = CaptureQuality(
+            pressesDetected = perSegmentDecodes.size.coerceAtLeast(1),
+            pressesAgreeing = agreement,
+            protocol = protocol,
+            packedCode = packedCode,
         )
         _captureState.value = CaptureState.DECODED
         Log.d(

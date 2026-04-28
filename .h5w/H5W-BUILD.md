@@ -30,7 +30,8 @@ camera capture, RF discovery currently dead-ending in the matcher).
 | ID | Feature | Phase | Status | Notes |
 |----|---------|-------|--------|-------|
 | B-100 | IR camera capture decode upgrade | 3 — RC6, JVC, Panasonic, NEC2 | TODO | wider protocol coverage |
-| B-100 | IR camera capture decode upgrade | 5 — Panasonic + RC6 codecs | TODO | RC6 needs Manchester encoding (different from PulseDistance) |
+| B-100 | IR camera capture decode upgrade | 5 — Panasonic codec | TODO | NEC-family but 48-bit; needs PulseDistance bit-count param |
+| B-100 | IR camera capture decode upgrade | 7 — RC6 codec (Manchester encoding) | TODO | different wire family |
 | B-101 | Brute-force smart ordering + auto-confirm | 2 — category-hint ordering + bulk-test option | TODO | adds category metadata to POWER_CODES |
 | B-002 | Home screen widget | 4 — macro chips on multi-cell widget | TODO | bigger scope: multi-tile RemoteViews |
 | B-004 | Smart-home control over RF | 1 — BLE write to discovered devices | TODO | leverages existing RfFingerprint |
@@ -64,7 +65,8 @@ camera capture, RF discovery currently dead-ending in the matcher).
 | B-100 | IR camera capture decode upgrade | 3 — multi-press averaging + per-press vote | `4ad0c58` |
 | B-100 | IR camera capture decode upgrade | 4 — Sony SIRC codec + 40 kHz protocol carrier | `cf03b2c` |
 | B-101 | Brute-force smart ordering + auto-confirm | 1 — acoustic auto-confirm via mic delta | `f6d62c4` |
-| B-102 | Multi-device disambiguation | 1 — top-N matcher + Results picker | (this commit) |
+| B-102 | Multi-device disambiguation | 1 — top-N matcher + Results picker | `884626a` |
+| B-100 | IR camera capture decode upgrade | 6 — surface multi-press agreement in Learn UI | (this commit) |
 
 ---
 

@@ -98,17 +98,28 @@ class LearnFragment : Fragment() {
             updateLearnedList(learnedCommands)
         }
 
-        // Camera capture state
+        // Camera capture state. On DECODED we also surface the
+        // multi-press agreement count and the protocol/code (when
+        // codec'd) so the user has immediate feedback on capture
+        // quality — a "Captured 3/3 ✓" reads as success, "Captured
+        // 1/3 — retry?" tells the user to re-press more cleanly.
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                vm.captureState.collect { state ->
-                    captureStatus.text = getString(when (state) {
-                        IrCameraCapture.CaptureState.IDLE -> R.string.device_capture_status_ready
-                        IrCameraCapture.CaptureState.CAPTURING -> R.string.device_capture_status_recording
-                        IrCameraCapture.CaptureState.PROCESSING -> R.string.device_capture_status_analyzing
-                        IrCameraCapture.CaptureState.DECODED -> R.string.device_capture_status_decoded
-                        IrCameraCapture.CaptureState.ERROR -> R.string.device_capture_status_no_signal
-                    })
+                kotlinx.coroutines.flow.combine(
+                    vm.captureState, vm.lastCaptureQuality,
+                ) { state, quality -> state to quality }.collect { (state, quality) ->
+                    captureStatus.text = when (state) {
+                        IrCameraCapture.CaptureState.IDLE ->
+                            getString(R.string.device_capture_status_ready)
+                        IrCameraCapture.CaptureState.CAPTURING ->
+                            getString(R.string.device_capture_status_recording)
+                        IrCameraCapture.CaptureState.PROCESSING ->
+                            getString(R.string.device_capture_status_analyzing)
+                        IrCameraCapture.CaptureState.DECODED ->
+                            renderDecodedStatus(quality)
+                        IrCameraCapture.CaptureState.ERROR ->
+                            getString(R.string.device_capture_status_no_signal)
+                    }
                 }
             }
         }
@@ -358,5 +369,43 @@ class LearnFragment : Fragment() {
                 ).show()
             }
         }, ContextCompat.getMainExecutor(requireContext()))
+    }
+
+    /**
+     * Build the DECODED capture-status string, including multi-press
+     * agreement and protocol/code when available (B-100 phase 6).
+     *
+     * Shapes:
+     *   "Captured! NEC 0x1234 (3/3 ✓)"           – multi-press, all agreed
+     *   "Captured! NEC 0x1234 (mixed 2/3)"        – multi-press, partial
+     *   "Captured! SAMSUNG 0xE0E0"                – single press, codec'd
+     *   "Captured! (raw)"                         – single press, no codec
+     */
+    private fun renderDecodedStatus(quality: IrCameraCapture.CaptureQuality?): String {
+        val base = getString(R.string.device_capture_status_decoded)
+        if (quality == null) return base
+
+        val codeLabel = quality.packedCode?.let { code ->
+            "${quality.protocol.name} 0x${"%04X".format(code)}"
+        } ?: when (quality.protocol) {
+            com.andene.spectra.data.models.IrProtocol.RAW,
+            com.andene.spectra.data.models.IrProtocol.UNKNOWN ->
+                getString(R.string.capture_quality_raw)
+            else -> quality.protocol.name
+        }
+
+        val agreement = when {
+            quality.pressesDetected <= 1 -> ""
+            quality.isHighConfidence ->
+                getString(R.string.capture_quality_agreement_high_format,
+                    quality.pressesAgreeing, quality.pressesDetected)
+            quality.isMixed ->
+                getString(R.string.capture_quality_agreement_mixed_format,
+                    quality.pressesAgreeing, quality.pressesDetected)
+            else -> ""
+        }
+
+        return if (agreement.isEmpty()) "$base $codeLabel"
+        else "$base $codeLabel $agreement"
     }
 }
