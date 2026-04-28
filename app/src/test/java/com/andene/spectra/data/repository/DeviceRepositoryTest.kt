@@ -31,7 +31,7 @@ import org.robolectric.annotation.Config
  * pointed at a temp location) without an emulator.
  */
 @RunWith(AndroidJUnit4::class)
-@Config(sdk = [29])
+@Config(sdk = [26, 34])
 class DeviceRepositoryTest {
 
     private lateinit var repo: DeviceRepository

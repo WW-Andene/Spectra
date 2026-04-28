@@ -20,7 +20,7 @@ import org.robolectric.annotation.Config
  * reads.
  */
 @RunWith(AndroidJUnit4::class)
-@Config(sdk = [29])
+@Config(sdk = [26, 34])
 class MacroRepositoryTest {
 
     private lateinit var repo: MacroRepository
