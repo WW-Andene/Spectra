@@ -78,6 +78,7 @@
     <string name="macro_discard_changes_message">Discard unsaved changes to this macro?</string>
     <string name="action_discard">Discard</string>
     <string name="action_keep_editing">Keep editing</string>
+    <string name="results_discard_message">Discard the typed device name and go back?</string>
     <string name="camera_bind_failed">Camera couldn\'t start. Try going back and reopening Learn, or reboot the phone if the issue persists.</string>
 
     <!-- Scanning -->

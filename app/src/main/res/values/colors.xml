@@ -16,7 +16,8 @@
     <color name="text_secondary">#FF9090A8</color>
     <color name="text_tertiary">#FF5A5A72</color>
 
-    <color name="divider">#FF2A2A3A</color>
+    <!-- divider colour removed in cycle 6 — never referenced. Re-add if a
+         <View android:background="@color/divider"/> separator gets used. -->
 
     <!-- Module-specific colors -->
     <color name="module_ir">#FFFF6B6B</color>           <!-- IR — warm red -->
@@ -26,7 +27,9 @@
 
     <!-- Remote button colors -->
     <color name="btn_remote_bg">#FF2A2A3A</color>
-    <color name="btn_remote_pressed">#FF3A3A4E</color>
+    <!-- btn_remote_pressed removed in cycle 6 — would need a state-list
+         drawable to hook up; current Material ripples handle pressed state
+         via foreground overlay. Re-add if a custom selector is needed. -->
     <color name="btn_power">#FFFF5252</color>
     <color name="btn_dpad_bg">#FF1E1E2A</color>
 </resources>

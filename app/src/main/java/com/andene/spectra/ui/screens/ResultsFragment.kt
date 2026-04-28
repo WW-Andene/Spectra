@@ -109,7 +109,35 @@ class ResultsFragment : Fragment() {
         }
 
         btnBack.setOnClickListener {
-            vm.navigate(MainViewModel.Screen.HOME)
+            confirmDiscardOrLeave(inputName)
         }
+
+        // Same dirty-state intercept on system back: don't drop a typed
+        // device name silently. Symmetric with MacroEditFragment F-060.
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : androidx.activity.OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    confirmDiscardOrLeave(inputName)
+                }
+            },
+        )
+    }
+
+    private fun confirmDiscardOrLeave(inputName: TextInputEditText) {
+        val typed = inputName.text?.toString().orEmpty().trim()
+        // Only prompt when there's typed content the user might lose.
+        // Empty input → user hadn't typed anything yet, no dialog needed.
+        if (typed.isEmpty()) {
+            vm.navigate(MainViewModel.Screen.HOME)
+            return
+        }
+        android.app.AlertDialog.Builder(requireContext())
+            .setMessage(getString(R.string.results_discard_message))
+            .setPositiveButton(R.string.action_discard) { _, _ ->
+                vm.navigate(MainViewModel.Screen.HOME)
+            }
+            .setNegativeButton(R.string.action_keep_editing, null)
+            .show()
     }
 }
