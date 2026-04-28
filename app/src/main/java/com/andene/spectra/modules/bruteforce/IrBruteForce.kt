@@ -176,6 +176,18 @@ class IrBruteForce(private val context: Context) {
     private val _state = MutableStateFlow(BruteForceState())
     val state: StateFlow<BruteForceState> = _state
 
+    /**
+     * Pattern that produced a confirmed reaction during the most recent
+     * sweep. Captured so the orchestrator can save it as a real "power"
+     * IrCommand on the device profile.
+     */
+    var lastFoundPattern: IntArray? = null
+        private set
+    var lastFoundManufacturer: String? = null
+        private set
+    var lastFoundCarrier: Int = CARRIER_FREQ
+        private set
+
     private var sweepJob: Job? = null
 
     /**
@@ -203,6 +215,8 @@ class IrBruteForce(private val context: Context) {
         }
 
         _state.value = BruteForceState(isRunning = true)
+        lastFoundPattern = null
+        lastFoundManufacturer = null
         var totalAttempts = 0
 
         for ((protocol, codes) in POWER_CODES) {
@@ -226,6 +240,9 @@ class IrBruteForce(private val context: Context) {
                 // Ask user: did the device respond?
                 val confirmed = onAttempt(protocol, manufacturer, totalAttempts)
                 if (confirmed) {
+                    lastFoundPattern = timings
+                    lastFoundManufacturer = manufacturer
+                    lastFoundCarrier = CARRIER_FREQ
                     _state.value = _state.value.copy(
                         isRunning = false,
                         foundProtocol = protocol,

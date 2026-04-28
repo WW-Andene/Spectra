@@ -184,10 +184,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
             val state = orchestrator.bruteForce.state.value
             if (state.foundProtocol != null) {
-                val device = _activeDevice.value
+                // The orchestrator may have updated the discovered device
+                // with the captured power pattern + manufacturer; pull that
+                // back into the viewmodel so it survives navigation.
+                val device = orchestrator.discoveredDevice.value ?: _activeDevice.value
                 if (device != null) {
+                    _activeDevice.value = device
                     orchestrator.registerKnownDevice(device)
                     repository.save(device)
+                    loadSavedDevices()
                 }
                 _screen.value = Screen.REMOTE
             }

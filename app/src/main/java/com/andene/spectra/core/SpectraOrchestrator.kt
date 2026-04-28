@@ -193,8 +193,39 @@ class SpectraOrchestrator(private val context: Context) {
         }
 
         val state = bruteForce.state.value
-        if (state.foundProtocol != null) {
+        val pattern = bruteForce.lastFoundPattern
+        if (state.foundProtocol != null && pattern != null) {
             appendLog("Protocol found: ${state.foundProtocol}")
+            // Persist the working pattern as a real power command so the
+            // user can immediately replay it from the remote screen.
+            val device = _discoveredDevice.value
+            if (device != null) {
+                val powerCommand = IrCommand(
+                    name = IrControl.Commands.POWER,
+                    rawTimings = pattern,
+                    protocol = state.foundProtocol!!,
+                    capturedVia = CaptureMethod.BRUTE_FORCE,
+                )
+                val updatedProfile = (device.irProfile ?: IrProfile()).let { existing ->
+                    existing.copy(
+                        protocol = state.foundProtocol!!,
+                        carrierFrequency = bruteForce.lastFoundCarrier,
+                        commands = existing.commands.toMutableMap().apply {
+                            put(powerCommand.name, powerCommand)
+                        },
+                    )
+                }
+                val updated = device.copy(
+                    irProfile = updatedProfile,
+                    manufacturer = device.manufacturer ?: bruteForce.lastFoundManufacturer,
+                )
+                _discoveredDevice.value = updated
+                control.saveDevice(updated)
+            }
+            _phase.value = Phase.READY
+        } else if (state.foundProtocol != null) {
+            // Hit was reported but the pattern wasn't captured — log only.
+            appendLog("Protocol found: ${state.foundProtocol} (pattern not captured)")
             _phase.value = Phase.READY
         } else {
             appendLog("No protocol matched — device may not use standard IR")
