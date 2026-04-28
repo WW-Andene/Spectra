@@ -83,8 +83,6 @@ class IrControl(private val context: Context) {
         _devices.value = map
     }
 
-    fun getDevice(deviceId: String): DeviceProfile? = _devices.value[deviceId]
-
     // ── IR Transmission ───────────────────────────────────────
 
     /**
@@ -103,23 +101,6 @@ class IrControl(private val context: Context) {
         }
 
         return transmit(deviceId, commandName, command)
-    }
-
-    /**
-     * Send a raw IR command directly (not from saved profile).
-     */
-    suspend fun sendRaw(
-        deviceId: String,
-        commandName: String,
-        carrierFreq: Int,
-        pattern: IntArray
-    ): Boolean {
-        val command = IrCommand(
-            name = commandName,
-            rawTimings = pattern,
-            capturedVia = CaptureMethod.MANUAL
-        )
-        return transmit(deviceId, commandName, command, carrierFreq)
     }
 
     /**

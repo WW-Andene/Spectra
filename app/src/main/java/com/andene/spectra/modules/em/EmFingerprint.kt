@@ -298,30 +298,6 @@ class EmFingerprint(private val context: Context) {
     }
 
     /**
-     * Compare two EM signatures using cosine similarity.
-     * Returns 0.0 (unrelated) to 1.0 (identical).
-     */
-    fun compareTo(a: EmSignature, b: EmSignature): Float {
-        val va = a.combinedFingerprint
-        val vb = b.combinedFingerprint
-        if (va.isEmpty() || vb.isEmpty()) return 0f
-
-        val minLen = minOf(va.size, vb.size)
-        var dot = 0f
-        var normA = 0f
-        var normB = 0f
-
-        for (i in 0 until minLen) {
-            dot += va[i] * vb[i]
-            normA += va[i] * va[i]
-            normB += vb[i] * vb[i]
-        }
-
-        val denom = sqrt(normA) * sqrt(normB)
-        return if (denom > 0) dot / denom else 0f
-    }
-
-    /**
      * Radix-2 in-place FFT.
      */
     private fun fftInPlace(real: FloatArray, imag: FloatArray) {

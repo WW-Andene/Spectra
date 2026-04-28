@@ -307,11 +307,4 @@ class RfFingerprint(private val context: Context) {
         }
     }
 
-    /**
-     * Lookup manufacturer from MAC prefix (OUI).
-     */
-    fun lookupManufacturer(macAddress: String): String? {
-        val prefix = macAddress.take(8).uppercase()
-        return OUI_MAP[prefix]
-    }
 }

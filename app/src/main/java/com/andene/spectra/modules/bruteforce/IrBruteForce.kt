@@ -230,19 +230,11 @@ class IrBruteForce(private val context: Context) {
     var lastFoundCarrier: Int = CARRIER_FREQ
         private set
 
-    private var sweepJob: Job? = null
 
     /**
      * Check if IR blaster is available.
      */
     fun isAvailable(): Boolean = irManager?.hasIrEmitter() == true
-
-    /**
-     * Get supported carrier frequency ranges.
-     */
-    fun getCarrierRanges(): List<ConsumerIrManager.CarrierFrequencyRange> {
-        return irManager?.carrierFrequencies?.toList() ?: emptyList()
-    }
 
     /**
      * Start brute force sweep across all protocol families.
@@ -339,12 +331,14 @@ class IrBruteForce(private val context: Context) {
     /**
      * Send a single raw IR pattern.
      */
-    fun transmitRaw(carrierFreq: Int, pattern: IntArray) {
-        irManager?.transmit(carrierFreq, pattern)
-    }
-
+    /**
+     * Mark the sweep as no-longer-running. Actual coroutine cancellation
+     * happens when the viewmodel completes pendingBruteForceResponse with
+     * false — the sweep's suspending point on response.await() unblocks
+     * and the loop unwinds. This function only resets the UI-facing state
+     * flow.
+     */
     fun stop() {
-        sweepJob?.cancel()
         _state.value = _state.value.copy(isRunning = false)
     }
 
