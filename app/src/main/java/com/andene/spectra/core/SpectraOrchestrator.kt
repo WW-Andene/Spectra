@@ -87,7 +87,11 @@ class SpectraOrchestrator(private val context: Context) {
         LEARNING_CAMERA,     // Module 1 active
         LEARNING_BRUTE,      // Module 5 active
         READY,               // Device has IR commands, can control
-        ERROR
+        // Phase.ERROR removed in cycle 7 — never set anywhere. Module-
+        // level errors propagate through scanLog (see scanPassive
+        // post-scan ERROR-state checks); we don't have a top-level
+        // 'orchestrator failed' state because individual module
+        // failures degrade gracefully without sinking the whole scan.
     }
 
     // ── Main Discovery Pipeline ───────────────────────────────
