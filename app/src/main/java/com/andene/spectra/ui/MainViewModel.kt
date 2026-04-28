@@ -492,12 +492,28 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * Apply a complete remote layout from the bundled DB to the active
      * device. Replaces any existing IR commands and persists immediately.
      */
+    /**
+     * Install a complete remote layout from the bundled DB.
+     * Existing commands on the device are MERGED — the DB entry's
+     * commands take precedence on name collision, but any
+     * captured-via-camera or learned commands the user already had
+     * for buttons the DB doesn't define survive intact.
+     *
+     * This is a behaviour change from the original "replace" semantics
+     * because silently dropping a user's captured POWER pattern when
+     * they later install a DB remote was data loss with no warning.
+     */
     fun installRemoteFromDatabase(entry: com.andene.spectra.data.codedb.IrCodeDatabase.RemoteEntry) {
         val device = _activeDevice.value ?: return
+        val existingCommands = device.irProfile?.commands ?: emptyMap()
+        val mergedCommands = existingCommands.toMutableMap().apply {
+            putAll(entry.commands) // DB wins on name collision
+        }
+        val mergedProfile = entry.asIrProfile().copy(commands = mergedCommands.toMutableMap())
         val updated = device.copy(
             manufacturer = device.manufacturer ?: entry.brand,
             category = if (device.category == DeviceCategory.UNKNOWN) entry.deviceType else device.category,
-            irProfile = entry.asIrProfile(),
+            irProfile = mergedProfile,
         )
         _activeDevice.value = updated
         orchestrator.registerKnownDevice(updated)
