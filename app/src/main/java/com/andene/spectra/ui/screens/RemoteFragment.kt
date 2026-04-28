@@ -100,7 +100,7 @@ class RemoteFragment : Fragment() {
         repeatButtons.forEach { (id, command) ->
             view.findViewById<Button>(id)?.also { btn ->
                 buttonsByCommand[command] = btn
-            }?.setOnTouchListener { _, event ->
+            }?.setOnTouchListener { v, event ->
                 when (event.action) {
                     MotionEvent.ACTION_DOWN -> {
                         vm.sendCommand(command)
@@ -113,7 +113,16 @@ class RemoteFragment : Fragment() {
                         }
                         true
                     }
-                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    MotionEvent.ACTION_UP -> {
+                        repeatJob?.cancel()
+                        repeatJob = null
+                        // Synthesize a click for accessibility services (TalkBack)
+                        // — without this, touch-explore users never get a click
+                        // event for the volume/channel buttons.
+                        v.performClick()
+                        true
+                    }
+                    MotionEvent.ACTION_CANCEL -> {
                         repeatJob?.cancel()
                         repeatJob = null
                         true

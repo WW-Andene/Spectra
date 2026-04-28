@@ -137,6 +137,17 @@ class IrCameraCapture(private val context: Context) {
     private var cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private var imageAnalysis: ImageAnalysis? = null
 
+    /**
+     * Lazily replace the executor when it's been shut down. Without this,
+     * a buildAnalyzer() after release() would post tasks to a dead executor
+     * and silently drop every frame.
+     */
+    private fun ensureExecutor() {
+        if (cameraExecutor.isShutdown) {
+            cameraExecutor = Executors.newSingleThreadExecutor()
+        }
+    }
+
     private val _captureState = MutableStateFlow(CaptureState.IDLE)
     val captureState: StateFlow<CaptureState> = _captureState
 
@@ -153,6 +164,7 @@ class IrCameraCapture(private val context: Context) {
     }
 
     fun buildAnalyzer(): ImageAnalysis {
+        ensureExecutor()
         imageAnalysis = ImageAnalysis.Builder()
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
