@@ -128,9 +128,16 @@ class LearnFragment : Fragment() {
         btnOpenRemote.setOnClickListener { vm.navigate(MainViewModel.Screen.REMOTE) }
 
         // Re-render the learned-commands list whenever the active device changes
-        // (rename/delete/install all flow through activeDevice).
+        // (rename/delete/install all flow through activeDevice). Also disable
+        // OPEN REMOTE until at least one command exists — clicking it before
+        // installing any commands lands the user on a non-functional grid.
         viewLifecycleOwner.lifecycleScope.launch {
-            vm.activeDevice.collect { updateLearnedList(learnedCommands) }
+            vm.activeDevice.collect { device ->
+                updateLearnedList(learnedCommands)
+                val hasCommands = device?.irProfile?.commands?.isNotEmpty() == true
+                btnOpenRemote.isEnabled = hasCommands
+                btnOpenRemote.alpha = if (hasCommands) 1f else 0.4f
+            }
         }
     }
 
@@ -160,6 +167,9 @@ class LearnFragment : Fragment() {
 
     private fun showRemotePicker(brand: String) {
         val entries = vm.codeDatabase.lookup(brand)
+            // List the most complete layouts first — coverage is the dominant
+            // tiebreaker between similarly-named entries.
+            .sortedByDescending { it.commands.size }
         if (entries.isEmpty()) {
             AlertDialog.Builder(requireContext())
                 .setTitle(brand)
@@ -170,7 +180,7 @@ class LearnFragment : Fragment() {
         }
         val labels = entries.map { "${it.model} · ${it.commands.size} cmds" }.toTypedArray()
         AlertDialog.Builder(requireContext())
-            .setTitle("$brand — pick a layout")
+            .setTitle("$brand — most-complete layout first")
             .setItems(labels) { _, which ->
                 vm.installRemoteFromDatabase(entries[which])
                 AlertDialog.Builder(requireContext())
