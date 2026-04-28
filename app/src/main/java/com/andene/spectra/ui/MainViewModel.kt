@@ -157,9 +157,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun runMacro(id: String) {
         if (macroJob?.isActive == true) return
         val macro = _macros.value.firstOrNull { it.id == id } ?: return
+
+        // Validate device references up front. A macro built six months ago
+        // may reference a device the user has since deleted; running it
+        // would silently no-op for those steps. Surface the count instead.
+        val knownIds = _savedDevices.value.map { it.id }.toSet()
+        val staleSteps = macro.steps.count { it.deviceId !in knownIds }
+        if (staleSteps == macro.steps.size) {
+            emitToast("Macro \"${macro.name}\" can't run — every device it uses has been deleted")
+            return
+        } else if (staleSteps > 0) {
+            emitToast("Macro \"${macro.name}\": $staleSteps step(s) skipped (deleted devices)")
+        }
+
         macroJob = viewModelScope.launch {
             try {
                 for ((index, step) in macro.steps.withIndex()) {
+                    if (step.deviceId !in knownIds) continue
                     if (step.delayBeforeMs > 0) kotlinx.coroutines.delay(step.delayBeforeMs.toLong())
                     _runningMacro.value = RunningMacro(
                         macroId = macro.id,
