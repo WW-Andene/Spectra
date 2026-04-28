@@ -60,6 +60,14 @@ class AcousticFingerprint {
      */
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     suspend fun capture(): AcousticSignature? = withContext(Dispatchers.IO) {
+        // Outer try/finally guarantees release() runs even if AudioRecord
+        // construction succeeds but startRecording() throws. The previous
+        // structure put release inside an inner try that wrapped only the
+        // capture loop, so a STATE_UNINITIALIZED AudioRecord (mic in use,
+        // sample rate unsupported, deeper SELinux denial) would leak —
+        // audioRecord field would still hold the unreleased instance and
+        // the system would treat the mic as held until the OS eventually
+        // GC'd the AudioRecord and ran its native finalizer.
         try {
             _state.value = State.RECORDING
 
@@ -80,6 +88,17 @@ class AcousticFingerprint {
                 bufferSize
             )
 
+            // AudioRecord(...) doesn't throw on init failure — it returns an
+            // instance with state STATE_UNINITIALIZED. Calling startRecording
+            // on that instance throws IllegalStateException. Check explicitly
+            // so we surface a clean ERROR state rather than relying on the
+            // generic catch below.
+            if (audioRecord?.state != AudioRecord.STATE_INITIALIZED) {
+                Log.e(TAG, "AudioRecord init failed (mic in use? unsupported sample rate?)")
+                _state.value = State.ERROR
+                return@withContext null
+            }
+
             // Collect chunks instead of a List<Short> — boxing each sample
             // would blow ~3 MB on a 3-second 44.1 kHz mono recording.
             val chunks = mutableListOf<ShortArray>()
@@ -94,12 +113,9 @@ class AcousticFingerprint {
                     if (read > 0) chunks.add(buffer.copyOf(read))
                 }
             } finally {
-                // Release the mic regardless of how we exit (timeout, throw,
-                // or coroutine cancellation). Without this, a cancelled scan
-                // leaves the mic locked until the OS eventually reclaims it.
+                // Stop recording while we still hold the inner scope; the
+                // outer finally will release the AudioRecord instance.
                 try { audioRecord?.stop() } catch (_: Exception) {}
-                try { audioRecord?.release() } catch (_: Exception) {}
-                audioRecord = null
             }
 
             _state.value = State.ANALYZING
@@ -111,6 +127,12 @@ class AcousticFingerprint {
             Log.e(TAG, "Capture failed", e)
             _state.value = State.ERROR
             null
+        } finally {
+            // Outer finally — runs on every exit path (success, exception,
+            // cancellation). Without this, an init-failure path leaked the
+            // mic until GC.
+            try { audioRecord?.release() } catch (_: Exception) {}
+            audioRecord = null
         }
     }
 
