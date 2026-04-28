@@ -61,7 +61,7 @@ class SpectraQuickTile : TileService() {
 
         scope.launch {
             val result = try {
-                QuickPowerKit.firePrimaryPower(app)
+                fireConfiguredTarget(app)
             } catch (e: Exception) {
                 Log.e(TAG, "Tile fire failed", e)
                 QuickPowerKit.Result.TRANSMIT_FAILED
@@ -73,32 +73,94 @@ class SpectraQuickTile : TileService() {
         }
     }
 
+    /**
+     * B-003 phase 2: route through the user's configured target if one
+     * exists, otherwise fall back to QuickPowerKit.firePrimaryPower
+     * (phase 1 default).
+     */
+    private suspend fun fireConfiguredTarget(app: SpectraApp): QuickPowerKit.Result {
+        return when (val binding = QuickTileConfigStore.get(this)) {
+            null -> QuickPowerKit.firePrimaryPower(app)
+
+            is QuickTileConfigStore.Binding.Command -> {
+                // Same cold-process safety pattern as WidgetCommandReceiver.
+                val device = app.repository.load(binding.deviceId)
+                if (device == null) {
+                    Log.w(TAG, "Tile-configured device ${binding.deviceId} not found")
+                    return QuickPowerKit.Result.NO_DEVICE
+                }
+                app.orchestrator.control.saveDevice(device)
+                val ok = app.orchestrator.control.sendCommand(binding.deviceId, binding.commandName)
+                if (ok) QuickPowerKit.Result.SENT else QuickPowerKit.Result.TRANSMIT_FAILED
+            }
+
+            is QuickTileConfigStore.Binding.Macro -> {
+                val macros = app.macroRepository.loadAll()
+                val macro = macros.firstOrNull { it.id == binding.macroId } ?: run {
+                    Log.w(TAG, "Tile-configured macro ${binding.macroId} not found")
+                    return QuickPowerKit.Result.NO_DEVICE
+                }
+                // Hydrate every device the macro touches.
+                val needed = macro.steps.map { it.deviceId }.distinct()
+                for (deviceId in needed) {
+                    if (app.orchestrator.control.devices.value[deviceId] == null) {
+                        app.repository.load(deviceId)?.let { app.orchestrator.control.saveDevice(it) }
+                    }
+                }
+                var anySent = false
+                for (step in macro.steps) {
+                    if (step.delayBeforeMs > 0) kotlinx.coroutines.delay(step.delayBeforeMs.toLong())
+                    if (app.orchestrator.control.sendCommand(step.deviceId, step.commandName)) anySent = true
+                }
+                if (anySent) QuickPowerKit.Result.SENT else QuickPowerKit.Result.TRANSMIT_FAILED
+            }
+        }
+    }
+
     private suspend fun refreshTileState(lastResult: QuickPowerKit.Result? = null) {
         val tile = qsTile ?: return
         val app = applicationContext as? SpectraApp ?: return
-        val primary = QuickPowerKit.selectPrimary(app.repository.loadAll())
 
-        if (primary == null) {
+        // Determine the tile's effective subtitle / availability based
+        // on whichever target is configured (B-003 phase 2). Fallbacks:
+        //   no binding → primary device's POWER (phase 1 behaviour)
+        //   binding → resolved to its label
+        val (subtitle, available) = when (val b = QuickTileConfigStore.get(this)) {
+            null -> {
+                val primary = QuickPowerKit.selectPrimary(app.repository.loadAll())
+                (primary?.name ?: getString(R.string.device_default_label)) to (primary != null)
+            }
+            is QuickTileConfigStore.Binding.Command -> {
+                val device = app.repository.load(b.deviceId)
+                (device?.name?.let { "$it · ${b.commandName.uppercase()}" }
+                    ?: getString(R.string.qs_tile_target_missing)) to (device != null)
+            }
+            is QuickTileConfigStore.Binding.Macro -> {
+                val macro = app.macroRepository.loadAll().firstOrNull { it.id == b.macroId }
+                (macro?.name ?: getString(R.string.qs_tile_target_missing)) to (macro != null)
+            }
+        }
+
+        if (!available) {
             tile.state = Tile.STATE_UNAVAILABLE
             tile.label = getString(R.string.qs_tile_label)
             tile.contentDescription = getString(R.string.widget_no_device)
             tile.subtitle = null
         } else {
-            // Always ACTIVE when a primary device is available — the
-            // INACTIVE flicker during a send is set in onClick before
-            // the suspend, this is the post-send return-to-ready
-            // redraw. lastResult is logged but doesn't gate the state
-            // because a TRANSMIT_FAILED still leaves the tile
-            // tappable (the user may want to retry).
+            // Always ACTIVE when a target is available — the INACTIVE
+            // flicker during a send is set in onClick before the
+            // suspend, this is the post-send return-to-ready redraw.
+            // lastResult is logged but doesn't gate the state because
+            // a TRANSMIT_FAILED still leaves the tile tappable (the
+            // user may want to retry).
             if (lastResult == QuickPowerKit.Result.TRANSMIT_FAILED) {
                 Log.w(TAG, "Last transmit failed; tile returning to ACTIVE for retry")
             }
             tile.state = Tile.STATE_ACTIVE
             tile.label = getString(R.string.qs_tile_label)
-            tile.subtitle = primary.name ?: getString(R.string.device_default_label)
+            tile.subtitle = subtitle
             tile.contentDescription = getString(
-                R.string.qs_tile_content_description_format,
-                primary.name ?: getString(R.string.device_default_label),
+                R.string.qs_tile_content_description_format, subtitle,
             )
         }
         tile.icon = Icon.createWithResource(this, R.drawable.ic_qs_power)

@@ -157,12 +157,14 @@ class HomeFragment : Fragment() {
             PopupMenu(requireContext(), anchor).apply {
                 menu.add(0, MENU_ALL_OFF, 0, R.string.action_all_off)
                 menu.add(0, MENU_SLEEP_TIMER, 1, R.string.action_sleep_timer)
-                menu.add(0, MENU_BACKUP, 2, R.string.action_backup_library)
-                menu.add(0, MENU_RESTORE, 3, R.string.action_restore_library)
+                menu.add(0, MENU_QS_TILE_TARGET, 2, R.string.action_qs_tile_target)
+                menu.add(0, MENU_BACKUP, 3, R.string.action_backup_library)
+                menu.add(0, MENU_RESTORE, 4, R.string.action_restore_library)
                 setOnMenuItemClickListener { item ->
                     when (item.itemId) {
                         MENU_ALL_OFF -> { vm.runAllOff(); true }
                         MENU_SLEEP_TIMER -> { showSleepTimerDialog(); true }
+                        MENU_QS_TILE_TARGET -> { showQuickTileTargetDialog(); true }
                         MENU_BACKUP -> { startBackupExport(); true }
                         MENU_RESTORE -> { startBackupImport(); true }
                         else -> false
@@ -651,10 +653,124 @@ class HomeFragment : Fragment() {
             .show()
     }
 
+    /**
+     * B-003 phase 2: pick which target the Quick Settings tile fires.
+     *
+     * Tiles don't get a system-invoked configuration activity (only
+     * widgets do), so the picker lives here. Two-step dialog to keep
+     * the flat list of (every macro) ⊕ (every device with POWER) from
+     * cluttering: first choose macro vs single command, then pick the
+     * specific entry. "Reset to default (auto-pick)" clears the
+     * binding so the tile falls back to the phase 1 primary-device
+     * auto-pick.
+     */
+    private fun showQuickTileTargetDialog() {
+        val ctx = requireContext()
+        val current = com.andene.spectra.widget.QuickTileConfigStore.get(ctx)
+        val items = arrayOf(
+            getString(R.string.qs_tile_target_pick_macro),
+            getString(R.string.qs_tile_target_pick_command),
+            getString(R.string.qs_tile_target_reset),
+        )
+        AlertDialog.Builder(ctx)
+            .setTitle(R.string.qs_tile_target_title)
+            .setItems(items) { _, which ->
+                when (which) {
+                    0 -> pickQsTileMacro()
+                    1 -> pickQsTileCommand()
+                    2 -> {
+                        com.andene.spectra.widget.QuickTileConfigStore.clear(ctx)
+                        toast(getString(R.string.qs_tile_target_reset_done))
+                    }
+                }
+            }
+            .setNegativeButton(R.string.action_cancel_dialog, null)
+            .show()
+        // Show the current binding (if any) as a hint above the picker.
+        if (current != null) toast(getCurrentBindingLabel(current))
+    }
+
+    private fun getCurrentBindingLabel(b: com.andene.spectra.widget.QuickTileConfigStore.Binding): String =
+        when (b) {
+            is com.andene.spectra.widget.QuickTileConfigStore.Binding.Macro ->
+                getString(R.string.qs_tile_target_current_macro_format,
+                    vm.macros.value.firstOrNull { it.id == b.macroId }?.name ?: "?")
+            is com.andene.spectra.widget.QuickTileConfigStore.Binding.Command ->
+                getString(R.string.qs_tile_target_current_command_format,
+                    vm.savedDevices.value.firstOrNull { it.id == b.deviceId }?.name ?: "?",
+                    b.commandName)
+        }
+
+    private fun pickQsTileMacro() {
+        val macros = vm.macros.value
+        if (macros.isEmpty()) {
+            toast(getString(R.string.sleep_timer_no_macros))
+            return
+        }
+        val labels = macros.map { it.name }.toTypedArray()
+        var picked = 0
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.qs_tile_target_pick_macro)
+            .setSingleChoiceItems(labels, 0) { _, which -> picked = which }
+            .setPositiveButton(R.string.action_save_button) { _, _ ->
+                com.andene.spectra.widget.QuickTileConfigStore.set(
+                    requireContext(),
+                    com.andene.spectra.widget.QuickTileConfigStore.Binding.Macro(macros[picked].id),
+                )
+                toast(getString(R.string.qs_tile_target_set_format, macros[picked].name))
+            }
+            .setNegativeButton(R.string.action_cancel_dialog, null)
+            .show()
+    }
+
+    private fun pickQsTileCommand() {
+        val devices = vm.savedDevices.value
+        if (devices.isEmpty()) {
+            toast(getString(R.string.qs_tile_target_no_devices))
+            return
+        }
+        val labels = devices.map { it.name ?: getString(R.string.device_default_label) }.toTypedArray()
+        var pickedDeviceIndex = 0
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.qs_tile_target_pick_device)
+            .setSingleChoiceItems(labels, 0) { _, which -> pickedDeviceIndex = which }
+            .setPositiveButton(R.string.action_next) { _, _ ->
+                pickQsTileCommandFor(devices[pickedDeviceIndex])
+            }
+            .setNegativeButton(R.string.action_cancel_dialog, null)
+            .show()
+    }
+
+    private fun pickQsTileCommandFor(device: com.andene.spectra.data.models.DeviceProfile) {
+        val commands = device.irProfile?.commands?.keys?.toList()?.sorted().orEmpty()
+        if (commands.isEmpty()) {
+            toast(getString(R.string.qs_tile_target_no_commands))
+            return
+        }
+        val labels = commands.toTypedArray()
+        var picked = 0
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.qs_tile_target_pick_command_title)
+            .setSingleChoiceItems(labels, 0) { _, which -> picked = which }
+            .setPositiveButton(R.string.action_save_button) { _, _ ->
+                com.andene.spectra.widget.QuickTileConfigStore.set(
+                    requireContext(),
+                    com.andene.spectra.widget.QuickTileConfigStore.Binding.Command(device.id, commands[picked]),
+                )
+                toast(getString(
+                    R.string.qs_tile_target_set_format,
+                    "${device.name ?: getString(R.string.device_default_label)} · ${commands[picked]}",
+                ))
+            }
+            .setNegativeButton(R.string.action_cancel_dialog, null)
+            .show()
+    }
+
     companion object {
         private const val MENU_ALL_OFF = 1
         private const val MENU_SLEEP_TIMER = 2
-        private const val MENU_BACKUP = 3
-        private const val MENU_RESTORE = 4
+        private const val MENU_QS_TILE_TARGET = 3
+        private const val MENU_BACKUP = 4
+        private const val MENU_RESTORE = 5
     }
 }

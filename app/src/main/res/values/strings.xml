@@ -61,6 +61,20 @@
     <!-- Quick Settings tile (B-003) -->
     <string name="qs_tile_label">Spectra Power</string>
     <string name="qs_tile_content_description_format">Send POWER to %1$s</string>
+    <string name="qs_tile_target_missing">Target missing</string>
+    <string name="action_qs_tile_target">Quick tile target</string>
+    <string name="qs_tile_target_title">Quick Settings tile target</string>
+    <string name="qs_tile_target_pick_macro">Pick a macro to fire</string>
+    <string name="qs_tile_target_pick_command">Pick one command to fire</string>
+    <string name="qs_tile_target_reset">Reset to auto-pick</string>
+    <string name="qs_tile_target_reset_done">Tile reset to auto-pick</string>
+    <string name="qs_tile_target_pick_device">Which device?</string>
+    <string name="qs_tile_target_pick_command_title">Which command?</string>
+    <string name="qs_tile_target_no_devices">No saved devices yet.</string>
+    <string name="qs_tile_target_no_commands">This device has no commands.</string>
+    <string name="qs_tile_target_set_format">Quick tile now fires: %1$s</string>
+    <string name="qs_tile_target_current_macro_format">Currently bound to macro: %1$s</string>
+    <string name="qs_tile_target_current_command_format">Currently bound to %1$s · %2$s</string>
 
     <!-- All-off macro (B-008) -->
     <string name="action_all_off">All off</string>
