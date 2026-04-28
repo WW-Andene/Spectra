@@ -73,6 +73,27 @@ worth refactoring to a shared IrHardware singleton).
 
 ---
 
+## Cycle 16 — AudioRecord init-failure leak
+
+**Closed:** T1 mic leak in AcousticFingerprint.
+
+**Commit:** `d45497d`
+
+`AudioRecord(...)` doesn't throw on init failure — returns an instance
+with `state == STATE_UNINITIALIZED`. The previous code skipped the
+state check so `startRecording()` threw IllegalStateException, and
+because `release()` lived inside an inner try/finally that wrapped
+only the capture loop, the throw from `startRecording()` (outside
+that inner try) bypassed release entirely. The mic stayed held until
+the native finalizer ran on GC — typically minutes-to-never on a
+backgrounded app, wedging the next scan and any other recording app.
+
+Fixed with an explicit state check that surfaces a clean ERROR
+return, plus restructure to outer try/finally so release() always
+runs on every exit path including cancellation.
+
+---
+
 ## Cycle 15 — Don't gate scan on POST_NOTIFICATIONS denial
 
 **Closed:** T2 UX gate introduced by cycle 11.
