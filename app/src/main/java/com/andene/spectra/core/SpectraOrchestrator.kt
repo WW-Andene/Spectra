@@ -248,9 +248,20 @@ class SpectraOrchestrator(private val context: Context) {
             appendLog("Module 5: Starting brute force sweep...")
         }
 
+        // B-101: instantiate the acoustic auto-confirm listener if mic
+        // permission is granted. The listener is null when mic isn't
+        // available, in which case startSweep falls back to the user-
+        // prompt path on every attempt (existing behaviour).
+        val autoConfirm = com.andene.spectra.modules.bruteforce.AcousticAutoConfirm(context)
+            .takeIf { it.isMicAvailable() }
+        if (autoConfirm != null) {
+            appendLog("  Acoustic auto-confirm active — listening for device reaction")
+        }
+
         bruteForce.startSweep(
             brandFilter = brandHint,
             startAttempt = startAttempt,
+            autoConfirm = autoConfirm,
             onSkip = { protocol, manufacturer, reason ->
                 // Surface transmit-time skips into the user-visible scan log
                 // — silent skips were hiding hardware-reject failures.

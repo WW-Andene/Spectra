@@ -238,11 +238,22 @@ class IrBruteForce(private val context: Context) {
 
     /**
      * Start brute force sweep across all protocol families.
-     * Calls [onAttempt] after each transmission so UI can ask user for confirmation.
+     *
+     * For each transmitted code, optionally hand the [autoConfirm]
+     * listener (B-101) the chance to detect an audible reaction and
+     * skip the user prompt. Three outcomes from autoConfirm:
+     *   CONFIRMED → treat as user-said-YES, save the find, sweep ends.
+     *   REJECTED  → treat as user-said-NO, advance to next code.
+     *   UNCERTAIN → fall through to [onAttempt] (the user prompt).
+     *
+     * autoConfirm is null on devices without mic permission, on
+     * platforms where AudioRecord init fails, or when the caller
+     * explicitly opts out.
      */
     suspend fun startSweep(
         brandFilter: String? = null,
         startAttempt: Int = 0,
+        autoConfirm: AcousticAutoConfirm? = null,
         onSkip: ((protocol: IrProtocol, manufacturer: String, reason: String) -> Unit)? = null,
         onAttempt: suspend (protocol: IrProtocol, manufacturer: String, attemptNum: Int) -> Boolean,
     ) {
@@ -250,6 +261,12 @@ class IrBruteForce(private val context: Context) {
             Log.e(TAG, "No IR emitter available")
             return
         }
+
+        // Sample the room's quiet floor BEFORE any IR fires so all
+        // subsequent reaction checks have something stable to compare
+        // against. Safe to call even when mic isn't granted — it's a
+        // no-op that leaves baseline=-1 and forces UNCERTAIN forever.
+        autoConfirm?.captureBaseline()
 
         _state.value = BruteForceState(isRunning = true)
         lastFoundPattern = null
@@ -312,8 +329,23 @@ class IrBruteForce(private val context: Context) {
 
                 delay(SEND_DELAY_MS)
 
-                // Ask user: did the device respond?
-                val confirmed = onAttempt(protocol, manufacturer, totalAttempts)
+                // B-101: try acoustic auto-confirm first. CONFIRMED and
+                // REJECTED short-circuit the user prompt; UNCERTAIN
+                // falls through to the prompt as before.
+                val confirmed = when (autoConfirm?.checkForReaction()) {
+                    AcousticAutoConfirm.Confidence.CONFIRMED -> {
+                        Log.d(TAG, "Auto-confirmed by acoustic listener")
+                        true
+                    }
+                    AcousticAutoConfirm.Confidence.REJECTED -> {
+                        // No audible reaction — advance silently. Counted
+                        // as an attempt so the resume index reflects what
+                        // was actually tried.
+                        false
+                    }
+                    AcousticAutoConfirm.Confidence.UNCERTAIN, null ->
+                        onAttempt(protocol, manufacturer, totalAttempts)
+                }
                 if (confirmed) {
                     lastFoundPattern = timings
                     lastFoundManufacturer = manufacturer
