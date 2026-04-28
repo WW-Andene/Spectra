@@ -261,38 +261,118 @@ class IrCameraCapture(private val context: Context) {
             return
         }
 
-        val protocol = attemptProtocolDecode(timings.toList())
+        // B-100 phase 3: multi-press averaging. Split the captured
+        // timeline at long inter-press gaps (a quiet space ≥ 50 ms is
+        // way longer than any intra-frame gap, so each segment is one
+        // button press). Decode each segment independently, then vote
+        // — if 3 of 5 presses agreed on NEC 0x1234, we ship that with
+        // higher confidence than a single best-effort capture.
+        val segments = splitOnLongGaps(timings)
+        val perSegmentDecodes = segments.mapNotNull { decodeOneSegment(it) }
+        val winner = if (perSegmentDecodes.isNotEmpty()) {
+            // Vote on the (protocol, packedCode-or-raw) tuple. Codes
+            // match across presses when the same physical button was
+            // pressed and the protocol decoded cleanly. Ties broken by
+            // first occurrence — preserves a sensible default when the
+            // user only pressed once.
+            perSegmentDecodes.groupingBy { it.signature() }.eachCount()
+                .maxByOrNull { it.value }
+                ?.let { entry -> perSegmentDecodes.first { it.signature() == entry.key } }
+        } else null
 
-        // Try a full bit-decode for protocols we have a codec for. When
-        // it succeeds we store the protocol code on the IrCommand —
-        // smaller, canonical, and re-synthesizable on any IR blaster
-        // regardless of the original capture's per-row jitter. The raw
-        // timings stay populated as a fallback for protocols we don't
-        // codec yet.
-        val packedCode: Long? = when (protocol) {
-            IrProtocol.NEC ->
-                com.andene.spectra.modules.ir.protocols.NecCodec.decode(timings)?.let {
-                    if (it.isRepeat) null else it.packed()
-                }
-            IrProtocol.SAMSUNG ->
-                com.andene.spectra.modules.ir.protocols.SamsungCodec.decode(timings)?.packed()
-            IrProtocol.LG ->
-                com.andene.spectra.modules.ir.protocols.LgCodec.decode(timings)?.packed()
-            else -> null
+        val (protocol, packedCode, chosenTimings, agreement) = if (winner != null) {
+            val agreement = perSegmentDecodes.count { it.signature() == winner.signature() }
+            Quad(winner.protocol, winner.packedCode, winner.timings, agreement)
+        } else {
+            // Fallback to whole-timeline decode (matches phase 1 / 2
+            // behaviour for unsplittable captures — single fast press
+            // with no inter-press gap, or non-codec'd protocol).
+            val protocol = attemptProtocolDecode(timings.toList()) ?: IrProtocol.RAW
+            Quad(protocol, decodeWithCodec(timings, protocol), timings, 1)
         }
 
         _capturedCommand.value = IrCommand(
             name = "captured_${System.currentTimeMillis()}",
-            rawTimings = timings,
-            protocol = protocol ?: IrProtocol.RAW,
+            rawTimings = chosenTimings,
+            protocol = protocol,
             code = packedCode,
             capturedVia = CaptureMethod.CAMERA_DECODE,
         )
         _captureState.value = CaptureState.DECODED
         Log.d(
             TAG,
-            "Decoded ${timings.size} pulses, protocol: $protocol, code: ${packedCode?.let { "0x%04X".format(it) }}, threshold: $threshold",
+            "Decoded ${chosenTimings.size} pulses, protocol: $protocol, code: ${packedCode?.let { "0x%04X".format(it) }}, agreement: $agreement/${perSegmentDecodes.size.coerceAtLeast(1)}, threshold: $threshold",
         )
+    }
+
+    /** Result of decoding one isolated press within a multi-press capture. */
+    private data class SegmentDecode(
+        val protocol: IrProtocol,
+        val packedCode: Long?,
+        val timings: IntArray,
+    ) {
+        /** Vote signature: (protocol, code) when codec decoded; otherwise
+         *  (protocol, null) so unrelated raw captures don't pile onto a
+         *  single bucket just because they share a protocol bucket. */
+        fun signature(): Pair<IrProtocol, Long?> = protocol to packedCode
+    }
+
+    /** 4-tuple helper for processTimeline's multi-press fallback path. */
+    private data class Quad<A, B, C, D>(val a: A, val b: B, val c: C, val d: D) {
+        operator fun component1() = a
+        operator fun component2() = b
+        operator fun component3() = c
+        operator fun component4() = d
+    }
+
+    /**
+     * Walk an alternating mark/space timings array and break it at any
+     * space ≥ 50 ms — those are inter-press gaps. Returns each press's
+     * timings as an independent IntArray. A single-press capture
+     * returns a list of one element (the entire array).
+     */
+    private fun splitOnLongGaps(timings: IntArray): List<IntArray> {
+        val gapThresholdUs = 50_000
+        val segments = mutableListOf<IntArray>()
+        var segmentStart = 0
+        var i = 0
+        while (i < timings.size) {
+            // Spaces are at odd indices (mark/space alternation, starting
+            // with mark at 0). Only spaces can be inter-press gaps —
+            // marks are always sub-millisecond.
+            if (i % 2 == 1 && timings[i] >= gapThresholdUs) {
+                if (i > segmentStart) {
+                    segments.add(timings.copyOfRange(segmentStart, i))
+                }
+                segmentStart = i + 1
+            }
+            i++
+        }
+        if (segmentStart < timings.size) {
+            segments.add(timings.copyOfRange(segmentStart, timings.size))
+        }
+        // Filter segments too short to be a real press (need at least
+        // a header + a few bits to be plausible).
+        return segments.filter { it.size >= 8 }
+            .ifEmpty { listOf(timings) }
+    }
+
+    private fun decodeOneSegment(segment: IntArray): SegmentDecode? {
+        val protocol = attemptProtocolDecode(segment.toList()) ?: return null
+        val code = decodeWithCodec(segment, protocol)
+        return SegmentDecode(protocol = protocol, packedCode = code, timings = segment)
+    }
+
+    private fun decodeWithCodec(timings: IntArray, protocol: IrProtocol): Long? = when (protocol) {
+        IrProtocol.NEC ->
+            com.andene.spectra.modules.ir.protocols.NecCodec.decode(timings)?.let {
+                if (it.isRepeat) null else it.packed()
+            }
+        IrProtocol.SAMSUNG ->
+            com.andene.spectra.modules.ir.protocols.SamsungCodec.decode(timings)?.packed()
+        IrProtocol.LG ->
+            com.andene.spectra.modules.ir.protocols.LgCodec.decode(timings)?.packed()
+        else -> null
     }
 
     /**

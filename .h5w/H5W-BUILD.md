@@ -30,7 +30,7 @@ camera capture, RF discovery currently dead-ending in the matcher).
 | ID | Feature | Phase | Status | Notes |
 |----|---------|-------|--------|-------|
 | B-100 | IR camera capture decode upgrade | 3 — RC6, JVC, Panasonic, NEC2 | TODO | wider protocol coverage |
-| B-100 | IR camera capture decode upgrade | 4 — multi-press averaging | TODO | reduces rolling-shutter jitter at source |
+| B-100 | IR camera capture decode upgrade | 4 — Sony SIRC + Panasonic codecs | TODO | distinct timings, separate codec |
 | B-101 | Brute-force smart ordering + auto-confirm | 1 — order protocols by manufacturer/category | TODO | ranking, no new IR code |
 | B-101 | Brute-force smart ordering + auto-confirm | 2 — acoustic auto-confirm via mic delta | TODO | listen for fan/TV change post-fire |
 | B-102 | Multi-device disambiguation | 1 — confidence-scored top-N picker on Results | TODO | when multiple matches close in score |
@@ -62,7 +62,8 @@ camera capture, RF discovery currently dead-ending in the matcher).
 | B-003 | Quick Settings tile | 2 — in-app target picker (macro / command) | `c5b1c62` |
 | B-002 | Home screen widget | 3 — per-widget command picker | `addd26e` |
 | B-100 | IR camera capture decode upgrade | 1 — NEC1 codec + decode-on-capture + encode-on-transmit | `de9539a` |
-| B-100 | IR camera capture decode upgrade | 2 — Samsung + LG codecs + shared PulseDistance impl | (this commit) |
+| B-100 | IR camera capture decode upgrade | 2 — Samsung + LG codecs + shared PulseDistance impl | `608009a` |
+| B-100 | IR camera capture decode upgrade | 3 — multi-press averaging + per-press vote | (this commit) |
 
 ---
 
